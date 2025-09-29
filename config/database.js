@@ -9,7 +9,7 @@ const initializeDatabase = async () => {
     const mongoUrl = process.env.MONGODB_URI
       || process.env.MONGO_URL
       || process.env.SCALINGO_MONGO_URL
-      || 'mongodb://localhost:27017/tidsrapportering';
+      || 'mongodb://localhost:27017/chain-out-db';
     client = new MongoClient(mongoUrl);
     
     await client.connect();

@@ -62,6 +62,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 initializePassport();
 
+// Initialize DB once per cold start and gate requests until ready
+// const ready = initializeDatabase();
+app.use((req, res, next) => {
+  ready.then(() => next()).catch(next);
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
