@@ -21,7 +21,6 @@ router.post('/register', [
     const db = getDatabase();
     const usersCollection = db.collection('users');
 
-    // Check if user already exists
     const existingUser = await usersCollection.findOne({ email: email });
     
     if (existingUser) {
