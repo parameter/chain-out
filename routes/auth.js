@@ -17,7 +17,7 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, name } = req.body;
+    const { email, password, username } = req.body;
     const db = getDatabase();
     const usersCollection = db.collection('users');
 
@@ -32,7 +32,7 @@ router.post('/register', [
     const result = await usersCollection.insertOne({
       email,
       password: hashedPassword,
-      name,
+      username,
       created_at: new Date(),
       updated_at: new Date()
     });
