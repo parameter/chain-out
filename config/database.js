@@ -57,7 +57,7 @@ const createIndexes = async () => {
     await db.collection('time_entries').createIndex({ user_id: 1, date: -1 });
 
     // Create 2dsphere index on location for jobs collection (for $geoNear queries)
-    await db.collection('jobs').createIndex({ location: "2dsphere" });
+    await db.collection('courses').createIndex({ geolocation: "2dsphere" });
 
     console.log('Database indexes created');
   } catch (error) {
