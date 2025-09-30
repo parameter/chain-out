@@ -19,6 +19,11 @@ const pusher = new Pusher({
 
 // Middleware to check authentication
 const requireAuth = (req, res, next) => {
+
+  console.log('Cookie header:', req.headers.cookie);
+  console.log('Session ID:', req.sessionID);
+  console.log('Session:', req.session);
+  
   if (req.isAuthenticated()) {
     return next();
   }
@@ -26,6 +31,7 @@ const requireAuth = (req, res, next) => {
 };
 
 router.get('/profile', requireAuth, (req, res) => {
+  
   res.json({
     _id: req.user._id,
     email: req.user.email,
@@ -35,10 +41,8 @@ router.get('/profile', requireAuth, (req, res) => {
 
 router.get('/courses', requireAuth,async (req, res) => {
 
-  console.log('Cookie header:', req.headers.cookie);
-  console.log('Session ID:', req.sessionID);
-  console.log('Session:', req.session);
   
+
   try {
     const { location } = req.query;
 
