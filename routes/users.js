@@ -34,6 +34,11 @@ router.get('/profile', requireAuth, (req, res) => {
 });
 
 router.get('/courses', requireAuth,async (req, res) => {
+
+  console.log('Cookie header:', req.headers.cookie);
+  console.log('Session ID:', req.sessionID);
+  console.log('Session:', req.session);
+  
   try {
     const { location } = req.query;
 
