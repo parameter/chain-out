@@ -33,7 +33,7 @@ router.get('/profile', requireAuth, (req, res) => {
   });
 });
 
-router.get('/courses', requireAuth, async (req, res) => {
+router.get('/courses', async (req, res) => {
   try {
     const { location } = req.query;
 
