@@ -37,8 +37,6 @@ router.get('/courses', async (req, res) => {
   try {
     const { location } = req.query;
 
-    console.log('location', location);
-
     if (!location) {
       return res.status(400).json({ message: 'location query parameter is required (format: lat,lng)' });
     }
@@ -56,10 +54,8 @@ router.get('/courses', async (req, res) => {
     // 100km in meters
     const maxDistance = 100 * 1000;
 
-    console.log('We are here');
-
     const courses = await db.collection('courses').find({
-      "geolocation": {
+      "location": {
         $nearSphere: {
           $geometry: {
             type: "Point",
@@ -70,9 +66,8 @@ router.get('/courses', async (req, res) => {
       }
     }).toArray();
 
-    console.log('courses', courses);
-
     res.json({ courses });
+
   } catch (err) {
     console.error('Error fetching courses by location:', err);
     res.status(500).json({ message: 'Failed to fetch courses' });
