@@ -49,13 +49,16 @@ const createIndexes = async () => {
   try {
     // Create unique index on email
     await db.collection('users').createIndex({ email: 1 }, { unique: true });
-    
+
     // Create index on user_id for time_entries
     await db.collection('time_entries').createIndex({ user_id: 1 });
-    
+
     // Create compound index on user_id and date for time_entries
     await db.collection('time_entries').createIndex({ user_id: 1, date: -1 });
-    
+
+    // Create 2dsphere index on location for jobs collection (for $geoNear queries)
+    await db.collection('jobs').createIndex({ location: "2dsphere" });
+
     console.log('Database indexes created');
   } catch (error) {
     console.error('Error creating indexes:', error);
