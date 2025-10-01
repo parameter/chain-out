@@ -1,6 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { getDatabase } = require('../config/database');
 

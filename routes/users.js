@@ -20,10 +20,9 @@ const pusher = new Pusher({
 
 // Middleware to check authentication
 // Middleware to log request headers
+
 router.use((req, res, next) => {
-  // Log method, url, and headers
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-  console.log('Headers:', req.headers);
+  console.log('Authorization header:', req.headers.authorization);
   next();
 });
 
