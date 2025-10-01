@@ -3,6 +3,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 const { getDatabase } = require('./database');
 const { ObjectId } = require('mongodb');
+const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 
 const initializePassport = () => {
   passport.use(new LocalStrategy({
@@ -48,46 +49,38 @@ const initializePassport = () => {
     }
   }));
 
-  passport.serializeUser((user, done) => {
-    // Store both user ID and type to know which collection to query during deserialization
-    const serializedData = {
-      id: user._id?.toString(),
-      userType: user.userType
-    };
-    done(null, JSON.stringify(serializedData));
-  });
+  passport.use(new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.JWT_SECRET || 'your-jwt-secret-change-this',
+      algorithms: ['HS256']
+    },
+    async (payload, done) => {
+      try {
+        const db = getDatabase();
 
-  passport.deserializeUser(async (serializedData, done) => {
-    try {
-      const { id, userType } = JSON.parse(serializedData);
-      const db = getDatabase();
-      
-      // Determine which collection to query based on userType
-      let collectionName = '';
-      if (userType === 'service-user') {
-        collectionName = 'service-users';
-      } else if (userType === 'operator') {
-        collectionName = 'operators';
-      } else {
-        collectionName = 'users';
-      }
-      const collection = db.collection(collectionName);
+        const { sub: id } = payload;
+        let collectionName = 'users';
 
-      const objectId = typeof id === 'string' ? new ObjectId(id) : id;
-      const user = await collection.findOne(
-        { _id: objectId },
-        { projection: { password: 0 } }
-      );
-      
-      if (user) {
-        user.userType = userType;
+        const collection = db.collection(collectionName);
+        const objectId = typeof id === 'string' ? new ObjectId(id) : id;
+        const user = await collection.findOne(
+          { _id: objectId },
+          { projection: { password: 0 } }
+        );
+
+        if (!user) {
+          return done(null, false);
+        }
+
+        return done(null, user);
+        
+      } catch (err) {
+        return done(err, false);
       }
-      
-      done(null, user);
-    } catch (error) {
-      done(error);
     }
-  });
+  ));
+  
 };
 
 module.exports = {

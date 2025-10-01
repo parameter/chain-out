@@ -52,35 +52,31 @@ router.post('/login', (req, res, next) => {
     if (err) {
       return res.status(500).json({ message: 'Server error' });
     }
-    
     if (!user) {
-      return res.status(401).json({ message: info.message });
+      return res.status(401).json({ message: info?.message || 'Invalid credentials' });
     }
-    
-    req.logIn(user, (err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Login failed' });
+
+    const token = jwt.sign(
+      { sub: user._id, userType: user.userType },
+      process.env.JWT_SECRET || 'your-jwt-secret-change-this',
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    return res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        userType: user.userType
       }
-      
-      return res.json({ 
-        message: 'Login successful',
-        user: {
-          _id: user._id,
-          email: user.email,
-          name: user.name
-        }
-      });
     });
   })(req, res, next);
 });
 
 router.post('/logout', (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({ message: 'Logout failed' });
-    }
-    res.json({ message: 'Logout successful' });
-  });
+  res.json({ message: 'Logged out (token invalidation is client-side for JWT)' });
 });
 
 router.get('/status', (req, res) => {

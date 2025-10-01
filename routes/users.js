@@ -1,4 +1,5 @@
 const express = require('express');
+const passport = require('passport');
 const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
@@ -18,17 +19,15 @@ const pusher = new Pusher({
 }); */
 
 // Middleware to check authentication
-const requireAuth = (req, res, next) => {
+// Middleware to log request headers
+router.use((req, res, next) => {
+  // Log method, url, and headers
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log('Headers:', req.headers);
+  next();
+});
 
-  console.log('Cookie header:', req.headers.cookie);
-  console.log('Session ID:', req.sessionID);
-  console.log('Session:', req.session);
-  
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: 'Authentication required' });
-};
+const requireAuth = passport.authenticate('jwt', { session: false });
 
 router.get('/profile', requireAuth, (req, res) => {
   
@@ -39,7 +38,7 @@ router.get('/profile', requireAuth, (req, res) => {
   });
 });
 
-router.get('/courses', requireAuth,async (req, res) => {
+router.get('/courses', requireAuth, async (req, res) => {
 
   
 
