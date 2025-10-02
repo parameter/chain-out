@@ -7,6 +7,14 @@ const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
 
 const router = express.Router();
 
+const badges = [
+  {
+    name: 'Birdie hunter',
+    description: 'Make your first birdie.',
+    condition: ,
+  }
+];
+
 /*
 const Pusher = require('pusher');
 
@@ -21,11 +29,6 @@ const pusher = new Pusher({
 // Middleware to check authentication
 // Middleware to log request headers
 
-router.use((req, res, next) => {
-  console.log('Authorization header:', req.headers.authorization);
-  next();
-});
-
 const requireAuth = passport.authenticate('jwt', { session: false });
 
 router.get('/profile', requireAuth, (req, res) => {
@@ -36,6 +39,9 @@ router.get('/profile', requireAuth, (req, res) => {
     name: req.user.name
   });
 });
+
+
+
 
 router.get('/courses', requireAuth, async (req, res) => {
 
@@ -112,5 +118,117 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to presign file url' });
   }
 });
+
+
+router.post('/scorecard/invite-user', requireAuth, async (req, res) => {
+  try {
+    const { courseId, layoutId, invitedUserId } = req.body;
+    if (!courseId || !invitedUserId) {
+      return res.status(400).json({ message: 'courseId and invitedUserId are required' });
+    }
+
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+    const coursesCollection = db.collection('courses');
+
+    let scorecard = await scorecardsCollection.findOne({ courseId });
+
+    if (!scorecard) {
+      
+      const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+      const layout = course?.layouts[layoutId] || null;
+
+      const newScorecard = {
+        courseId,
+        layout,
+        results: [],
+        invites: [
+          {
+            invitedUserId,
+            invitedBy: req.user._id,
+            status: 'pending',
+            date: new Date()
+          }
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      const result = await scorecardsCollection.insertOne(newScorecard);
+      scorecard = { ...newScorecard, _id: result.insertedId };
+    } else {
+      // Add new invite to the existing scorecard's invites array
+      const invite = {
+        invitedUserId,
+        invitedBy: req.user._id,
+        status: 'pending',
+        date: new Date()
+      };
+      await scorecardsCollection.updateOne(
+        { _id: scorecard._id },
+        {
+          $push: { invites: invite },
+          $set: { updatedAt: new Date() }
+        }
+      );
+    }
+
+    res.status(201).json({
+      message: 'User invited to scorecard',
+      scorecardId: result.insertedId,
+      status: 'pending',
+      date: scorecard.date
+    });
+  } catch (e) {
+    console.error('Error inviting user to scorecard:', e);
+    res.status(500).json({ message: 'Failed to invite user to scorecard' });
+  }
+});
+
+router.post('/scorecard/add-result', requireAuth, async (req, res) => {
+  try {
+    const { scorecardId, hole, score } = req.body;
+    if (!scorecardId || typeof hole === 'undefined' || typeof score === 'undefined') {
+      return res.status(400).json({ message: 'scorecardId, hole, and score are required' });
+    }
+
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+
+    const resultObj = {
+      userId: req.user._id,
+      hole,
+      score,
+      datetime: new Date()
+    };
+
+    // Combine the find and update in a single query using $elemMatch to check invite
+    const updateResult = await scorecardsCollection.updateOne(
+      {
+        _id: new ObjectId(scorecardId),
+        "invites.invitedUserId": req.user._id
+      },
+      { $push: { results: resultObj } }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      // Either scorecard not found or user not invited
+      // Check which case it is for more specific error
+      const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
+      if (!scorecard) {
+        return res.status(404).json({ message: 'Scorecard not found' });
+      }
+      return res.status(403).json({ message: 'You are not invited to this scorecard' });
+    }
+
+    res.status(201).json({ message: 'Result added to scorecard', result: resultObj });
+
+  } catch (e) {
+    console.error('Error adding result to scorecard:', e);
+    res.status(500).json({ message: 'Failed to add result to scorecard' });
+  }
+});
+
+
+
 
 module.exports = router;
