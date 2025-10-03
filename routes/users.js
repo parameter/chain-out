@@ -7,13 +7,6 @@ const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
 
 const router = express.Router();
 
-const badges = [
-  {
-    name: 'Birdie hunter',
-    description: 'Make your first birdie.',
-    condition: ,
-  }
-];
 
 /*
 const Pusher = require('pusher');
