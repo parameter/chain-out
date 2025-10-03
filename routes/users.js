@@ -221,6 +221,29 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/find-users', requireAuth, async (req, res) => {
+  const { string } = req.body;
+
+  if (!string || typeof string !== 'string' || !string.trim()) {
+    return res.status(400).json({ message: 'Search string is required' });
+  }
+
+  const db = getDatabase();
+  const usersCollection = db.collection('users');
+
+  const regex = new RegExp(string, 'i');
+  const users = await usersCollection.find({
+      $or: [
+        { username: { $regex: regex } },
+        { email: { $regex: regex } }
+      ]
+    })
+    .project({ password: 0 })
+    .toArray();
+
+  res.json({ users });
+});
+
 
 
 
