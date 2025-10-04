@@ -244,7 +244,45 @@ router.post('/find-users', requireAuth, async (req, res) => {
   res.json({ users });
 });
 
+router.post('/find-course', requireAuth, async (req, res) => {
+  const { string } = req.body;
 
+  if (!string || typeof string !== 'string' || !string.trim() || string.trim().length <= 4) {
+    return res.status(400).json({ message: 'Search string is required and must be longer than 4 characters' });
+  }
 
+  const db = getDatabase();
+  const coursesCollection = db.collection('courses');
+
+  const regex = new RegExp(string, 'i');
+  const courses = await coursesCollection.find({
+      $or: [
+        { name: { $regex: regex } },
+        { address: { $regex: regex } }
+      ]
+    })
+    .toArray();
+
+  res.json({ courses });
+});
+
+router.post('/get-course-by-id', requireAuth, async (req, res) => {
+  const { courseId } = req.body;
+
+  if (!courseId || typeof courseId !== 'string' || !courseId.trim()) {
+    return res.status(400).json({ message: 'Course id is required' });
+  }
+
+  const db = getDatabase();
+  const coursesCollection = db.collection('courses');
+
+  const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+
+  if (!course) {
+    return res.status(404).json({ message: 'Course not found' });
+  }
+
+  res.json({ course });
+});
 
 module.exports = router;
