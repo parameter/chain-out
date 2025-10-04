@@ -266,8 +266,8 @@ router.post('/find-course', requireAuth, async (req, res) => {
   res.json({ courses });
 });
 
-router.post('/get-course-by-id', requireAuth, async (req, res) => {
-  const { courseId } = req.body;
+router.get('/get-course-by-id', requireAuth, async (req, res) => {
+  const { courseId } = req.query;
 
   if (!courseId || typeof courseId !== 'string' || !courseId.trim()) {
     return res.status(400).json({ message: 'Course id is required' });
