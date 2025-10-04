@@ -269,9 +269,13 @@ router.post('/find-course', requireAuth, async (req, res) => {
 router.get('/get-course-by-id', requireAuth, async (req, res) => {
   const { courseId } = req.query;
 
+  console.log('courseId 1', courseId);
+
   if (!courseId || typeof courseId !== 'string' || !courseId.trim()) {
     return res.status(400).json({ message: 'Course id is required' });
   }
+
+  console.log('courseId 2', courseId);
 
   const db = getDatabase();
   const coursesCollection = db.collection('courses');
