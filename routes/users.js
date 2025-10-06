@@ -262,7 +262,7 @@ router.post('/find-users', requireAuth, async (req, res) => {
       { email: { $regex: regex } }
     ]
   })
-  .project({ password: 0 })
+  .project({ password: 0, created_at: 0, updated_at: 0, email: 0 })
   .toArray();
 
   console.log('users', users);
