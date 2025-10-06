@@ -11,6 +11,8 @@ const initializeDatabase = async () => {
       || process.env.SCALINGO_MONGO_URL
       || 'mongodb://localhost:27017/chain-out-db';
     client = new MongoClient(mongoUrl);
+
+    console.log('mongoUrl', mongoUrl);
     
     await client.connect();
     db = client.db();

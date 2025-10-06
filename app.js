@@ -16,14 +16,26 @@ app.use(helmet());
 app.set('trust proxy', 1);
 app.use(morgan('combined'));
 
+// Define an array of allowed URLs (can be set via env or hardcoded)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+if (process.env.CLIENT_URL) {
+  process.env.CLIENT_URL.split(',').forEach(url => {
+    const trimmed = url.trim().replace(/\/$/, '');
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
 app.use(cors({
   origin: (origin, cb) => {
-    const allowed = (process.env.CLIENT_URL || 'http://localhost:5173')
-      .split(',')
-      .map(s => s.trim().replace(/\/$/, ''));
     if (!origin) return cb(null, true);
     const norm = origin.replace(/\/$/, '');
-    cb(null, allowed.includes(norm));
+    cb(null, allowedOrigins.includes(norm));
   },
   credentials: true,
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],

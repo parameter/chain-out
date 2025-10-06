@@ -12,6 +12,8 @@ const initializePassport = () => {
   }, async (email, password, done) => {
     try {
       const db = getDatabase();
+
+      console.log('trying to login', email, password);
       
       // Check users collection first
       const usersCollection = db.collection('users');

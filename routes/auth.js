@@ -50,6 +50,7 @@ router.post('/register', [
 
 router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
+    console.log('err', err);
     if (err) {
       return res.status(500).json({ message: 'Server error' });
     }

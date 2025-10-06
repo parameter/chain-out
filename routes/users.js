@@ -113,11 +113,23 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
 });
 
 
-router.post('/scorecard/invite-user', requireAuth, async (req, res) => {
+router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
-    const { courseId, layoutId, invitedUserId } = req.body;
-    if (!courseId || !invitedUserId) {
-      return res.status(400).json({ message: 'courseId and invitedUserId are required' });
+    const { courseId, layoutId, invitedUserIds } = req.body;
+
+    // Accept both a single string or an array for backward compatibility
+    let userIds = [];
+    if (Array.isArray(invitedUserIds)) {
+      userIds = invitedUserIds.filter(Boolean);
+    } else if (typeof invitedUserIds === 'string') {
+      userIds = [invitedUserIds];
+    } else if (req.body.invitedUserId) {
+      // fallback for old clients
+      userIds = [req.body.invitedUserId];
+    }
+
+    if (!courseId || !userIds.length) {
+      return res.status(400).json({ message: 'courseId and at least one invitedUserId are required' });
     }
 
     const db = getDatabase();
@@ -126,54 +138,60 @@ router.post('/scorecard/invite-user', requireAuth, async (req, res) => {
 
     let scorecard = await scorecardsCollection.findOne({ courseId });
 
+    // Prepare invite objects
+    const now = new Date();
+    const invites = userIds.map(uid => ({
+      invitedUserId: uid,
+      invitedBy: req.user._id,
+      status: 'pending',
+      date: now
+    }));
+
+    let scorecardId;
+    let created = false;
+
     if (!scorecard) {
-      
       const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
-      const layout = course?.layouts[layoutId] || null;
+      const layout = course?.layouts?.[layoutId] || null;
 
       const newScorecard = {
         courseId,
         layout,
         results: [],
-        invites: [
-          {
-            invitedUserId,
-            invitedBy: req.user._id,
-            status: 'pending',
-            date: new Date()
-          }
-        ],
-        createdAt: new Date(),
-        updatedAt: new Date()
+        invites,
+        createdAt: now,
+        updatedAt: now
       };
       const result = await scorecardsCollection.insertOne(newScorecard);
       scorecard = { ...newScorecard, _id: result.insertedId };
+      scorecardId = result.insertedId;
+      created = true;
     } else {
-      // Add new invite to the existing scorecard's invites array
-      const invite = {
-        invitedUserId,
-        invitedBy: req.user._id,
-        status: 'pending',
-        date: new Date()
-      };
-      await scorecardsCollection.updateOne(
-        { _id: scorecard._id },
-        {
-          $push: { invites: invite },
-          $set: { updatedAt: new Date() }
-        }
-      );
+      // Only add users who are not already invited
+      const alreadyInvitedIds = (scorecard.invites || []).map(inv => String(inv.invitedUserId));
+      const newInvites = invites.filter(invite => !alreadyInvitedIds.includes(String(invite.invitedUserId)));
+      if (newInvites.length > 0) {
+        await scorecardsCollection.updateOne(
+          { _id: scorecard._id },
+          {
+            $push: { invites: { $each: newInvites } },
+            $set: { updatedAt: now }
+          }
+        );
+      }
+      scorecardId = scorecard._id;
     }
 
     res.status(201).json({
-      message: 'User invited to scorecard',
-      scorecardId: result.insertedId,
+      message: userIds.length > 1 ? 'Users invited to scorecard' : 'User invited to scorecard',
+      scorecardId,
+      invitedUserIds: userIds,
       status: 'pending',
-      date: scorecard.date
+      date: now
     });
   } catch (e) {
-    console.error('Error inviting user to scorecard:', e);
-    res.status(500).json({ message: 'Failed to invite user to scorecard' });
+    console.error('Error inviting user(s) to scorecard:', e);
+    res.status(500).json({ message: 'Failed to invite user(s) to scorecard' });
   }
 });
 
