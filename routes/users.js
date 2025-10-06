@@ -248,6 +248,7 @@ router.post('/find-users', requireAuth, async (req, res) => {
   }
 
   if (!string) {
+    console.log('Search string is required');
     return res.status(400).json({ message: 'Search string is required' });
   }
 
@@ -256,13 +257,15 @@ router.post('/find-users', requireAuth, async (req, res) => {
 
   const regex = new RegExp(string, 'i');
   const users = await usersCollection.find({
-      $or: [
-        { username: { $regex: regex } },
-        { email: { $regex: regex } }
-      ]
-    })
-    .project({ password: 0 })
-    .toArray();
+    $or: [
+      { username: { $regex: regex } },
+      { email: { $regex: regex } }
+    ]
+  })
+  .project({ password: 0 })
+  .toArray();
+
+  console.log('users', users);
 
   res.json({ users });
 });
