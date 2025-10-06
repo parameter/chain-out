@@ -242,7 +242,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 router.post('/find-users', requireAuth, async (req, res) => {
   const { string } = req.body;
 
-  if (!string || typeof string !== 'string' || !string.trim()) {
+  if (!string) {
     return res.status(400).json({ message: 'Search string is required' });
   }
 
