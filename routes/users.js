@@ -112,6 +112,103 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/send-friend-request', requireAuth, async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    if (userId === String(req.user._id)) {
+      return res.status(400).json({ message: 'Cannot send friend request to yourself' });
+    }
+
+    const db = getDatabase();
+    const friendsCollection = db.collection('friends');
+
+    const now = new Date();
+
+    // Try to insert, but only if no existing pending/accepted request in either direction
+    const result = await friendsCollection.findOneAndUpdate(
+      {
+        $or: [
+          { from: req.user._id, to: userId },
+          { from: userId, to: req.user._id }
+        ],
+        status: { $in: ['pending', 'accepted'] }
+      },
+      { $setOnInsert: {
+          from: req.user._id,
+          to: userId,
+          status: 'pending',
+          createdAt: now,
+          updatedAt: now
+        }
+      },
+      { upsert: true, returnDocument: 'after' }
+    );
+
+    // If a document already existed, don't allow sending again
+    if (!result.lastErrorObject.upserted) {
+      return res.status(400).json({ message: 'Friend request already exists or you are already friends' });
+    }
+
+    res.json({ message: 'Friend request sent', status: 'pending' });
+
+  } catch (e) {
+    console.error('Error sending friend request:', e);
+    res.status(500).json({ message: 'Failed to send friend request' });
+  }
+});
+
+router.post('/say-fore', requireAuth, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    if (userId === String(req.user._id)) {
+      return res.status(400).json({ message: 'Cannot send a fore to yourself' });
+    }
+
+    const db = getDatabase();
+    const foresCollection = db.collection('fores');
+
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Check if a fore was sent from this user to the target user within the last week
+    // Try to insert only if no recent fore exists in one atomic operation
+    const foreDoc = {
+      from: req.user._id,
+      to: userId,
+      message: 'Fore!',
+      createdAt: now
+    };
+
+    const result = await foresCollection.findOneAndUpdate(
+      {
+        from: req.user._id,
+        to: userId,
+        createdAt: { $gte: oneWeekAgo }
+      },
+      { $setOnInsert: foreDoc },
+      { upsert: true, returnDocument: 'after' }
+    );
+
+    // If a document already existed, don't allow sending again
+    if (!result.lastErrorObject.upserted) {
+      return res.status(400).json({ message: 'You have already sent a fore to this user within the last week' });
+    }
+
+    res.status(201).json({ message: 'Fore sent', fore: foreDoc });
+  } catch (e) {
+    console.error('Error sending fore:', e);
+    res.status(500).json({ message: 'Failed to send fore' });
+  }
+});
 
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
@@ -122,7 +219,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     if (Array.isArray(invitedUserIds)) {
       userIds = invitedUserIds.filter(Boolean);
     } else if (typeof invitedUserIds === 'string') {
-      userIds = [invitedUserIds];
+      userIds = invitedUserIds;
     } else if (req.body.invitedUserId) {
       // fallback for old clients
       userIds = [req.body.invitedUserId];
@@ -149,6 +246,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     let scorecardId;
     let created = false;
+
+    console.log('courseId', courseId);
 
     if (!scorecard) {
       const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
