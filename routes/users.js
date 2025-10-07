@@ -214,7 +214,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds } = req.body;
 
-    // Accept both a single string or an array for backward compatibility
     let userIds = [];
     if (Array.isArray(invitedUserIds)) {
       userIds = invitedUserIds.filter(Boolean);
@@ -254,12 +253,14 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       const layout = course?.layouts?.[layoutId] || null;
 
       const newScorecard = {
+        creatorId: req.user._id,
         courseId,
         layout,
         results: [],
         invites,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        status: 'active'
       };
       const result = await scorecardsCollection.insertOne(newScorecard);
       scorecard = { ...newScorecard, _id: result.insertedId };
@@ -291,6 +292,26 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   } catch (e) {
     console.error('Error inviting user(s) to scorecard:', e);
     res.status(500).json({ message: 'Failed to invite user(s) to scorecard' });
+  }
+});
+
+router.get('/active-scorecards', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+
+    const scorecards = await scorecardsCollection.find({
+      status: 'active',
+      $or: [
+        { "invites.invitedUserId": req.user._id },
+        { creatorId: req.user._id }
+      ]
+    }).toArray();
+
+    res.status(200).json({ scorecards });
+  } catch (e) {
+    console.error('Error fetching active scorecards:', e);
+    res.status(500).json({ message: 'Failed to fetch active scorecards' });
   }
 });
 
