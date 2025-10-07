@@ -359,6 +359,31 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   }
 });
 
+router.get('/user', requireAuth, async (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) {
+    return res.status(400).json({ message: 'userID query parameter is required' });
+  }
+
+  try {
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { password: 0, created_at: 0, updated_at: 0 } }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ user });
+  } catch (e) {
+    console.error('Error fetching user:', e);
+    res.status(500).json({ message: 'Failed to fetch user' });
+  }
+});
+
 router.post('/find-users', requireAuth, async (req, res) => {
   const { string } = req.body;
 
