@@ -220,7 +220,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     } else if (typeof invitedUserIds === 'string') {
       userIds = invitedUserIds;
     } else if (req.body.invitedUserId) {
-      // fallback for old clients
       userIds = [req.body.invitedUserId];
     }
 
@@ -245,8 +244,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     let scorecardId;
     let created = false;
-
-    console.log('courseId', courseId);
 
     if (!scorecard) {
       const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
@@ -282,6 +279,18 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       scorecardId = scorecard._id;
     }
 
+    const new_notifications = userIds.map(uid => ({
+      forUser: uid,
+      fromUser: req.user._id,
+      type: 'scorecard-invite',
+      message: `${req.user.name} has invited you to a scorecard`,
+      status: 'unseen',
+      createdAt: now
+    }));
+
+    const localNotificationsCollection = db.collection('local-notifications');
+    await localNotificationsCollection.insertMany(new_notifications);
+
     res.status(201).json({
       message: userIds.length > 1 ? 'Users invited to scorecard' : 'User invited to scorecard',
       scorecardId,
@@ -289,6 +298,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       status: 'pending',
       date: now
     });
+    
   } catch (e) {
     console.error('Error inviting user(s) to scorecard:', e);
     res.status(500).json({ message: 'Failed to invite user(s) to scorecard' });
@@ -458,6 +468,19 @@ router.get('/get-course-by-id', requireAuth, async (req, res) => {
   }
 
   res.json({ course });
+});
+
+router.get('/local-notifications', requireAuth, async (req, res) => {
+  const db = getDatabase();
+  const localNotificationsCollection = db.collection('local-notifications');
+
+  const notification = await localNotificationsCollection.find({ forUser: req.user._id }).toArray();
+
+  if (!notification) {
+    return res.status(404).json({ message: 'Notification not found' });
+  }
+
+  res.json({ notification });
 });
 
 module.exports = router;
