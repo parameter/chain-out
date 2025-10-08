@@ -399,11 +399,6 @@ router.get('/user', requireAuth, async (req, res) => {
 router.post('/find-users', requireAuth, async (req, res) => {
   const { string } = req.body;
 
-  console.log('string', string);
-  if (string) {
-    console.log('string is not empty');
-  }
-
   if (!string) {
     console.log('Search string is required');
     return res.status(400).json({ message: 'Search string is required' });
