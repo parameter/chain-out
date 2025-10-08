@@ -214,6 +214,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds } = req.body;
 
+    console.log('invitedUserIds', invitedUserIds);
+
     let userIds = [];
     if (Array.isArray(invitedUserIds)) {
       userIds = invitedUserIds.filter(Boolean);
@@ -298,7 +300,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       status: 'pending',
       date: now
     });
-    
+
   } catch (e) {
     console.error('Error inviting user(s) to scorecard:', e);
     res.status(500).json({ message: 'Failed to invite user(s) to scorecard' });
