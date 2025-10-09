@@ -342,6 +342,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
 
+    console.log('req.body', req.body);
+
     // Validate required fields
     if (
       !scorecardId ||
@@ -381,7 +383,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const updateResult = await scorecardsCollection.updateOne(
       {
         _id: new ObjectId(scorecardId),
-        invites: { $elemMatch: { invitedUserId: req.user._id.toString() } }
+        $or: [
+          { invites: { $elemMatch: { invitedUserId: req.user._id.toString() } } },
+          { creatorId: req.user._id }
+        ]
       },
       { $push: { results: resultObj } }
     );
