@@ -471,7 +471,7 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
   const db = getDatabase();
   const localNotificationsCollection = db.collection('local-notifications');
 
-  const notifications = await localNotificationsCollection.find({ forUser: req.user._id }).toArray();
+  const notifications = await localNotificationsCollection.find({ forUser: req.user._id.toString() }).toArray();
 
   console.log('notifications', notifications);
   console.log('req.user._id', req.user._id);
