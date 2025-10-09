@@ -474,6 +474,7 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
   const notifications = await localNotificationsCollection.find({ forUser: req.user._id }).toArray();
 
   console.log('notifications', notifications);
+  console.log('req.user._id', req.user._id);
 
   if (!notifications) {
     return res.status(404).json({ message: 'notifications not found' });
