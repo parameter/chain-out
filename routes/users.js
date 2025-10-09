@@ -382,7 +382,7 @@ router.get('/user', requireAuth, async (req, res) => {
     const usersCollection = db.collection('users');
     const user = await usersCollection.findOne(
       { _id: new ObjectId(userId) },
-      { projection: { password: 0, created_at: 0, updated_at: 0 } }
+      { projection: { password: 0, created_at: 0, updated_at: 0, _id: 0 } }
     );
 
     if (!user) {
@@ -471,13 +471,15 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
   const db = getDatabase();
   const localNotificationsCollection = db.collection('local-notifications');
 
-  const notification = await localNotificationsCollection.find({ forUser: req.user._id }).toArray();
+  const notifications = await localNotificationsCollection.find({ forUser: req.user._id }).toArray();
 
-  if (!notification) {
-    return res.status(404).json({ message: 'Notification not found' });
+  console.log('notifications', notifications);
+
+  if (!notifications) {
+    return res.status(404).json({ message: 'notifications not found' });
   }
 
-  res.json({ notification });
+  res.json({ notifications });
 });
 
 module.exports = router;
