@@ -381,7 +381,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const updateResult = await scorecardsCollection.updateOne(
       {
         _id: new ObjectId(scorecardId),
-        "invites.invitedUserId": req.user._id
+        invites: { $elemMatch: { invitedUserId: req.user._id.toString() } }
       },
       { $push: { results: resultObj } }
     );
