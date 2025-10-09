@@ -386,6 +386,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       { $push: { results: resultObj } }
     );
 
+    console.log('updateResult', updateResult);
+
     if (updateResult.matchedCount === 0) {
       // Either scorecard not found or user not invited
       // Check which case it is for more specific error
