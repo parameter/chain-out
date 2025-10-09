@@ -364,11 +364,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       }
     }
 
-    // Only allow the authenticated user to add results for themselves
-    if (playerId !== String(req.user._id)) {
-      return res.status(403).json({ message: 'You can only add results for yourself' });
-    }
-
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
