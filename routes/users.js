@@ -329,6 +329,31 @@ router.get('/active-scorecards', requireAuth, async (req, res) => {
   }
 });
 
+
+router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
+  const { scorecardId } = req.query;
+  if (!scorecardId) {
+    return res.status(400).json({ message: 'scorecardId is required' });
+  }
+
+  const db = getDatabase();
+  const scorecardsCollection = db.collection('scorecards');
+  const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
+  res.status(200).json({ scorecard });
+
+  if (!scorecard) {
+    return res.status(404).json({ message: 'Scorecard not found' });
+  }
+
+  res.status(200).json({ scorecard });
+
+  if (!scorecard) {
+    return res.status(404).json({ message: 'Scorecard not found' });
+  }
+
+  res.status(200).json({ scorecard });
+});
+
 router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   try {
     const {
