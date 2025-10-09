@@ -288,7 +288,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       message: `${req.user.username} has invited you to a scorecard`,
       status: 'unseen',
       courseId,
-      layout,
+      layoutId,
       createdAt: now
     }));
 
