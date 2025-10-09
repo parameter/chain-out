@@ -329,19 +329,55 @@ router.get('/active-scorecards', requireAuth, async (req, res) => {
 
 router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   try {
-    const { scorecardId, hole, score } = req.body;
-    if (!scorecardId || typeof hole === 'undefined' || typeof score === 'undefined') {
-      return res.status(400).json({ message: 'scorecardId, hole, and score are required' });
+    const {
+      scorecardId,
+      playerId,
+      holeNumber,
+      score,
+      putt,
+      obCount,
+      specifics,
+      timestamp
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !scorecardId ||
+      typeof playerId !== 'string' ||
+      typeof holeNumber !== 'number' ||
+      typeof score !== 'number' ||
+      !['outside', 'inside', '-'].includes(putt) ||
+      typeof obCount !== 'number' ||
+      typeof specifics !== 'object' ||
+      specifics === null
+    ) {
+      return res.status(400).json({ message: 'Missing or invalid required fields' });
+    }
+
+    // Validate specifics fields
+    const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
+    for (const field of specificsFields) {
+      if (typeof specifics[field] !== 'boolean') {
+        return res.status(400).json({ message: `specifics.${field} must be a boolean` });
+      }
+    }
+
+    // Only allow the authenticated user to add results for themselves
+    if (playerId !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You can only add results for yourself' });
     }
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
     const resultObj = {
-      userId: req.user._id,
-      hole,
+      playerId,
+      holeNumber,
       score,
-      datetime: new Date()
+      putt,
+      obCount,
+      specifics,
+      timestamp: timestamp ? new Date(timestamp) : new Date()
     };
 
     // Combine the find and update in a single query using $elemMatch to check invite
