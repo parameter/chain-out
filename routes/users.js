@@ -308,6 +308,30 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
+  try {
+    const { scorecardId, answer } = req.body;
+    if (!scorecardId || !answer) {
+      return res.status(400).json({ message: 'scorecardId and answer are required' });
+    }
+
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+
+    const inviteStatus = answer === true ? 'accepted' : 'rejected';
+    await scorecardsCollection.updateOne(
+      { _id: new ObjectId(scorecardId), "invites.invitedUserId": req.user._id },
+      { $set: { "invites.$.status": inviteStatus } }
+    );
+
+    res.status(200).json({ scorecard });
+
+  } catch (e) {
+    console.error('Error fetching scorecard:', e);
+    res.status(500).json({ message: 'Failed to answer invite' });
+  }
+});
+
 router.get('/active-scorecards', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
