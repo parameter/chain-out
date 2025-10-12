@@ -214,8 +214,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds } = req.body;
 
-    console.log('invitedUserIds', invitedUserIds);
-
     let userIds = [];
     if (Array.isArray(invitedUserIds)) {
       userIds = invitedUserIds.filter(Boolean);
@@ -223,10 +221,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       userIds = invitedUserIds;
     } else if (req.body.invitedUserId) {
       userIds = [req.body.invitedUserId];
-    }
-
-    if (!courseId || !userIds.length) {
-      return res.status(400).json({ message: 'courseId and at least one invitedUserId are required' });
     }
 
     const db = getDatabase();
