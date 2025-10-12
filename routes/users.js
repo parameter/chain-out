@@ -323,7 +323,7 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
 
     const inviteStatus = answer === true ? 'accepted' : 'rejected';
     await scorecardsCollection.updateOne(
-      { _id: new ObjectId(scorecardId), "invites.invitedUserId": req.user._id },
+      { _id: new ObjectId(scorecardId), "invites.invitedUserId": req.user._id.toString() },
       { $set: { "invites.$.status": inviteStatus } }
     );
 
