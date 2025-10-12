@@ -311,12 +311,14 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
   try {
     const { scorecardId, notificationId, answer } = req.body;
-    if (!scorecardId || !answer) {
-      return res.status(400).json({ message: 'scorecardId and answer are required' });
-    }
 
     console.log('answer', answer);
     console.log('scorecardId', scorecardId);
+    console.log('notificationId', notificationId);
+
+    if (!scorecardId || !answer) {
+      return res.status(400).json({ message: 'scorecardId and answer are required' });
+    }
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
