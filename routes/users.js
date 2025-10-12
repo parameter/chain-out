@@ -245,10 +245,15 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       ]
     }).toArray();
 
+    const currentUserIsOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.creatorId === req.user._id.toString() || scorecard.invites.some((invite) => invite.invitedUserId === req.user._id.toString()));
+    const invitedUsersAreOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.invites.some((invite) => userIds.includes(invite.invitedUserId)));
+    
     if (activeScorecards.length > 0) {
       return res.status(201).json({
         message: 'Users already invited to scorecard',
-        scorecards: activeScorecards
+        scorecards: activeScorecards,
+        currentUserIsOnActiveScorecard: currentUserIsOnActiveScorecard,
+        invitedUsersAreOnActiveScorecard: invitedUsersAreOnActiveScorecard
       });
     }
 
