@@ -315,6 +315,9 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'scorecardId and answer are required' });
     }
 
+    console.log('answer', answer);
+    console.log('scorecardId', scorecardId);
+
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
