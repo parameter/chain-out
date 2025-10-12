@@ -432,6 +432,8 @@ router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
     participants,
   };
 
+  console.log('expandedScorecard', expandedScorecard);
+
   res.status(200).json({ scorecard: expandedScorecard });
 });
 
