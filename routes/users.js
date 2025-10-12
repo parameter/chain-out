@@ -233,6 +233,25 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     const scorecardsCollection = db.collection('scorecards');
     const coursesCollection = db.collection('courses');
 
+    const userIdsObj = userIds.map((uid) => new ObjectId(uid));
+
+    // Find any active scorecard where any user in userIds is not already invited from the database 
+    const activeScorecards = await scorecardsCollection.find({ 
+      courseId, 
+      status: "active", 
+      $or: [
+        { invites: { $elemMatch: { invitedUserId: { $in: userIdsObj } } } },
+        { creatorId: { $in: userIdsObj } }
+      ]
+    }).toArray();
+
+    if (activeScorecards.length > 0) {
+      return res.status(201).json({
+        message: 'Users already invited to scorecard',
+        scorecards: activeScorecards
+      });
+    }
+
     let scorecard = await scorecardsCollection.findOne({ courseId });
 
     // Prepare invite objects
