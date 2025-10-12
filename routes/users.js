@@ -324,7 +324,7 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
       { $set: { "invites.$.status": inviteStatus } }
     );
 
-    res.status(200).json({ scorecard });
+    res.status(200).json({ inviteStatus });
 
   } catch (e) {
     console.error('Error fetching scorecard:', e);
