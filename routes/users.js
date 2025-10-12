@@ -367,7 +367,6 @@ router.get('/active-scorecards', requireAuth, async (req, res) => {
   }
 });
 
-
 router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
   const { scorecardId } = req.query;
   if (!scorecardId) {
@@ -376,21 +375,66 @@ router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
 
   const db = getDatabase();
   const scorecardsCollection = db.collection('scorecards');
+  const usersCollection = db.collection('users');
+
   const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
-  res.status(200).json({ scorecard });
 
   if (!scorecard) {
     return res.status(404).json({ message: 'Scorecard not found' });
   }
 
-  res.status(200).json({ scorecard });
+  // Get invitedUserIds
+  const invitedIds = Array.isArray(scorecard.invites) && scorecard.invites.length > 0
+    ? scorecard.invites.map(i => i.invitedUserId)
+    : [];
 
-  if (!scorecard) {
-    return res.status(404).json({ message: 'Scorecard not found' });
+  // include the creator
+  const creatorId = scorecard.creatorId ? [scorecard.creatorId] : [];
+
+  // addedIds from added/players, if present (this restores addedIds variable)
+  let addedIds = [];
+  if (Array.isArray(scorecard.added)) {
+    addedIds = scorecard.added.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
+  } else if (Array.isArray(scorecard.players)) {
+    addedIds = scorecard.players.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
   }
 
-  res.status(200).json({ scorecard });
+  // Combine all user IDs, deduplicate
+  const allUserIds = Array.from(
+    new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
+  );
+
+  // Find these users in the users collection
+  const users =
+    allUserIds.length > 0
+      ? await usersCollection
+          .find({ _id: { $in: allUserIds.map(id => new ObjectId(id)) } })
+          .project({ _id: 1, name: 1, email: 1 }) // include any additional fields if needed
+          .toArray()
+      : [];
+
+  // Map _id string to user doc
+  const userMap = {};
+  users.forEach(u => (userMap[u._id.toString()] = u));
+
+  // Create a single "participants" array: invited users + added/players users + creator, with deduplication
+  const participants = allUserIds.map(userId => {
+    const userObj = userMap[userId];
+    if (userObj) {
+      return { _id: userObj._id, name: userObj.name, email: userObj.email };
+    }
+    return { _id: userId };
+  });
+
+  // Add the "participants" array to the returned scorecard, do NOT modify invites
+  const expandedScorecard = {
+    ...scorecard,
+    participants,
+  };
+
+  res.status(200).json({ scorecard: expandedScorecard });
 });
+
 
 router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   try {
