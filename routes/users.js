@@ -240,7 +240,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       courseId, 
       status: "active", 
       $or: [
-        { invites: { $elemMatch: { invitedUserId: { $in: userIdsObj } } } },
+        { invites: { $elemMatch: { invitedUserId: { $in: userIds } } } },
         { creatorId: { $in: userIdsObj } }
       ]
     }).toArray();
