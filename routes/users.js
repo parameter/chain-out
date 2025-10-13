@@ -8,6 +8,21 @@ const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
 const router = express.Router();
 
 
+
+const Pusher = require("pusher");
+
+const pusher = new Pusher({
+  appId: "2063152",
+  key: "2c85b86b4c0e381ed22e",
+  secret: "fc81d030a65e16481a02",
+  cluster: "eu",
+  useTLS: true
+});
+
+
+
+
+
 /*
 const Pusher = require('pusher');
 
@@ -247,20 +262,15 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     const currentUserIsOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.creatorId === req.user._id.toString() || scorecard.invites.some((invite) => invite.invitedUserId === req.user._id.toString()));
     const invitedUsersAreOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.invites.some((invite) => userIds.includes(invite.invitedUserId)));
     
-    console.log('currentUserIsOnActiveScorecard', currentUserIsOnActiveScorecard);
-    console.log('invitedUsersAreOnActiveScorecard', invitedUsersAreOnActiveScorecard);
-    console.log('userIds', userIds);
-    console.log('userIdsObj', userIdsObj);
     if (activeScorecards.length > 0) {
 
-      console.log('send it back');
-      
       return res.status(201).json({
         message: 'Users already invited to scorecard',
         scorecards: activeScorecards,
         currentUserIsOnActiveScorecard: currentUserIsOnActiveScorecard,
         invitedUsersAreOnActiveScorecard: invitedUsersAreOnActiveScorecard
       });
+
     }
 
     let scorecard = await scorecardsCollection.findOne({ courseId });
@@ -320,6 +330,14 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       scorecardId,
       createdAt: now
     }));
+
+    new_notifications.map((note) => {
+
+      pusher.trigger(note.forUser, "scorecard-invite", {
+        message: note.message
+      });
+
+    });
 
     const localNotificationsCollection = db.collection('local-notifications');
     await localNotificationsCollection.insertMany(new_notifications);
