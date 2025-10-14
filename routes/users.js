@@ -337,6 +337,10 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         message: note.message
       });
 
+      pusher.trigger(note.fromUser, "scorecard-invite", {
+        message: note.message
+      });
+
     });
 
     const localNotificationsCollection = db.collection('local-notifications');
