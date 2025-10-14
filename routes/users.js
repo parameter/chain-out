@@ -379,10 +379,6 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
   try {
     const { scorecardId, notificationId, answer } = req.body;
 
-    console.log('answer', answer);
-    console.log('scorecardId', scorecardId);
-    console.log('notificationId', notificationId);
-
     if (!scorecardId || typeof answer !== "boolean") {
       return res.status(400).json({ message: 'scorecardId and answer are required (answer must be true or false)' });
     }
@@ -396,8 +392,6 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
       { _id: new ObjectId(scorecardId), "invites.invitedUserId": req.user._id.toString() },
       { $set: { "invites.$.status": inviteStatus } }
     );
-
-    console.log('result', result);
 
     if (result.matchedCount) {
       await localNotificationsCollection.updateOne(
