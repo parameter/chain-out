@@ -383,8 +383,8 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
     console.log('scorecardId', scorecardId);
     console.log('notificationId', notificationId);
 
-    if (!scorecardId || !answer) {
-      return res.status(400).json({ message: 'scorecardId and answer are required' });
+    if (!scorecardId || typeof answer !== "boolean") {
+      return res.status(400).json({ message: 'scorecardId and answer are required (answer must be true or false)' });
     }
 
     const db = getDatabase();
@@ -677,8 +677,6 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
   const localNotificationsCollection = db.collection('local-notifications');
 
   const notifications = await localNotificationsCollection.find({ forUser: req.user._id.toString(), status: 'unseen' }).toArray();
-
-  console.log('notifications', notifications);
 
   if (!notifications) {
     return res.status(404).json({ message: 'notifications not found' });
