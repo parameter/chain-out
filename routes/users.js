@@ -259,6 +259,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     console.log('activeScorecards', activeScorecards.length);
 
+    /*
     const currentUserIsOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.creatorId === req.user._id.toString() || scorecard.invites.some((invite) => invite.invitedUserId === req.user._id.toString()));
     const invitedUsersAreOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.invites.some((invite) => userIds.includes(invite.invitedUserId)));
     
@@ -272,6 +273,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       });
 
     }
+    */
 
     let scorecard = await scorecardsCollection.findOne({ courseId });
 
