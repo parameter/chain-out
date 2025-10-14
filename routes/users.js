@@ -348,7 +348,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
       try {
 
-        pusher.trigger(note.fromUser, "scorecard-invite", {
+        pusher.trigger(note.fromUser.toString(), "scorecard-invite", {
           message: note.message
         });
 
