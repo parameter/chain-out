@@ -245,6 +245,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     const userIdsObj = userIds.map((uid) => new ObjectId(uid));
 
     // Find any active scorecard where any user in userIds is not already invited from the database 
+    /*
     userIdsObj.push(req.user._id);
     userIds.push(req.user._id.toString());
 
@@ -259,7 +260,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     console.log('activeScorecards', activeScorecards.length);
 
-    /*
+    
     const currentUserIsOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.creatorId === req.user._id.toString() || scorecard.invites.some((invite) => invite.invitedUserId === req.user._id.toString()));
     const invitedUsersAreOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.invites.some((invite) => userIds.includes(invite.invitedUserId)));
     
@@ -335,13 +336,25 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     new_notifications.map((note) => {
 
-      pusher.trigger(note.forUser, "scorecard-invite", {
-        message: note.message
-      });
+      try {
 
-      pusher.trigger(note.fromUser, "scorecard-invite", {
-        message: note.message
-      });
+        pusher.trigger(note.forUser, "scorecard-invite", {
+          message: note.message
+        });
+
+      } catch (e) {
+        console.error('Error sending pusher notification 1:', e);
+      }
+
+      try {
+
+        pusher.trigger(note.fromUser, "scorecard-invite", {
+          message: note.message
+        });
+
+      } catch (e) {
+        console.error('Error sending pusher notification 2:', e);
+      }
 
     });
 
