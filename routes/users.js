@@ -225,6 +225,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
   }
 });
 
+// should only create new scorecard if no active scorecard exists for the current user and course
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds } = req.body;
@@ -245,10 +246,10 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     const userIdsObj = userIds.map((uid) => new ObjectId(uid));
 
     // Find any active scorecard where any user in userIds is not already invited from the database 
-    /*
     userIdsObj.push(req.user._id);
     userIds.push(req.user._id.toString());
 
+    /*
     const activeScorecards = await scorecardsCollection.find({ 
       courseId, 
       status: "active", 
@@ -257,9 +258,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         { creatorId: { $in: userIdsObj } }
       ]
     }).toArray();
-
-    console.log('activeScorecards', activeScorecards.length);
-
     
     const currentUserIsOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.creatorId === req.user._id.toString() || scorecard.invites.some((invite) => invite.invitedUserId === req.user._id.toString()));
     const invitedUsersAreOnActiveScorecard = activeScorecards.some((scorecard) => scorecard.invites.some((invite) => userIds.includes(invite.invitedUserId)));
@@ -276,7 +274,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     }
     */
 
-    let scorecard = await scorecardsCollection.findOne({ courseId });
+    let scorecard = await scorecardsCollection.findOne({ courseId: courseId, creatorId: new ObjectId(req.user._id) });
 
     // Prepare invite objects
     const now = new Date();
@@ -308,7 +306,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       scorecard = { ...newScorecard, _id: result.insertedId };
       scorecardId = result.insertedId;
       created = true;
-    } else {
+      
+    } /* else {
       // Only add users who are not already invited
       const alreadyInvitedIds = (scorecard.invites || []).map(inv => String(inv.invitedUserId));
       const newInvites = invites.filter(invite => !alreadyInvitedIds.includes(String(invite.invitedUserId)));
@@ -322,7 +321,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         );
       }
       scorecardId = scorecard._id;
-    }
+    } */
 
     const new_notifications = userIds.map(uid => ({
       forUser: uid,
