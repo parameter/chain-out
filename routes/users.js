@@ -606,6 +606,8 @@ router.get('/scorecards', requireAuth, async (req, res) => {
       }
     ]).toArray();
 
+    console.log('scorecards', scorecards);
+
     res.status(200).json({ scorecards });
 
   } catch (e) {
