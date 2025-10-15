@@ -529,9 +529,11 @@ router.get('/scorecards', requireAuth, async (req, res) => {
         return { _id: userId };
       });
     });
+
+    console.log('scorecards', scorecards);
     
     res.status(200).json({ scorecards });
-    
+
   } catch (e) {
     console.error('Error fetching active scorecards:', e);
     res.status(500).json({ message: 'Failed to fetch active scorecards' });
