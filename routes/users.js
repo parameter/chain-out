@@ -416,13 +416,12 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/active-scorecards', requireAuth, async (req, res) => {
+router.get('/scorecards', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
     const scorecards = await scorecardsCollection.find({
-      status: 'active',
       $or: [
         { "invites.invitedUserId": req.user._id },
         { creatorId: req.user._id }
