@@ -465,29 +465,12 @@ router.get('/scorecards', requireAuth, async (req, res) => {
         creatorIds.push(scorecard.creatorId);
       }
 
-      // "added" (legacy format) or "players"
-      if (Array.isArray(scorecard.added)) {
-        addedIds.push(
-          ...scorecard.added
-            .map(a => typeof a === 'string' ? a : a.userId || a._id)
-            .filter(Boolean)
-        );
-      } else if (Array.isArray(scorecard.players)) {
-        addedIds.push(
-          ...scorecard.players
-            .map(a => typeof a === 'string' ? a : a.userId || a._id)
-            .filter(Boolean)
-        );
-      }
-    }
-
     // Remove duplicates just in case
     invitedIds = [...new Set(invitedIds.map(String))];
     creatorIds = [...new Set(creatorIds.map(String))];
-    addedIds = [...new Set(addedIds.map(String))];
 
     const allUserIds = Array.from(
-      new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
+      new Set([...invitedIds, ...creatorIds].map(String))
     );
 
     const users =
