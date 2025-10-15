@@ -230,6 +230,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds } = req.body;
 
+    console.log('courseId', courseId);
+
     let userIds = [];
     if (Array.isArray(invitedUserIds)) {
       userIds = invitedUserIds.filter(Boolean);
