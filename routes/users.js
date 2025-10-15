@@ -420,6 +420,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
+    const usersCollection = db.collection('users');
 
     // Aggregate to join course data via courseId
     const scorecards = await scorecardsCollection.aggregate([
