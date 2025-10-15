@@ -295,7 +295,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
       const newScorecard = {
         creatorId: req.user._id,
-        courseId,
+        courseId: new ObjectId(courseId),
         layout,
         results: [],
         invites,
