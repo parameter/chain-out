@@ -446,9 +446,92 @@ router.get('/scorecards', requireAuth, async (req, res) => {
       }
     ]).toArray();
 
-    console.log('scorecards', scorecards);
 
+    
+    
+    // Now, handle scorecards as an array
+    let invitedIds = [];
+    let creatorIds = [];
+    let addedIds = [];
+
+    for (const scorecard of scorecards) {
+      // invited users
+      if (Array.isArray(scorecard.invites) && scorecard.invites.length > 0) {
+        invitedIds.push(...scorecard.invites.map(i => i.invitedUserId));
+      }
+
+      // creator id
+      if (scorecard.creatorId) {
+        creatorIds.push(scorecard.creatorId);
+      }
+
+      // "added" (legacy format) or "players"
+      if (Array.isArray(scorecard.added)) {
+        addedIds.push(
+          ...scorecard.added
+            .map(a => typeof a === 'string' ? a : a.userId || a._id)
+            .filter(Boolean)
+        );
+      } else if (Array.isArray(scorecard.players)) {
+        addedIds.push(
+          ...scorecard.players
+            .map(a => typeof a === 'string' ? a : a.userId || a._id)
+            .filter(Boolean)
+        );
+      }
+    }
+
+    // Remove duplicates just in case
+    invitedIds = [...new Set(invitedIds.map(String))];
+    creatorIds = [...new Set(creatorIds.map(String))];
+    addedIds = [...new Set(addedIds.map(String))];
+
+    const allUserIds = Array.from(
+      new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
+    );
+
+    const users =
+      allUserIds.length > 0
+        ? await usersCollection
+            .find({ _id: { $in: allUserIds.map(id => new ObjectId(id)) } })
+            .project({ _id: 1, username: 1, email: 1 }) // include any additional fields if needed
+            .toArray()
+        : [];
+
+    const userMap = {};
+    users.forEach(u => (userMap[u._id.toString()] = u));
+
+    // Add participants to each scorecard
+    scorecards.forEach(scorecard => {
+      // Gather all unique user IDs for this scorecard
+      let invited = Array.isArray(scorecard.invites) && scorecard.invites.length > 0
+        ? scorecard.invites.map(i => i.invitedUserId)
+        : [];
+      let creator = scorecard.creatorId ? [scorecard.creatorId] : [];
+      let added = [];
+      if (Array.isArray(scorecard.added)) {
+        added = scorecard.added
+          .map(a => typeof a === 'string' ? a : a.userId || a._id)
+          .filter(Boolean);
+      } else if (Array.isArray(scorecard.players)) {
+        added = scorecard.players
+          .map(a => typeof a === 'string' ? a : a.userId || a._id)
+          .filter(Boolean);
+      }
+      const scorecardAllUserIds = Array.from(
+        new Set([...invited, ...added, ...creator].map(String))
+      );
+      scorecard.participants = scorecardAllUserIds.map(userId => {
+        const userObj = userMap[userId];
+        if (userObj) {
+          return { _id: userObj._id, username: userObj.username, email: userObj.email };
+        }
+        return { _id: userId };
+      });
+    });
+    
     res.status(200).json({ scorecards });
+    
   } catch (e) {
     console.error('Error fetching active scorecards:', e);
     res.status(500).json({ message: 'Failed to fetch active scorecards' });
