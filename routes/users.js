@@ -230,6 +230,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds } = req.body;
 
+    console.log('layoutId', layoutId);
+
     let userIds = [];
     if (Array.isArray(invitedUserIds)) {
       userIds = invitedUserIds.filter(Boolean);
@@ -290,6 +292,9 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     if (!scorecard) {
       const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+
+      console.log('course?.layouts', course?.layouts);
+      
       const layout = course?.layouts?.[layoutId] || null;
 
       const newScorecard = {
@@ -306,7 +311,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       scorecard = { ...newScorecard, _id: result.insertedId };
       scorecardId = result.insertedId;
       created = true;
-      
+
     } /* else {
       // Only add users who are not already invited
       const alreadyInvitedIds = (scorecard.invites || []).map(inv => String(inv.invitedUserId));
