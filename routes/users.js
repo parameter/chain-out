@@ -230,8 +230,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds } = req.body;
 
-    console.log('courseId', courseId);
-
     let userIds = [];
     if (Array.isArray(invitedUserIds)) {
       userIds = invitedUserIds.filter(Boolean);
@@ -276,7 +274,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     }
     */
 
-    let scorecard = await scorecardsCollection.findOne({ courseId: courseId, creatorId: new ObjectId(req.user._id) });
+    let scorecard = await scorecardsCollection.findOne({ courseId: new ObjectId(courseId), creatorId: new ObjectId(req.user._id) });
 
     // Prepare invite objects
     const now = new Date();
