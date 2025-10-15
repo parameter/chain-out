@@ -308,6 +308,14 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       scorecardId = result.insertedId;
       created = true;
 
+    } else {
+
+      return res.status(201).json({
+        message: 'Du har ett aktivt scorecard för denna bana',
+        result: 'active-scorecard-exists-for-course',
+        scorecard: scorecard
+      });
+
     } /* else {
       // Only add users who are not already invited
       const alreadyInvitedIds = (scorecard.invites || []).map(inv => String(inv.invitedUserId));
