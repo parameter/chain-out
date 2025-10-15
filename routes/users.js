@@ -452,7 +452,6 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     // Now, handle scorecards as an array
     let invitedIds = [];
     let creatorIds = [];
-    let addedIds = [];
 
     for (const scorecard of scorecards) {
       // invited users
@@ -464,6 +463,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
       if (scorecard.creatorId) {
         creatorIds.push(scorecard.creatorId);
       }
+    }
 
     // Remove duplicates just in case
     invitedIds = [...new Set(invitedIds.map(String))];
