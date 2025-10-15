@@ -420,9 +420,8 @@ router.get('/scorecards', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
-    const usersCollection = db.collection('users');
 
-    // Aggregate to join course data via courseId
+    // The aggregation computes the participants array and looks up user data in-line
     const scorecards = await scorecardsCollection.aggregate([
       {
         $match: {
@@ -444,78 +443,169 @@ router.get('/scorecards', requireAuth, async (req, res) => {
         $addFields: {
           course: { $arrayElemAt: ["$course", 0] }
         }
+      },
+      // Compute all possible participant IDs: invited, creator, 'added', 'players'
+      {
+        $addFields: {
+          invitedIds: {
+            $cond: [
+              { $and: [
+                  { $isArray: ["$invites"] },
+                  { $gt: [{ $size: "$invites" }, 0] }
+                ]
+              },
+              {
+                $map: {
+                  input: "$invites",
+                  as: "i",
+                  in: "$$i.invitedUserId"
+                }
+              },
+              []
+            ]
+          },
+          addedIds: {
+            $cond: [
+              { $and: [
+                { $isArray: ["$added"] },
+                { $gt: [{ $size: "$added" }, 0] }
+              ]},
+              {
+                $map: {
+                  input: "$added",
+                  as: "a",
+                  in: {
+                    $cond: [
+                      { $eq: [{ $type: "$$a" }, "string"] },
+                      "$$a",
+                      {
+                        $ifNull: ["$$a.userId", "$$a._id"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                $cond: [
+                  { $and: [
+                    { $isArray: ["$players"] },
+                    { $gt: [{ $size: "$players" }, 0] }
+                  ]},
+                  {
+                    $map: {
+                      input: "$players",
+                      as: "p",
+                      in: {
+                        $cond: [
+                          { $eq: [{ $type: "$$p" }, "string"] },
+                          "$$p",
+                          {
+                            $ifNull: ["$$p.userId", "$$p._id"]
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  []
+                ]
+              }
+            ]
+          },
+          creatorIdArr: {
+            $cond: [
+              { $ifNull: ["$creatorId", false] },
+              [{ $toString: "$creatorId" }],
+              []
+            ]
+          }
+        }
+      },
+      // Gather all unique user IDs for participants
+      {
+        $addFields: {
+          allUserIds: {
+            $setUnion: [
+              { $map: { input: "$invitedIds", as: "i", in: { $toString: "$$i" } } },
+              { $map: { input: "$addedIds", as: "a", in: { $toString: "$$a" } } },
+              { $map: { input: "$creatorIdArr", as: "c", in: { $toString: "$$c" } } }
+            ]
+          }
+        }
+      },
+      // Lookup allUserIds in users collection, get object array "allUsers"
+      {
+        $lookup: {
+          from: "users",
+          let: { ids: "$allUserIds" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: [{ $toString: "$_id" }, "$$ids"] }
+              }
+            },
+            {
+              $project: {
+                _id: 1,
+                username: 1,
+                email: 1
+              }
+            }
+          ],
+          as: "allUsers"
+        }
+      },
+      // Build the participants array with user fields or with just the _id if not found
+      {
+        $addFields: {
+          participants: {
+            $map: {
+              input: "$allUserIds",
+              as: "uid",
+              in: {
+                $let: {
+                  vars: {
+                    user: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$allUsers",
+                            as: "u",
+                            cond: { $eq: [{ $toString: "$$u._id" }, "$$uid"] }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  in: {
+                    $cond: [
+                      { $ifNull: ["$$user", false] },
+                      {
+                        _id: "$$user._id",
+                        username: "$$user.username",
+                        email: "$$user.email"
+                      },
+                      { _id: "$$uid" }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      // Clean up: optionally suppress temp fields if you wish
+      {
+        $project: {
+          invitedIds: 0,
+          addedIds: 0,
+          creatorIdArr: 0,
+          allUserIds: 0,
+          allUsers: 0
+        }
       }
     ]).toArray();
 
-
-    
-    
-    // Now, handle scorecards as an array
-    let invitedIds = [];
-    let creatorIds = [];
-
-    for (const scorecard of scorecards) {
-      // invited users
-      if (Array.isArray(scorecard.invites) && scorecard.invites.length > 0) {
-        invitedIds.push(...scorecard.invites.map(i => i.invitedUserId));
-      }
-
-      // creator id
-      if (scorecard.creatorId) {
-        creatorIds.push(scorecard.creatorId);
-      }
-    }
-
-    // Remove duplicates just in case
-    invitedIds = [...new Set(invitedIds.map(String))];
-    creatorIds = [...new Set(creatorIds.map(String))];
-
-    const allUserIds = Array.from(
-      new Set([...invitedIds, ...creatorIds].map(String))
-    );
-
-    const users =
-      allUserIds.length > 0
-        ? await usersCollection
-            .find({ _id: { $in: allUserIds.map(id => new ObjectId(id)) } })
-            .project({ _id: 1, username: 1, email: 1 }) // include any additional fields if needed
-            .toArray()
-        : [];
-
-    const userMap = {};
-    users.forEach(u => (userMap[u._id.toString()] = u));
-
-    // Add participants to each scorecard
-    scorecards.forEach(scorecard => {
-      // Gather all unique user IDs for this scorecard
-      let invited = Array.isArray(scorecard.invites) && scorecard.invites.length > 0
-        ? scorecard.invites.map(i => i.invitedUserId)
-        : [];
-      let creator = scorecard.creatorId ? [scorecard.creatorId] : [];
-      let added = [];
-      if (Array.isArray(scorecard.added)) {
-        added = scorecard.added
-          .map(a => typeof a === 'string' ? a : a.userId || a._id)
-          .filter(Boolean);
-      } else if (Array.isArray(scorecard.players)) {
-        added = scorecard.players
-          .map(a => typeof a === 'string' ? a : a.userId || a._id)
-          .filter(Boolean);
-      }
-      const scorecardAllUserIds = Array.from(
-        new Set([...invited, ...added, ...creator].map(String))
-      );
-      scorecard.participants = scorecardAllUserIds.map(userId => {
-        const userObj = userMap[userId];
-        if (userObj) {
-          return { _id: userObj._id, username: userObj.username, email: userObj.email };
-        }
-        return { _id: userId };
-      });
-    });
-
-    console.log('scorecards', scorecards);
-    
     res.status(200).json({ scorecards });
 
   } catch (e) {
@@ -523,6 +613,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch active scorecards' });
   }
 });
+
 
 router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
   const { scorecardId } = req.query;
