@@ -421,12 +421,30 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
-    const scorecards = await scorecardsCollection.find({
-      $or: [
-        { "invites.invitedUserId": req.user._id },
-        { creatorId: req.user._id }
-      ]
-    }).toArray();
+    // Aggregate to join course data via courseId
+    const scorecards = await scorecardsCollection.aggregate([
+      {
+        $match: {
+          $or: [
+            { "invites.invitedUserId": req.user._id },
+            { creatorId: req.user._id }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'courseId',
+          foreignField: '_id',
+          as: 'course'
+        }
+      },
+      {
+        $addFields: {
+          course: { $arrayElemAt: ["$course", 0] }
+        }
+      }
+    ]).toArray();
 
     res.status(200).json({ scorecards });
   } catch (e) {
