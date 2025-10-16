@@ -401,11 +401,14 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
       { $set: { "invites.$.status": inviteStatus } }
     );
 
+    console.log('result', result);
+
     if (result.matchedCount) {
-      await localNotificationsCollection.updateOne(
+      const updateResult = await localNotificationsCollection.updateOne(
         { _id: new ObjectId(notificationId) },
         { $set: { status: 'seen' } }
       );
+      console.log('updateResult', updateResult);
     }
 
     res.status(200).json({ inviteStatus });
