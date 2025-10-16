@@ -354,6 +354,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         console.error('Error sending pusher notification 1:', e);
       }
 
+      /*
       try {
 
         pusher.trigger(note.fromUser.toString(), "scorecard-invite", {
@@ -362,7 +363,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
       } catch (e) {
         console.error('Error sending pusher notification 2:', e);
-      }
+      } */
 
     });
 
@@ -403,7 +404,7 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
 
     console.log('result', result);
 
-    if (result.matchedCount) {
+    if (result.modifiedCount) {
       const updateResult = await localNotificationsCollection.updateOne(
         { _id: new ObjectId(notificationId) },
         { $set: { status: 'seen' } }
