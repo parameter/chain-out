@@ -448,6 +448,17 @@ router.get('/scorecards', requireAuth, async (req, res) => {
           course: { $arrayElemAt: ["$course", 0] }
         }
       },
+      // Project only certain fields from course
+      {
+        $addFields: {
+          course: {
+            _id: "$course._id",
+            name: "$course.name",
+            address: "$course.address",
+            location: "$course.location"
+          }
+        }
+      },
       // Compute all possible participant IDs: invited, creator, 'added', 'players'
       {
         $addFields: {
@@ -619,7 +630,6 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch active scorecards' });
   }
 });
-
 
 router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
   const { scorecardId } = req.query;
