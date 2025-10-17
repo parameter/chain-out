@@ -275,6 +275,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     */
 
     let scorecard = await scorecardsCollection.findOne({ courseId: new ObjectId(courseId), creatorId: new ObjectId(req.user._id) });
+    const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
 
     // Prepare invite objects
     const now = new Date();
@@ -289,8 +290,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     let created = false;
 
     if (!scorecard) {
-      const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
-
       const layout = course?.layouts?.find(l => l.id === layoutId) || null;
 
       const newScorecard = {
@@ -349,7 +348,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         pusher.trigger(note.forUser, "scorecard-invite", {
           message: note.message,
           scorecardId: scorecardId,
-          courseName: course?.name || scorecard.course.name
+          courseName: course.name
         });
 
       } catch (e) {
@@ -361,7 +360,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         pusher.trigger(note.fromUser.toString(), "scorecard-invite", {
           message: note.message,
           scorecardId: scorecardId,
-          courseName: course?.name || scorecard.course.name
+          courseName: course.name
         });
 
       } catch (e) {
