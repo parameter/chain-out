@@ -756,7 +756,33 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
     console.log('updatedResult', updatedResult);
 
-    if (updatedResult.value) {
+    // Check if all holes for all players have a result saved in updatedResult
+    let allResultsEntered = false;
+    if (
+      updatedResult &&
+      updatedResult.layout &&
+      updatedResult.layout.latestVersion &&
+      Array.isArray(updatedResult.layout.latestVersion.holes) &&
+      Array.isArray(updatedResult.results)
+    ) {
+      const holes = updatedResult.layout.latestVersion.holes;
+      // Get unique playerIds for this scorecard (from result objects)
+      const playerIds = Array.from(
+        new Set(updatedResult.results.map(r => r.playerId))
+      );
+      // For every player, check if they have a result for every hole number
+      allResultsEntered = playerIds.every(playerId => {
+        return holes.every(hole =>
+          updatedResult.results.some(
+            r => r.playerId === playerId && r.holeNumber === hole.holeNumber
+          )
+        );
+      });
+    }
+
+    console.log('allResultsEntered', allResultsEntered);
+
+    if (updatedResult) {
       // Either scorecard not found or user not invited
       // Check which case it is for more specific error
       const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
