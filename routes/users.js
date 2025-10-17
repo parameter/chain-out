@@ -349,7 +349,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         pusher.trigger(note.forUser, "scorecard-invite", {
           message: note.message,
           scorecardId: scorecardId,
-          courseName: course.name || scorecard.course.name
+          courseName: course?.name || scorecard.course.name
         });
 
       } catch (e) {
@@ -361,7 +361,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         pusher.trigger(note.fromUser.toString(), "scorecard-invite", {
           message: note.message,
           scorecardId: scorecardId,
-          courseName: course.name || scorecard.course.name
+          courseName: course?.name || scorecard.course.name
         });
 
       } catch (e) {
