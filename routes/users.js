@@ -770,18 +770,19 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       const playerIds = Array.from(
         new Set(updatedResult.results.map(r => r.playerId))
       );
+      console.log('playerIds', playerIds);
       // For every player, check if they have a result for every hole number
       allResultsEntered = playerIds.every(playerId => {
         return holes.every(hole =>
           updatedResult.results.some(
-            r => r.playerId === playerId && r.holeNumber === hole.holeNumber
+            r => r.playerId === playerId && r.holeNumber === hole.number
           )
         );
       });
     }
 
     console.log('allResultsEntered', allResultsEntered);
-
+ 
     if (updatedResult) {
       // Either scorecard not found or user not invited
       // Check which case it is for more specific error
