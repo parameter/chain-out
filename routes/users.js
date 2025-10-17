@@ -780,20 +780,18 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         );
       });
     }
-
-    console.log('allResultsEntered', allResultsEntered);
  
-    if (updatedResult) {
+    if (!updatedResult) {
       // Either scorecard not found or user not invited
       // Check which case it is for more specific error
       const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
       if (!scorecard) {
         return res.status(404).json({ message: 'Scorecard not found' });
       }
-      return res.status(403).json({ message: 'You are not invited to this scorecard' });
+      return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
-    res.status(201).json({ message: 'Result added to scorecard', result: resultObj });
+    res.status(201).json({ message: 'Result added to scorecard', result: resultObj, roundComplete: allResultsEntered });
 
   } catch (e) {
     console.error('Error adding result to scorecard:', e);
