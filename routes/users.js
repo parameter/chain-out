@@ -706,8 +706,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
 
-    console.log('req.body', req.body);
-
     // Validate required fields
     if (
       !scorecardId ||
@@ -744,7 +742,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     };
 
     // Combine the find and update in a single query using $elemMatch to check invite
-    const updateResult = await scorecardsCollection.updateOne(
+    const updatedResult = await scorecardsCollection.findOneAndUpdate(
       {
         _id: new ObjectId(scorecardId),
         $or: [
@@ -752,12 +750,13 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
           { creatorId: req.user._id }
         ]
       },
-      { $push: { results: resultObj } }
+      { $push: { results: resultObj } },
+      { returnDocument: 'after' }
     );
 
-    console.log('updateResult', updateResult);
+    console.log('updatedResult', updatedResult);
 
-    if (updateResult.matchedCount === 0) {
+    if (updatedResult.value) {
       // Either scorecard not found or user not invited
       // Check which case it is for more specific error
       const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
