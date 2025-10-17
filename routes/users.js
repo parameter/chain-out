@@ -799,6 +799,30 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
+  try {
+    const { scorecardId } = req.body;
+
+    if (!scorecardId) {
+      return res.status(400).json({ message: 'scorecardId is required' });
+    }
+    
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+
+    const updatedResult = await scorecardsCollection.findOneAndUpdate(
+      { _id: new ObjectId(scorecardId) },
+      { $set: { status: 'completed' } },
+      { returnDocument: 'after' }
+    );
+
+    res.status(200).json({ message: 'Round completed', scorecard: updatedResult });
+  } catch (e) {
+    console.error('Error completing round:', e);
+    res.status(500).json({ message: 'Failed to complete round' });
+  }
+});
+
 router.get('/user', requireAuth, async (req, res) => {
   const userId = req.query.userId;
   if (!userId) {
