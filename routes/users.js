@@ -819,6 +819,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       { returnDocument: 'after' }
     );
 
+    console.log('updatedResult', updatedResult);
+
     if (updatedResult) {
       
       searchForEarnedBadges(updatedResult);
