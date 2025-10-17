@@ -4,6 +4,7 @@ const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
+const searchForEarnedBadges = require('../lib/badges');
 
 const router = express.Router();
 
@@ -780,6 +781,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         );
       });
     }
+
+    console.log('allResultsEntered', allResultsEntered);
  
     if (!updatedResult) {
       // Either scorecard not found or user not invited
@@ -815,6 +818,12 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       { $set: { status: 'completed' } },
       { returnDocument: 'after' }
     );
+
+    if (updatedResult) {
+      
+      searchForEarnedBadges(updatedResult);
+
+    }
 
     res.status(200).json({ message: 'Round completed', scorecard: updatedResult });
   } catch (e) {
