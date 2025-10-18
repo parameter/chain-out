@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
 const { initializePassport } = require('./config/passport');
 const { initializeDatabase } = require('./config/database');
 
@@ -58,6 +59,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/admin', adminRoutes);
 
 // Health
 app.get('/api/health', (req, res) => {
