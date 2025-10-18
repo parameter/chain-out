@@ -18,11 +18,15 @@ async function readBadgesFromDatabase() {
         
         // Get the single document containing all badges
         const result = await badgesCollection.findOne({ type: 'badges' });
-
-				console.log('result', result);
         
         if (result && result.badges) {
-            return result.badges;
+            // Ensure all badges have _id
+            const badgesWithIds = ensureBadgeIds(result.badges);
+            // Save back to database if any badges were missing _id
+            if (badgesWithIds !== result.badges) {
+                await writeBadgesToDatabase(badgesWithIds);
+            }
+            return badgesWithIds;
         }
         
         // If no badges found, try to load from JSON file and initialize
@@ -30,9 +34,12 @@ async function readBadgesFromDatabase() {
             const data = await fs.readFile(BADGES_FILE_PATH, 'utf8');
             const badges = JSON.parse(data);
             
+            // Ensure all badges have _id
+            const badgesWithIds = ensureBadgeIds(badges);
+            
             // Save to database for future use
-            await writeBadgesToDatabase(badges);
-            return badges;
+            await writeBadgesToDatabase(badgesWithIds);
+            return badgesWithIds;
         } catch (fileError) {
             console.log('No badges file found, starting with empty array');
             return [];
@@ -60,6 +67,21 @@ async function writeBadgesToDatabase(badges) {
         console.error('Error writing badges to database:', error);
         return false;
     }
+}
+
+// Helper function to generate unique ID
+function generateUniqueId() {
+    return 'badge_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Helper function to ensure all badges have _id
+function ensureBadgeIds(badges) {
+    return badges.map(badge => {
+        if (!badge._id) {
+            badge._id = generateUniqueId();
+        }
+        return badge;
+    });
 }
 
 // Serve the admin JavaScript file with correct MIME type
@@ -687,16 +709,16 @@ router.post('/api/badges/save', async (req, res) => {
          // Add new badge
          existingBadges.push(badge);
       } else if (action === 'update') {
-         // Update existing badge
-         const index = existingBadges.findIndex(b => b.id === badge.id);
+         // Update existing badge using _id for matching
+         const index = existingBadges.findIndex(b => b._id === badge._id);
          if (index !== -1) {
             existingBadges[index] = badge;
          } else {
             return res.status(404).json({ error: 'Badge not found' });
          }
       } else if (action === 'delete') {
-         // Remove badge
-         const filteredBadges = existingBadges.filter(b => b.id !== badge.id);
+         // Remove badge using _id for matching
+         const filteredBadges = existingBadges.filter(b => b._id !== badge._id);
          const success = await writeBadgesToDatabase(filteredBadges);
          
          if (success) {

@@ -484,6 +484,9 @@ function populateBadgeForm(badge) {
     document.getElementById('badgeQuote').value = badge.quote || '';
     document.getElementById('badgeDescription').value = badge.description || '';
     
+    // Store the _id for later use
+    document.getElementById('badgeEditModal').dataset.badgeId = badge._id || '';
+    
     // Badge properties
     document.getElementById('badgeTier').value = badge.tier || 'bronze';
     document.getElementById('badgeDifficulty').value = badge.difficulty || 'easy';
@@ -622,6 +625,15 @@ function collectBadgeFormData() {
         points: parseInt(document.getElementById('badgePoints').value) || 0,
         isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false
     };
+    
+    // Use existing _id if editing, or generate new one for new badges
+    const modal = document.getElementById('badgeEditModal');
+    const existingId = modal.dataset.badgeId;
+    if (existingId) {
+        badge._id = existingId;
+    } else if (!badge._id) {
+        badge._id = 'badge_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
     
     // Add tier information if not unique
     if (!badge.isUnique) {
