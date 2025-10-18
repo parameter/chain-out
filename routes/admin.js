@@ -18,6 +18,8 @@ async function readBadgesFromDatabase() {
         
         // Get the single document containing all badges
         const result = await badgesCollection.findOne({ type: 'badges' });
+
+				console.log('result', result);
         
         if (result && result.badges) {
             return result.badges;
