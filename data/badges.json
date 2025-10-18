@@ -1,0 +1,85 @@
+[
+  {
+    "id": "birdie_hunter",
+    "name": "Birdie Hunter",
+    "quote": "You're a true predator of the fairway, hunting down birdies with skill and precision.",
+    "icon": "birdiehunter",
+    "isUnique": false,
+    "type": "allRounds",
+    "tier": "bronze",
+    "tierNames": [
+      "Birdie Hunter",
+      "Birdie Pioneer",
+      "Birdie Master",
+      "Birdie Legend",
+      "Birdie Trailblazer",
+      "Birdie Conqueror",
+      "Birdie Champion",
+      "Birdie Grandmaster"
+    ],
+    "tierThresholds": [5, 50, 100, 500, 1000, 2000, 5000, 10000],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "tierDescriptionPrefix": "Make",
+    "tierDescriptionSuffix": "birdies",
+    "difficulty": [
+      "easy",
+      "easy",
+      "easy",
+      "medium",
+      "medium",
+      "hard",
+      "hard",
+      "extreme"
+    ],
+    "animation": "pulse",
+    "condition": "(results, layout) => {\n  const birdies = results.filter((r) => {\n    const hole = layout.holes.find((h) => h.number === r.holeNumber);\n    return hole && r.score === hole.par - 1;\n  }).length;\n  return birdies;\n}"
+  },
+  {
+    "id": "eagle_man",
+    "name": "Eagle Man",
+    "quote": "You just caught a really rare bird man, be proud of yourself!",
+    "description": "Score your first eagle",
+    "icon": "eagle-man",
+    "isUnique": true,
+    "type": "lastRound",
+    "unlockCondition": 1,
+    "tier": "diamond",
+    "difficulty": "hard",
+    "points": 500,
+    "animation": "glow",
+    "condition": "(results, layout) => {\n  return results.some((r) => {\n    const hole = layout.holes.find((h) => h.number === r.holeNumber);\n    return hole && r.score !== 1 && r.score === hole.par - 2;\n  });\n}"
+  },
+  {
+    "id": "basket_marksman",
+    "name": "Basket Marksman",
+    "quote": "You just found the holy grale of disc golf, now that's something to tell the kids about.",
+    "icon": "basket-marksman",
+    "isUnique": false,
+    "type": "allRounds",
+    "tierNames": [
+      "Ace Hunter",
+      "Ace Pioneer",
+      "Ace Master",
+      "Ace Legend",
+      "Ace Trailblazer",
+      "Ace Conqueror",
+      "Ace Champion",
+      "Ace Grandmaster"
+    ],
+    "tierThresholds": [1, 5, 10, 25, 50, 75, 100, 200],
+    "tierPoints": [25, 50, 100, 250, 500, 750, 1000, 1250],
+    "difficulty": [
+      "easy",
+      "medium",
+      "medium",
+      "medium",
+      "hard",
+      "hard",
+      "extreme",
+      "extreme"
+    ],
+    "tier": "cosmic",
+    "animation": "glow",
+    "condition": "(results) => {\n  return results.some((r) => r.score === 1 && r.isAce === true);\n}"
+  }
+]

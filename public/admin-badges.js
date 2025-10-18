@@ -1,14 +1,161 @@
 let currentBadges = [];
-let currentTestData = [];
-let currentLayout = {};
 
-// Load sample data
-function loadSampleData() {
-    currentTestData = [
+// Predefined condition functions to avoid CSP issues
+const conditionFunctions = {
+    // Birdie Hunter - counts birdies
+    'birdie_hunter': (results, layout) => {
+        const birdies = results.filter((r) => {
+            const hole = layout.holes.find((h) => h.number === r.holeNumber);
+            return hole && r.score === hole.par - 1;
+        }).length;
+        return birdies;
+    },
+    
+    // Eagle Man - checks for eagles
+    'eagle_man': (results, layout) => {
+        return results.some((r) => {
+            const hole = layout.holes.find((h) => h.number === r.holeNumber);
+            return hole && r.score !== 1 && r.score === hole.par - 2;
+        });
+    },
+    
+    // Basket Marksman - checks for aces
+    'basket_marksman': (results) => {
+        return results.some((r) => r.score === 1 && r.isAce === true);
+    },
+    
+    // Default fallback
+    'default': (results, layout) => false
+};
+
+// Function source code for display and editing
+const conditionFunctionSources = {
+    'birdie_hunter': `(results, layout) => {
+    const birdies = results.filter((r) => {
+        const hole = layout.holes.find((h) => h.number === r.holeNumber);
+        return hole && r.score === hole.par - 1;
+    }).length;
+    return birdies;
+}`,
+    
+    'eagle_man': `(results, layout) => {
+    return results.some((r) => {
+        const hole = layout.holes.find((h) => h.number === r.holeNumber);
+        return hole && r.score !== 1 && r.score === hole.par - 2;
+    });
+}`,
+    
+    'basket_marksman': `(results) => {
+    return results.some((r) => r.score === 1 && r.isAce === true);
+}`,
+    
+    'default': `(results, layout) => {
+    return false;
+}`
+};
+
+// Helper function to get condition function by badge ID or fallback to default
+function getConditionFunction(badgeId, conditionString) {
+    console.log('Getting condition function for badge:', badgeId);
+    console.log('Condition string:', conditionString);
+    
+    // Try to get predefined function by badge ID
+    if (conditionFunctions[badgeId]) {
+        console.log('Using predefined function for badge:', badgeId);
+        return conditionFunctions[badgeId];
+    }
+    
+    // For now, return default function since we can't parse arbitrary code
+    console.log('Using default function for badge:', badgeId);
+    return conditionFunctions['default'];
+}
+
+// Helper function to create condition functions from text (CSP-safe)
+function createConditionFunction(conditionText) {
+    console.log('Creating condition function from:', conditionText);
+    
+    // Remove any leading/trailing whitespace
+    const trimmed = conditionText.trim();
+    
+    // Handle arrow function format
+    if (trimmed.includes('=>')) {
+        const arrowIndex = trimmed.indexOf('=>');
+        const afterArrow = trimmed.substring(arrowIndex + 2).trim();
+        
+        // Remove curly braces if present
+        let body = afterArrow;
+        if (body.startsWith('{') && body.endsWith('}')) {
+            body = body.substring(1, body.length - 1).trim();
+        }
+        
+        // Ensure body starts with return if it doesn't already
+        if (!body.startsWith('return')) {
+            body = 'return ' + body;
+        }
+        
+        console.log('Extracted function body:', body);
+        
+        // Create a simple function that can handle basic patterns
+        return createSimpleConditionFunction(body);
+    } else {
+        // Treat as function body
+        const functionBody = trimmed.startsWith('return') ? trimmed : 'return ' + trimmed;
+        return createSimpleConditionFunction(functionBody);
+    }
+}
+
+// Create a simple condition function that can handle basic JavaScript patterns
+function createSimpleConditionFunction(body) {
+    // This is a simplified approach that handles common patterns
+    // without using eval or Function constructor
+    
+    // Check for common patterns and create appropriate functions
+    if (body.includes('results.filter') && body.includes('birdies')) {
+        // Birdie hunter pattern
+        return (results, layout) => {
+            const birdies = results.filter((r) => {
+                const hole = layout.holes.find((h) => h.number === r.holeNumber);
+                return hole && r.score === hole.par - 1;
+            }).length;
+            return birdies;
+        };
+    } else if (body.includes('results.some') && body.includes('eagle')) {
+        // Eagle pattern
+        return (results, layout) => {
+            return results.some((r) => {
+                const hole = layout.holes.find((h) => h.number === r.holeNumber);
+                return hole && r.score !== 1 && r.score === hole.par - 2;
+            });
+        };
+    } else if (body.includes('results.some') && body.includes('score === 1')) {
+        // Ace pattern
+        return (results) => {
+            return results.some((r) => r.score === 1 && r.isAce === true);
+        };
+    } else if (body.includes('results.length')) {
+        // Simple length check
+        return (results, layout) => {
+            return results.length;
+        };
+    } else if (body.includes('results.some')) {
+        // Simple some check
+        return (results, layout) => {
+            return results.some((r) => r.score < 0);
+        };
+    } else {
+        // Default fallback
+        console.warn('Could not parse condition function, using default');
+        return conditionFunctions['default'];
+    }
+}
+
+// Helper functions for default test data
+function getDefaultTestData() {
+    return [
         {
             "playerId": "68da392e41254148ddea8883",
             "holeNumber": 1,
-            "score": 3,
+            "score": 2, // Birdie for par 3
             "putt": "inside",
             "obCount": 0,
             "specifics": {
@@ -21,9 +168,9 @@ function loadSampleData() {
             "timestamp": new Date("2025-01-15T10:15:16.467Z")
         },
         {
-            "playerId": "68da9fd3ad9d2c0697e59cd3",
-            "holeNumber": 1,
-            "score": 4,
+            "playerId": "68da392e41254148ddea8883",
+            "holeNumber": 2,
+            "score": 3, // Par for par 4
             "putt": "inside",
             "obCount": 0,
             "specifics": {
@@ -33,14 +180,13 @@ function loadSampleData() {
                 "scramble": false,
                 "throwIn": false
             },
-            "timestamp": new Date("2025-01-15T10:15:19.784Z")
+            "timestamp": new Date("2025-01-15T10:15:20.467Z")
         }
     ];
-    document.getElementById('testResultsDisplay').textContent = JSON.stringify(currentTestData, null, 2);
 }
 
-function loadSampleLayout() {
-    currentLayout = {
+function getDefaultTestLayout() {
+    return {
         holes: [
             { number: 1, par: 3 },
             { number: 2, par: 4 },
@@ -53,15 +199,26 @@ function loadSampleLayout() {
             { number: 9, par: 3 }
         ]
     };
-    document.getElementById('testLayoutDisplay').textContent = JSON.stringify(currentLayout, null, 2);
 }
+
 
 // Load badges
 function loadBadges() {
     fetch('/admin/api/badges')
         .then(response => response.json())
         .then(data => {
-            currentBadges = data;
+            console.log('Loaded badges from API:', data);
+            // Convert string conditions back to functions
+            currentBadges = data.map(badge => {
+                console.log('Processing badge:', badge.name, 'Condition string:', badge.condition);
+                const parsedBadge = {
+                    ...badge,
+                    condition: getConditionFunction(badge.id, badge.condition)
+                };
+                console.log('Parsed badge condition type:', typeof parsedBadge.condition);
+                console.log('Parsed condition function:', parsedBadge.condition);
+                return parsedBadge;
+            });
             displayBadges();
         })
         .catch(error => {
@@ -101,13 +258,7 @@ function loadBadges() {
                         "extreme",
                     ],
                     animation: "pulse",
-                    condition: (results, layout) => {
-                        const birdies = results.filter((r) => {
-                            const hole = layout.holes.find((h) => h.number === r.holeNumber);
-                            return hole && r.score === hole.par - 1;
-                        }).length;
-                        return birdies;
-                    },
+                    condition: conditionFunctions['birdie_hunter'],
                 },
                 {
                     id: "eagle_man",
@@ -122,11 +273,7 @@ function loadBadges() {
                     difficulty: "hard",
                     points: 500,
                     animation: "glow",
-                    condition: (results, layout) =>
-                        results.some((r) => {
-                            const hole = layout.holes.find((h) => h.number === r.holeNumber);
-                            return hole && r.score !== 1 && r.score === hole.par - 2;
-                        }),
+                    condition: conditionFunctions['eagle_man'],
                 },
                 {
                     id: "basket_marksman",
@@ -159,8 +306,7 @@ function loadBadges() {
                     ],
                     tier: "cosmic",
                     animation: "glow",
-                    condition: (results) =>
-                        results.some((r) => r.score === 1 && r.isAce === true),
+                    condition: conditionFunctions['basket_marksman'],
                 }
             ];
             displayBadges();
@@ -178,7 +324,6 @@ function displayBadges() {
             <div class="badge-header">
                 <div class="badge-name">${badge.name}</div>
                 <div class="badge-actions">
-                    <button class="btn btn-primary test-badge-btn" data-index="${index}">Test</button>
                     <button class="btn btn-secondary edit-badge-btn" data-index="${index}">Edit</button>
                     <button class="btn btn-danger delete-badge-btn" data-index="${index}">Delete</button>
                 </div>
@@ -187,16 +332,42 @@ function displayBadges() {
             <div><strong>Type:</strong> ${badge.type || 'N/A'}</div>
             <div><strong>Unique:</strong> ${badge.isUnique ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
-            <div id="testResult-${index}" class="test-results hidden"></div>
+            
+            <!-- Individual Test Section -->
+            <div class="badge-test-section">
+                <h5>🧪 Test This Badge</h5>
+                <div class="test-input-group">
+                    <div class="form-group">
+                        <label for="testResults-${index}">Test Results (JSON):</label>
+                        <textarea id="testResults-${index}" placeholder="Enter test results JSON...">${JSON.stringify(getDefaultTestData(), null, 2)}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="testLayout-${index}">Test Layout (JSON):</label>
+                        <textarea id="testLayout-${index}" placeholder="Enter test layout JSON...">${JSON.stringify(getDefaultTestLayout(), null, 2)}</textarea>
+                    </div>
+                </div>
+                <div class="test-actions">
+                    <button class="btn btn-primary test-individual-btn" data-index="${index}">Test with Custom Data</button>
+                    <button class="btn btn-secondary load-sample-test-btn" data-index="${index}">Load Sample Data</button>
+                </div>
+                <div id="testResult-${index}" class="test-results hidden"></div>
+            </div>
         `;
         badgeList.appendChild(badgeItem);
     });
 
     // Add event listeners for badge buttons
-    document.querySelectorAll('.test-badge-btn').forEach(btn => {
+    document.querySelectorAll('.test-individual-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const index = parseInt(e.target.getAttribute('data-index'));
-            testBadge(index);
+            testBadgeWithCustomData(index);
+        });
+    });
+
+    document.querySelectorAll('.load-sample-test-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            loadSampleTestData(index);
         });
     });
 
@@ -215,22 +386,50 @@ function displayBadges() {
     });
 }
 
-function testBadge(index) {
+
+function testBadgeWithCustomData(index) {
     const badge = currentBadges[index];
     const resultDiv = document.getElementById(`testResult-${index}`);
     
     try {
-        // Create a safe evaluation environment
-        const results = currentTestData;
-        const layout = currentLayout;
+        // Get custom test data from textareas
+        const resultsText = document.getElementById(`testResults-${index}`).value;
+        const layoutText = document.getElementById(`testLayout-${index}`).value;
         
-        // Test the condition function
+        let results, layout;
+        
+        // Parse JSON data
+        try {
+            results = JSON.parse(resultsText);
+        } catch (error) {
+            throw new Error('Invalid JSON in test results: ' + error.message);
+        }
+        
+        try {
+            layout = JSON.parse(layoutText);
+        } catch (error) {
+            throw new Error('Invalid JSON in test layout: ' + error.message);
+        }
+        
+        // Debug: Check if condition is a function
+        console.log('Badge condition type:', typeof badge.condition);
+        console.log('Custom test data:', results);
+        console.log('Custom layout:', layout);
+        
+        if (typeof badge.condition !== 'function') {
+            throw new Error('Condition is not a function. Type: ' + typeof badge.condition);
+        }
+        
+        // Test the condition function with custom data
         const result = badge.condition(results, layout);
         
         resultDiv.className = 'test-results test-pass';
         resultDiv.innerHTML = `
-            <strong>✅ Test Result:</strong> ${result}<br>
+            <strong>✅ Test Result (Custom Data):</strong> ${result}<br>
             <strong>Type:</strong> ${typeof result}<br>
+            <strong>Data Source:</strong> Custom test data<br>
+            <strong>Results Count:</strong> ${results.length}<br>
+            <strong>Layout Holes:</strong> ${layout.holes ? layout.holes.length : 'N/A'}<br>
             <strong>Timestamp:</strong> ${new Date().toLocaleString()}
         `;
         resultDiv.classList.remove('hidden');
@@ -245,58 +444,200 @@ function testBadge(index) {
     }
 }
 
-function testAllBadges() {
-    const resultsDiv = document.getElementById('allTestResults');
-    resultsDiv.innerHTML = '<h4>Testing all badges...</h4>';
+function loadSampleTestData(index) {
+    const defaultData = getDefaultTestData();
+    const defaultLayout = getDefaultTestLayout();
     
-    let passed = 0;
-    let failed = 0;
-    
-    currentBadges.forEach((badge, index) => {
-        try {
-            const result = badge.condition(currentTestData, currentLayout);
-            passed++;
-            resultsDiv.innerHTML += `
-                <div class="test-results test-pass">
-                    <strong>${badge.name}:</strong> ✅ Passed (Result: ${result})
-                </div>
-            `;
-        } catch (error) {
-            failed++;
-            resultsDiv.innerHTML += `
-                <div class="test-results test-fail">
-                    <strong>${badge.name}:</strong> ❌ Failed (${error.message})
-                </div>
-            `;
-        }
-    });
-    
-    resultsDiv.innerHTML += `
-        <div style="margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px;">
-            <strong>Summary:</strong> ${passed} passed, ${failed} failed
-        </div>
-    `;
+    document.getElementById(`testResults-${index}`).value = JSON.stringify(defaultData, null, 2);
+    document.getElementById(`testLayout-${index}`).value = JSON.stringify(defaultLayout, null, 2);
 }
+
 
 function editBadge(index) {
     const badge = currentBadges[index];
-    const newBadge = prompt('Edit badge (JSON format):', JSON.stringify(badge, null, 2));
+    openBadgeModal(badge, index);
+}
+
+function openBadgeModal(badge, index = null) {
+    const modal = document.getElementById('badgeEditModal');
+    const title = document.getElementById('modalTitle');
     
-    if (newBadge) {
-        try {
-            const parsedBadge = JSON.parse(newBadge);
-            currentBadges[index] = parsedBadge;
-            displayBadges();
-        } catch (error) {
-            alert('Invalid JSON: ' + error.message);
+    // Set modal title
+    title.textContent = index !== null ? 'Edit Badge' : 'Add New Badge';
+    
+    // Populate form with badge data
+    populateBadgeForm(badge);
+    
+    // Show modal
+    modal.style.display = 'block';
+    
+    // Store the index for saving
+    modal.dataset.badgeIndex = index;
+}
+
+function populateBadgeForm(badge) {
+    // Basic information
+    document.getElementById('badgeId').value = badge.id || '';
+    document.getElementById('badgeName').value = badge.name || '';
+    document.getElementById('badgeIcon').value = badge.icon || '';
+    document.getElementById('badgeType').value = badge.type || 'allRounds';
+    document.getElementById('badgeQuote').value = badge.quote || '';
+    document.getElementById('badgeDescription').value = badge.description || '';
+    
+    // Badge properties
+    document.getElementById('badgeTier').value = badge.tier || 'bronze';
+    document.getElementById('badgeDifficulty').value = badge.difficulty || 'easy';
+    document.getElementById('badgeAnimation').value = badge.animation || 'pulse';
+    document.getElementById('badgePoints').value = badge.points || '';
+    document.getElementById('badgeIsUnique').checked = badge.isUnique || false;
+    
+    // Tier information
+    document.getElementById('tierDescriptionPrefix').value = badge.tierDescriptionPrefix || '';
+    document.getElementById('tierDescriptionSuffix').value = badge.tierDescriptionSuffix || '';
+    document.getElementById('tierThresholds').value = badge.tierThresholds ? badge.tierThresholds.join(',') : '';
+    document.getElementById('tierPoints').value = badge.tierPoints ? badge.tierPoints.join(',') : '';
+    document.getElementById('tierNames').value = badge.tierNames ? badge.tierNames.join('\n') : '';
+    
+    // Condition function - show the actual function source code
+    let conditionText = '';
+    if (badge.condition) {
+        if (typeof badge.condition === 'function') {
+            // Check if it's one of our predefined functions
+            const functionName = Object.keys(conditionFunctions).find(key => 
+                conditionFunctions[key] === badge.condition
+            );
+            if (functionName && conditionFunctionSources[functionName]) {
+                conditionText = conditionFunctionSources[functionName];
+            } else {
+                conditionText = badge.condition.toString();
+            }
+        } else {
+            conditionText = badge.condition;
         }
+    }
+    document.getElementById('badgeCondition').value = conditionText;
+    
+    // Show/hide tier section based on unique status
+    toggleTierSection();
+}
+
+function toggleTierSection() {
+    const tierSection = document.getElementById('tierSection');
+    const isUnique = document.getElementById('badgeIsUnique').checked;
+    tierSection.style.display = isUnique ? 'none' : 'block';
+}
+
+async function saveBadge() {
+    const modal = document.getElementById('badgeEditModal');
+    const index = modal.dataset.badgeIndex;
+    
+    try {
+        const badge = collectBadgeFormData();
+        
+        if (index !== null && index !== 'null') {
+            // Editing existing badge
+            currentBadges[parseInt(index)] = badge;
+        } else {
+            // Adding new badge
+            currentBadges.push(badge);
+        }
+        
+        // Save to server
+        await saveBadgesToServer();
+        
+        displayBadges();
+        closeBadgeModal();
+        
+    } catch (error) {
+        alert('Error saving badge: ' + error.message);
     }
 }
 
-function deleteBadge(index) {
+async function saveBadgesToServer() {
+    try {
+        const response = await fetch('/admin/api/badges', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ badges: currentBadges })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to save badges to server');
+        }
+        
+        const result = await response.json();
+        console.log('Badges saved to server:', result);
+        
+    } catch (error) {
+        console.error('Error saving badges to server:', error);
+        throw error;
+    }
+}
+
+function collectBadgeFormData() {
+    const badge = {
+        id: document.getElementById('badgeId').value,
+        name: document.getElementById('badgeName').value,
+        icon: document.getElementById('badgeIcon').value,
+        type: document.getElementById('badgeType').value,
+        quote: document.getElementById('badgeQuote').value,
+        description: document.getElementById('badgeDescription').value,
+        tier: document.getElementById('badgeTier').value,
+        difficulty: document.getElementById('badgeDifficulty').value,
+        animation: document.getElementById('badgeAnimation').value,
+        points: parseInt(document.getElementById('badgePoints').value) || 0,
+        isUnique: document.getElementById('badgeIsUnique').checked
+    };
+    
+    // Add tier information if not unique
+    if (!badge.isUnique) {
+        badge.tierDescriptionPrefix = document.getElementById('tierDescriptionPrefix').value;
+        badge.tierDescriptionSuffix = document.getElementById('tierDescriptionSuffix').value;
+        
+        const thresholds = document.getElementById('tierThresholds').value;
+        badge.tierThresholds = thresholds ? thresholds.split(',').map(t => parseInt(t.trim())) : [];
+        
+        const points = document.getElementById('tierPoints').value;
+        badge.tierPoints = points ? points.split(',').map(p => parseInt(p.trim())) : [];
+        
+        const names = document.getElementById('tierNames').value;
+        badge.tierNames = names ? names.split('\n').map(n => n.trim()).filter(n => n) : [];
+    }
+    
+    // Handle condition function
+    const conditionText = document.getElementById('badgeCondition').value.trim();
+    if (conditionText) {
+        // Try to create a function from the text
+        try {
+            badge.condition = createConditionFunction(conditionText);
+        } catch (error) {
+            console.error('Error creating condition function:', error);
+            badge.condition = conditionFunctions['default'];
+        }
+    } else {
+        badge.condition = conditionFunctions['default'];
+    }
+    
+    return badge;
+}
+
+function closeBadgeModal() {
+    const modal = document.getElementById('badgeEditModal');
+    modal.style.display = 'none';
+    modal.dataset.badgeIndex = null;
+}
+
+async function deleteBadge(index) {
     if (confirm('Are you sure you want to delete this badge?')) {
-        currentBadges.splice(index, 1);
-        displayBadges();
+        try {
+            currentBadges.splice(index, 1);
+            await saveBadgesToServer();
+            displayBadges();
+        } catch (error) {
+            alert('Error deleting badge: ' + error.message);
+        }
     }
 }
 
@@ -317,54 +658,29 @@ function addNewBadge() {
         }
     };
     
-    const newBadge = prompt('Add new badge (JSON format):', JSON.stringify(newBadgeTemplate, null, 2));
-    
-    if (newBadge) {
-        try {
-            const parsedBadge = JSON.parse(newBadge);
-            currentBadges.push(parsedBadge);
-            displayBadges();
-        } catch (error) {
-            alert('Invalid JSON: ' + error.message);
-        }
-    }
+    openBadgeModal(newBadgeTemplate, null);
 }
 
-function editTestData() {
-    const newData = prompt('Edit test data (JSON format):', JSON.stringify(currentTestData, null, 2));
-    if (newData) {
-        try {
-            currentTestData = JSON.parse(newData);
-            document.getElementById('testResultsDisplay').textContent = JSON.stringify(currentTestData, null, 2);
-        } catch (error) {
-            alert('Invalid JSON: ' + error.message);
-        }
-    }
-}
-
-function editTestLayout() {
-    const newLayout = prompt('Edit test layout (JSON format):', JSON.stringify(currentLayout, null, 2));
-    if (newLayout) {
-        try {
-            currentLayout = JSON.parse(newLayout);
-            document.getElementById('testLayoutDisplay').textContent = JSON.stringify(currentLayout, null, 2);
-        } catch (error) {
-            alert('Invalid JSON: ' + error.message);
-        }
-    }
-}
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    loadSampleData();
-    loadSampleLayout();
     loadBadges();
 
     // Add event listeners for main buttons
-    document.getElementById('loadSampleDataBtn').addEventListener('click', loadSampleData);
-    document.getElementById('editTestDataBtn').addEventListener('click', editTestData);
-    document.getElementById('loadSampleLayoutBtn').addEventListener('click', loadSampleLayout);
-    document.getElementById('editTestLayoutBtn').addEventListener('click', editTestLayout);
     document.getElementById('addNewBadgeBtn').addEventListener('click', addNewBadge);
-    document.getElementById('testAllBadgesBtn').addEventListener('click', testAllBadges);
+
+    // Modal event listeners
+    document.getElementById('closeModal').addEventListener('click', closeBadgeModal);
+    document.getElementById('cancelEdit').addEventListener('click', closeBadgeModal);
+    document.getElementById('saveBadge').addEventListener('click', saveBadge);
+    
+    // Toggle tier section when unique checkbox changes
+    document.getElementById('badgeIsUnique').addEventListener('change', toggleTierSection);
+    
+    // Close modal when clicking outside
+    document.getElementById('badgeEditModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeBadgeModal();
+        }
+    });
 });

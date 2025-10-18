@@ -3,109 +3,43 @@ const passport = require('passport');
 const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
+const fs = require('fs').promises;
 
 const router = express.Router();
 
-// Serve static files from public directory
-router.use(express.static(path.join(__dirname, '../public')));
+// Path to the badges JSON file
+const BADGES_FILE_PATH = path.join(__dirname, '../data/badges.json');
 
-// Sample badge definitions for testing
-const sampleBadges = [
-   {
-      id: "birdie_hunter",
-      name: "Birdie Hunter",
-      quote: "You're a true predator of the fairway, hunting down birdies with skill and precision.",
-      icon: "birdiehunter",
-      isUnique: false,
-      type: "allRounds",
-      tier: "bronze",
-      tierNames: [
-         "Birdie Hunter",
-         "Birdie Pioneer",
-         "Birdie Master",
-         "Birdie Legend",
-         "Birdie Trailblazer",
-         "Birdie Conqueror",
-         "Birdie Champion",
-         "Birdie Grandmaster",
-      ],
-      tierThresholds: [5, 50, 100, 500, 1000, 2000, 5000, 10000],
-      tierPoints: [10, 25, 50, 100, 250, 500, 750, 1000],
-      tierDescriptionPrefix: "Make",
-      tierDescriptionSuffix: "birdies",
-      difficulty: [
-         "easy",
-         "easy",
-         "easy",
-         "medium",
-         "medium",
-         "hard",
-         "hard",
-         "extreme",
-      ],
-      animation: "pulse",
-      condition: (results, layout) => {
-         const birdies = results.filter((r) => {
-            const hole = layout.holes.find((h) => h.number === r.holeNumber);
-            return hole && r.score === hole.par - 1;
-         }).length;
-         return birdies;
-      },
-   },
-   {
-      id: "eagle_man",
-      name: "Eagle Man",
-      quote: "You just caught a really rare bird man, be proud of yourself!",
-      description: "Score your first eagle",
-      icon: "eagle-man",
-      isUnique: true,
-      type: "lastRound",
-      unlockCondition: 1,
-      tier: "diamond",
-      difficulty: "hard",
-      points: 500,
-      animation: "glow",
-      condition: (results, layout) =>
-         results.some((r) => {
-            const hole = layout.holes.find((h) => h.number === r.holeNumber);
-            return hole && r.score !== 1 && r.score === hole.par - 2;
-         }),
-   },
-   {
-      id: "basket_marksman",
-      name: "Basket Marksman",
-      quote: "You just found the holy grale of disc golf, now that's something to tell the kids about.",
-      icon: "basket-marksman",
-      isUnique: false,
-      type: "allRounds",
-      tierNames: [
-         "Ace Hunter",
-         "Ace Pioneer",
-         "Ace Master",
-         "Ace Legend",
-         "Ace Trailblazer",
-         "Ace Conqueror",
-         "Ace Champion",
-         "Ace Grandmaster",
-      ],
-      tierThresholds: [1, 5, 10, 25, 50, 75, 100, 200],
-      tierPoints: [25, 50, 100, 250, 500, 750, 1000, 1250],
-      difficulty: [
-         "easy",
-         "medium",
-         "medium",
-         "medium",
-         "hard",
-         "hard",
-         "extreme",
-         "extreme",
-      ],
-      tier: "cosmic",
-      animation: "glow",
-      condition: (results) =>
-         results.some((r) => r.score === 1 && r.isAce === true),
-   }
-];
+// Helper function to read badges from JSON file
+async function readBadgesFromFile() {
+    try {
+        const data = await fs.readFile(BADGES_FILE_PATH, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading badges file:', error);
+        return [];
+    }
+}
+
+// Helper function to write badges to JSON file
+async function writeBadgesToFile(badges) {
+    try {
+        await fs.writeFile(BADGES_FILE_PATH, JSON.stringify(badges, null, 2), 'utf8');
+        return true;
+    } catch (error) {
+        console.error('Error writing badges file:', error);
+        return false;
+    }
+}
+
+// Serve the admin JavaScript file with correct MIME type
+router.get('/admin-badges.js', (req, res) => {
+    console.log('Serving admin-badges.js');
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, '../public/admin-badges.js'));
+});
+
+// Badges are now loaded from JSON file
 
 // Sample test data
 const sampleTestData = [
@@ -330,6 +264,183 @@ router.get('/badges', (req, res) => {
             max-height: 200px;
             overflow-y: auto;
         }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            opacity: 0.7;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+        }
+        
+        .form-group select {
+            height: 40px;
+        }
+        
+        .tier-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .tier-section h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .tier-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .tier-inputs .form-group {
+            margin-bottom: 0;
+        }
+        
+        .condition-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .condition-section h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+        
+        .condition-editor {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            min-height: 200px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+						width: 100%;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn-large {
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+        
+        .badge-test-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        .badge-test-section h5 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .test-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .test-input-group .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .test-input-group .form-group textarea {
+            min-height: 80px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .test-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .test-actions .btn {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -340,23 +451,6 @@ router.get('/badges', (req, res) => {
         </div>
         
         <div class="content">
-            <!-- Test Data Section -->
-            <div class="section">
-                <h3>📊 Test Data</h3>
-                <div class="test-data-section">
-                    <h4>Sample Round Results:</h4>
-                    <div class="json-display" id="testResultsDisplay"></div>
-                    <button class="btn btn-secondary" id="loadSampleDataBtn">Load Sample Data</button>
-                    <button class="btn btn-primary" id="editTestDataBtn">Edit Test Data</button>
-                </div>
-                
-                <div class="test-data-section">
-                    <h4>Sample Layout:</h4>
-                    <div class="json-display" id="testLayoutDisplay"></div>
-                    <button class="btn btn-secondary" id="loadSampleLayoutBtn">Load Sample Layout</button>
-                    <button class="btn btn-primary" id="editTestLayoutBtn">Edit Test Layout</button>
-                </div>
-            </div>
 
             <!-- Badge Management Section -->
             <div class="section">
@@ -367,11 +461,149 @@ router.get('/badges', (req, res) => {
                 <button class="btn btn-success" id="addNewBadgeBtn">+ Add New Badge</button>
             </div>
 
-            <!-- Test All Badges Section -->
-            <div class="section">
-                <h3>🧪 Test All Badges</h3>
-                <button class="btn btn-primary" id="testAllBadgesBtn">Test All Badges</button>
-                <div id="allTestResults"></div>
+        </div>
+    </div>
+
+    <!-- Badge Edit Modal -->
+    <div id="badgeEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Edit Badge</h2>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="badgeEditForm">
+                    <!-- Basic Information -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="badgeId">Badge ID:</label>
+                            <input type="text" id="badgeId" name="id" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="badgeName">Badge Name:</label>
+                            <input type="text" id="badgeName" name="name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="badgeIcon">Icon:</label>
+                            <input type="text" id="badgeIcon" name="icon">
+                        </div>
+                        <div class="form-group">
+                            <label for="badgeType">Type:</label>
+                            <select id="badgeType" name="type">
+                                <option value="allRounds">All Rounds</option>
+                                <option value="lastRound">Last Round</option>
+                                <option value="courseSpecific">Course Specific</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="badgeQuote">Quote:</label>
+                        <textarea id="badgeQuote" name="quote" placeholder="Enter badge quote..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="badgeDescription">Description:</label>
+                        <textarea id="badgeDescription" name="description" placeholder="Enter badge description..."></textarea>
+                    </div>
+                    
+                    <!-- Badge Properties -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="badgeTier">Tier:</label>
+                            <select id="badgeTier" name="tier">
+                                <option value="bronze">Bronze</option>
+                                <option value="silver">Silver</option>
+                                <option value="gold">Gold</option>
+                                <option value="platinum">Platinum</option>
+                                <option value="diamond">Diamond</option>
+                                <option value="emerald">Emerald</option>
+                                <option value="ruby">Ruby</option>
+                                <option value="cosmic">Cosmic</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="badgeDifficulty">Difficulty:</label>
+                            <select id="badgeDifficulty" name="difficulty">
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                                <option value="extreme">Extreme</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="badgeAnimation">Animation:</label>
+                            <select id="badgeAnimation" name="animation">
+                                <option value="pulse">Pulse</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="rotate">Rotate</option>
+                                <option value="glow">Glow</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="badgePoints">Points:</label>
+                            <input type="number" id="badgePoints" name="points" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="badgeIsUnique" name="isUnique"> 
+                            Unique Badge (one-time achievement)
+                        </label>
+                    </div>
+                    
+                    <!-- Tier Information (for non-unique badges) -->
+                    <div class="tier-section" id="tierSection">
+                        <h4>Tier Configuration</h4>
+                        <div class="form-group">
+                            <label for="tierDescriptionPrefix">Tier Description Prefix:</label>
+                            <input type="text" id="tierDescriptionPrefix" name="tierDescriptionPrefix" placeholder="e.g., 'Make'">
+                        </div>
+                        <div class="form-group">
+                            <label for="tierDescriptionSuffix">Tier Description Suffix:</label>
+                            <input type="text" id="tierDescriptionSuffix" name="tierDescriptionSuffix" placeholder="e.g., 'birdies'">
+                        </div>
+                        
+                        <div class="tier-inputs">
+                            <div class="form-group">
+                                <label for="tierThresholds">Tier Thresholds (comma-separated):</label>
+                                <input type="text" id="tierThresholds" name="tierThresholds" placeholder="1,5,10,25,50,100,200,500">
+                            </div>
+                            <div class="form-group">
+                                <label for="tierPoints">Tier Points (comma-separated):</label>
+                                <input type="text" id="tierPoints" name="tierPoints" placeholder="10,25,50,100,250,500,750,1000">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tierNames">Tier Names (one per line):</label>
+                            <textarea id="tierNames" name="tierNames" rows="8" placeholder="Bronze Badge&#10;Silver Badge&#10;Gold Badge&#10;..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Condition Function -->
+                    <div class="condition-section">
+                        <h4>Condition Function</h4>
+                        <p>Write the JavaScript function that determines when this badge is earned:</p>
+                        <textarea id="badgeCondition" name="condition" class="condition-editor" placeholder="(results, layout) => {
+    // Your condition logic here
+    // Return true/false for unique badges
+    // Return number for tiered badges
+    return results.length > 0;
+}"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-large" id="cancelEdit">Cancel</button>
+                <button type="button" class="btn btn-primary btn-large" id="saveBadge">Save Badge</button>
             </div>
         </div>
     </div>
@@ -383,18 +615,34 @@ router.get('/badges', (req, res) => {
 });
 
 // GET /api/badges - Get all badges
-router.get('/api/badges', (req, res) => {
-   res.json(sampleBadges);
+router.get('/api/badges', async (req, res) => {
+   try {
+      const badges = await readBadgesFromFile();
+      res.json(badges);
+   } catch (error) {
+      console.error('Error loading badges:', error);
+      res.status(500).json({ error: 'Failed to load badges' });
+   }
 });
 
 // POST /api/badges - Create or update badges
-router.post('/api/badges', (req, res) => {
+router.post('/api/badges', async (req, res) => {
    try {
       const { badges } = req.body;
-      // Here you would typically save to database
-      // For now, just return success
-      res.json({ success: true, message: 'Badges updated successfully' });
+      
+      if (!Array.isArray(badges)) {
+         return res.status(400).json({ error: 'Badges must be an array' });
+      }
+      
+      const success = await writeBadgesToFile(badges);
+      
+      if (success) {
+         res.json({ success: true, message: 'Badges updated successfully' });
+      } else {
+         res.status(500).json({ error: 'Failed to save badges' });
+      }
    } catch (error) {
+      console.error('Error saving badges:', error);
       res.status(500).json({ error: error.message });
    }
 });
