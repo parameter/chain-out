@@ -31,8 +31,110 @@
       "hard",
       "extreme"
     ],
-    "animation": "pulse",
-    "condition": "(results, layout) => {\n  const birdies = results.filter((r) => {\n    const hole = layout.holes.find((h) => h.number === r.holeNumber);\n    return hole && r.score === hole.par - 1;\n  }).length;\n  return birdies;\n}"
+    "animation": "pulse"
+  },
+  {
+    "id": "bird_collector",
+    "name": "Bird Collector",
+    "quote": "Catch birdies in different habitats.",
+    "icon": "bird-collector",
+    "isUnique": false,
+    "type": "allRounds",
+    "tier": "silver",
+    "tierNames": [
+      "Novice Bird Collector",
+      "Apprentice Bird Collector",
+      "Adept Birdie Hunter",
+      "Birdie Hunter Marksman",
+      "Professional Birdie Hunter",
+      "Elite Birdie Hunter",
+      "Master Birdie Hunter",
+      "Grandmaster Birdie Hunter"
+    ],
+    "tierThresholds": [3, 5, 10, 15, 25, 50, 75, 100],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "tierDescriptionPrefix": "Score birdie on",
+    "tierDescriptionSuffix": "different courses",
+    "difficulty": [
+      "easy",
+      "easy",
+      "easy",
+      "medium",
+      "medium",
+      "hard",
+      "hard",
+      "extreme"
+    ],
+    "points": 500,
+    "animation": "bounce"
+  },
+  {
+    "id": "bullseye_hunter",
+    "name": "Bullseye Hunter",
+    "quote": "Land in the bullseye — your safe space.",
+    "icon": "bullseye-hunter",
+    "isUnique": false,
+    "type": "allRounds",
+    "tier": "bronze",
+    "tierNames": [
+      "Bullseye Hunter",
+      "Bullseye Pioneer",
+      "Bullseye Master",
+      "Bullseye Legend",
+      "Bullseye Trailblazer",
+      "Bullseye Conqueror",
+      "Bullseye Champion",
+      "Bullseye Grandmaster"
+    ],
+    "tierThresholds": [5, 25, 50, 100, 250, 500, 1000, 2000],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "tierDescriptionPrefix": "Hit the bullseye",
+    "tierDescriptionSuffix": "times",
+    "difficulty": [
+      "easy",
+      "easy",
+      "medium",
+      "medium",
+      "hard",
+      "hard",
+      "extreme",
+      "extreme"
+    ],
+    "animation": "rotate"
+  },
+  {
+    "id": "course_collector",
+    "name": "Course Collector",
+    "quote": "Your appetite for new courses is insatiable!",
+    "icon": "course-collector",
+    "isUnique": false,
+    "type": "allRounds",
+    "tierNames": [
+      "Course Hunter",
+      "Course Traveler",
+      "Course Wanderer",
+      "Course Sprinter",
+      "Course Explorer",
+      "Course Adventurer",
+      "Course Vagabond",
+      "Course Globetrotter"
+    ],
+    "tierThresholds": [1, 5, 10, 25, 50, 100, 200, 500],
+    "tierPoints": [10, 25, 50, 250, 500, 1000, 2000, 5000],
+    "tierDescriptionPrefix": "Score birdie on",
+    "tierDescriptionSuffix": "different courses",
+    "difficulty": [
+      "easy",
+      "easy",
+      "easy",
+      "medium",
+      "medium",
+      "hard",
+      "hard",
+      "extreme"
+    ],
+    "tier": "bronze",
+    "animation": "glow"
   },
   {
     "id": "eagle_man",
@@ -46,8 +148,34 @@
     "tier": "diamond",
     "difficulty": "hard",
     "points": 500,
-    "animation": "glow",
-    "condition": "(results, layout) => {\n  return results.some((r) => {\n    const hole = layout.holes.find((h) => h.number === r.holeNumber);\n    return hole && r.score !== 1 && r.score === hole.par - 2;\n  });\n}"
+    "animation": "glow"
+  },
+  {
+    "id": "round_rollercoaster",
+    "name": "Round Rollercoaster",
+    "quote": "Strap in — it's gonna be a bumpy ride!",
+    "description": "Go birdie to bogey at least twice in one round",
+    "icon": "round-rollercoaster",
+    "isUnique": true,
+    "type": "lastRound",
+    "tier": "emerald",
+    "difficulty": "hard",
+    "points": 250,
+    "animation": "glow"
+  },
+  {
+    "id": "three_wishes",
+    "name": "Three Wishes",
+    "quote": "Unlock three secret achievements.",
+    "description": "Unlock three secret achievements, and you can make a wish. Be careful what you wish for!",
+    "icon": "three-wishes",
+    "isUnique": true,
+    "type": "lastRound",
+    "isSecret": true,
+    "tier": "ruby",
+    "difficulty": "hard",
+    "points": 500,
+    "animation": "bounce"
   },
   {
     "id": "basket_marksman",
@@ -79,7 +207,51 @@
       "extreme"
     ],
     "tier": "cosmic",
-    "animation": "glow",
-    "condition": "(results) => {\n  return results.some((r) => r.score === 1 && r.isAce === true);\n}"
+    "animation": "glow"
+  },
+  {
+    "id": "comeback",
+    "name": "Comeback",
+    "quote": "What goes down must come up again. Your resilience is admirable!",
+    "description": "Make 2 consecutive birdies after a double bogey.",
+    "icon": "comeback",
+    "isUnique": true,
+    "type": "lastRound",
+    "tier": "gold",
+    "difficulty": "medium",
+    "points": 150,
+    "animation": "glow"
+  },
+  {
+    "id": "ob_hunter",
+    "name": "OB Hunter",
+    "quote": "Landing OB is never fun, but someone's gotta do it. Here's a consollation prize!",
+    "icon": "ob-hunter",
+    "isUnique": false,
+    "type": "allRounds",
+    "tierNames": [
+      "OB Hunter",
+      "OB Pioneer",
+      "OB Master",
+      "OB Legend",
+      "OB Trailblazer",
+      "OB Conqueror",
+      "OB Champion",
+      "OB Grandmaster"
+    ],
+    "tierThresholds": [1, 5, 10, 25, 50, 100, 200, 500],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "difficulty": [
+      "easy",
+      "easy",
+      "easy",
+      "easy",
+      "easy",
+      "medium",
+      "hard",
+      "extreme"
+    ],
+    "tier": "bronze",
+    "animation": "pulse"
   }
 ]
