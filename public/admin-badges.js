@@ -58,7 +58,7 @@ function loadSampleLayout() {
 
 // Load badges
 function loadBadges() {
-    fetch('/api/admin/badges')
+    fetch('/admin/api/badges')
         .then(response => response.json())
         .then(data => {
             currentBadges = data;
@@ -178,9 +178,9 @@ function displayBadges() {
             <div class="badge-header">
                 <div class="badge-name">${badge.name}</div>
                 <div class="badge-actions">
-                    <button class="btn btn-primary" onclick="testBadge(${index})">Test</button>
-                    <button class="btn btn-secondary" onclick="editBadge(${index})">Edit</button>
-                    <button class="btn btn-danger" onclick="deleteBadge(${index})">Delete</button>
+                    <button class="btn btn-primary test-badge-btn" data-index="${index}">Test</button>
+                    <button class="btn btn-secondary edit-badge-btn" data-index="${index}">Edit</button>
+                    <button class="btn btn-danger delete-badge-btn" data-index="${index}">Delete</button>
                 </div>
             </div>
             <div><strong>ID:</strong> ${badge.id}</div>
@@ -190,6 +190,28 @@ function displayBadges() {
             <div id="testResult-${index}" class="test-results hidden"></div>
         `;
         badgeList.appendChild(badgeItem);
+    });
+
+    // Add event listeners for badge buttons
+    document.querySelectorAll('.test-badge-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            testBadge(index);
+        });
+    });
+
+    document.querySelectorAll('.edit-badge-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            editBadge(index);
+        });
+    });
+
+    document.querySelectorAll('.delete-badge-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            deleteBadge(index);
+        });
     });
 }
 
@@ -337,4 +359,12 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSampleData();
     loadSampleLayout();
     loadBadges();
+
+    // Add event listeners for main buttons
+    document.getElementById('loadSampleDataBtn').addEventListener('click', loadSampleData);
+    document.getElementById('editTestDataBtn').addEventListener('click', editTestData);
+    document.getElementById('loadSampleLayoutBtn').addEventListener('click', loadSampleLayout);
+    document.getElementById('editTestLayoutBtn').addEventListener('click', editTestLayout);
+    document.getElementById('addNewBadgeBtn').addEventListener('click', addNewBadge);
+    document.getElementById('testAllBadgesBtn').addEventListener('click', testAllBadges);
 });

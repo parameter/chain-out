@@ -346,15 +346,15 @@ router.get('/badges', (req, res) => {
                 <div class="test-data-section">
                     <h4>Sample Round Results:</h4>
                     <div class="json-display" id="testResultsDisplay"></div>
-                    <button class="btn btn-secondary" onclick="loadSampleData()">Load Sample Data</button>
-                    <button class="btn btn-primary" onclick="editTestData()">Edit Test Data</button>
+                    <button class="btn btn-secondary" id="loadSampleDataBtn">Load Sample Data</button>
+                    <button class="btn btn-primary" id="editTestDataBtn">Edit Test Data</button>
                 </div>
                 
                 <div class="test-data-section">
                     <h4>Sample Layout:</h4>
                     <div class="json-display" id="testLayoutDisplay"></div>
-                    <button class="btn btn-secondary" onclick="loadSampleLayout()">Load Sample Layout</button>
-                    <button class="btn btn-primary" onclick="editTestLayout()">Edit Test Layout</button>
+                    <button class="btn btn-secondary" id="loadSampleLayoutBtn">Load Sample Layout</button>
+                    <button class="btn btn-primary" id="editTestLayoutBtn">Edit Test Layout</button>
                 </div>
             </div>
 
@@ -364,13 +364,13 @@ router.get('/badges', (req, res) => {
                 <div class="badge-list" id="badgeList">
                     <!-- Badges will be loaded here -->
                 </div>
-                <button class="btn btn-success" onclick="addNewBadge()">+ Add New Badge</button>
+                <button class="btn btn-success" id="addNewBadgeBtn">+ Add New Badge</button>
             </div>
 
             <!-- Test All Badges Section -->
             <div class="section">
                 <h3>🧪 Test All Badges</h3>
-                <button class="btn btn-primary" onclick="testAllBadges()">Test All Badges</button>
+                <button class="btn btn-primary" id="testAllBadgesBtn">Test All Badges</button>
                 <div id="allTestResults"></div>
             </div>
         </div>
@@ -382,13 +382,13 @@ router.get('/badges', (req, res) => {
    `);
 });
 
-// GET /api/admin/badges - Get all badges
-router.get('/api/admin/badges', (req, res) => {
+// GET /api/badges - Get all badges
+router.get('/api/badges', (req, res) => {
    res.json(sampleBadges);
 });
 
-// POST /api/admin/badges - Create or update badges
-router.post('/api/admin/badges', (req, res) => {
+// POST /api/badges - Create or update badges
+router.post('/api/badges', (req, res) => {
    try {
       const { badges } = req.body;
       // Here you would typically save to database
@@ -399,8 +399,8 @@ router.post('/api/admin/badges', (req, res) => {
    }
 });
 
-// POST /api/admin/badges/test - Test badge conditions
-router.post('/api/admin/badges/test', (req, res) => {
+// POST /api/badges/test - Test badge conditions
+router.post('/api/badges/test', (req, res) => {
    try {
       const { badge, testData, layout } = req.body;
       
