@@ -489,7 +489,12 @@ function populateBadgeForm(badge) {
     document.getElementById('badgeDifficulty').value = badge.difficulty || 'easy';
     document.getElementById('badgeAnimation').value = badge.animation || 'pulse';
     document.getElementById('badgePoints').value = badge.points || '';
-    document.getElementById('badgeIsUnique').checked = badge.isUnique || false;
+    
+    // Handle isUnique checkbox if it exists
+    const isUniqueCheckbox = document.getElementById('badgeIsUnique');
+    if (isUniqueCheckbox) {
+        isUniqueCheckbox.checked = badge.isUnique || false;
+    }
     
     // Tier information
     document.getElementById('tierDescriptionPrefix').value = badge.tierDescriptionPrefix || '';
@@ -523,7 +528,8 @@ function populateBadgeForm(badge) {
 
 function toggleTierSection() {
     const tierSection = document.getElementById('tierSection');
-    const isUnique = document.getElementById('badgeIsUnique').checked;
+    const isUniqueCheckbox = document.getElementById('badgeIsUnique');
+    const isUnique = isUniqueCheckbox ? isUniqueCheckbox.checked : false;
     tierSection.style.display = isUnique ? 'none' : 'block';
 }
 
@@ -614,7 +620,7 @@ function collectBadgeFormData() {
         difficulty: document.getElementById('badgeDifficulty').value,
         animation: document.getElementById('badgeAnimation').value,
         points: parseInt(document.getElementById('badgePoints').value) || 0,
-        isUnique: document.getElementById('badgeIsUnique').checked
+        isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false
     };
     
     // Add tier information if not unique
@@ -701,8 +707,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cancelEdit').addEventListener('click', closeBadgeModal);
     document.getElementById('saveBadge').addEventListener('click', saveBadge);
     
-    // Toggle tier section when unique checkbox changes
-    document.getElementById('badgeIsUnique').addEventListener('change', toggleTierSection);
+    // Toggle tier section when unique checkbox changes (if it exists)
+    const isUniqueCheckbox = document.getElementById('badgeIsUnique');
+    if (isUniqueCheckbox) {
+        isUniqueCheckbox.addEventListener('change', toggleTierSection);
+    }
     
     // Close modal when clicking outside
     document.getElementById('badgeEditModal').addEventListener('click', function(e) {
