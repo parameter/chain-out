@@ -534,22 +534,48 @@ async function saveBadge() {
     try {
         const badge = collectBadgeFormData();
         
+        let action;
         if (index !== null && index !== 'null') {
             // Editing existing badge
+            action = 'update';
             currentBadges[parseInt(index)] = badge;
         } else {
             // Adding new badge
+            action = 'create';
             currentBadges.push(badge);
         }
         
-        // Save to server
-        await saveBadgesToServer();
+        // Save single badge to server
+        await saveSingleBadgeToServer(badge, action);
         
         displayBadges();
         closeBadgeModal();
         
     } catch (error) {
         alert('Error saving badge: ' + error.message);
+    }
+}
+
+async function saveSingleBadgeToServer(badge, action) {
+    try {
+        const response = await fetch('/admin/api/badges/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ badge, action })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to ${action} badge on server`);
+        }
+        
+        const result = await response.json();
+        console.log(`Badge ${action}d on server:`, result);
+        
+    } catch (error) {
+        console.error(`Error ${action} badge on server:`, error);
+        throw error;
     }
 }
 
@@ -632,8 +658,9 @@ function closeBadgeModal() {
 async function deleteBadge(index) {
     if (confirm('Are you sure you want to delete this badge?')) {
         try {
+            const badge = currentBadges[index];
             currentBadges.splice(index, 1);
-            await saveBadgesToServer();
+            await saveSingleBadgeToServer(badge, 'delete');
             displayBadges();
         } catch (error) {
             alert('Error deleting badge: ' + error.message);

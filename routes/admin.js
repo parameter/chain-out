@@ -647,6 +647,56 @@ router.post('/api/badges', async (req, res) => {
    }
 });
 
+// POST /api/badges/save - Save a single badge
+router.post('/api/badges/save', async (req, res) => {
+   try {
+      const { badge, action } = req.body; // action: 'create', 'update', 'delete'
+      
+      if (!badge) {
+         return res.status(400).json({ error: 'Badge data is required' });
+      }
+      
+      // Load existing badges
+      const existingBadges = await readBadgesFromFile();
+      
+      if (action === 'create') {
+         // Add new badge
+         existingBadges.push(badge);
+      } else if (action === 'update') {
+         // Update existing badge
+         const index = existingBadges.findIndex(b => b.id === badge.id);
+         if (index !== -1) {
+            existingBadges[index] = badge;
+         } else {
+            return res.status(404).json({ error: 'Badge not found' });
+         }
+      } else if (action === 'delete') {
+         // Remove badge
+         const filteredBadges = existingBadges.filter(b => b.id !== badge.id);
+         const success = await writeBadgesToFile(filteredBadges);
+         
+         if (success) {
+            res.json({ success: true, message: 'Badge deleted successfully' });
+         } else {
+            res.status(500).json({ error: 'Failed to delete badge' });
+         }
+         return;
+      }
+      
+      // Save updated badges
+      const success = await writeBadgesToFile(existingBadges);
+      
+      if (success) {
+         res.json({ success: true, message: `Badge ${action}d successfully` });
+      } else {
+         res.status(500).json({ error: `Failed to ${action} badge` });
+      }
+   } catch (error) {
+      console.error(`Error ${req.body.action} badge:`, error);
+      res.status(500).json({ error: error.message });
+   }
+});
+
 // POST /api/badges/test - Test badge conditions
 router.post('/api/badges/test', (req, res) => {
    try {

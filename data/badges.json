@@ -17,8 +17,26 @@
       "Birdie Champion",
       "Birdie Grandmaster"
     ],
-    "tierThresholds": [5, 50, 100, 500, 1000, 2000, 5000, 10000],
-    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "tierThresholds": [
+      5,
+      50,
+      100,
+      500,
+      1000,
+      2000,
+      5000,
+      10000
+    ],
+    "tierPoints": [
+      10,
+      25,
+      50,
+      100,
+      250,
+      500,
+      750,
+      1000
+    ],
     "tierDescriptionPrefix": "Make",
     "tierDescriptionSuffix": "birdies",
     "difficulty": [
@@ -51,8 +69,26 @@
       "Master Birdie Hunter",
       "Grandmaster Birdie Hunter"
     ],
-    "tierThresholds": [3, 5, 10, 15, 25, 50, 75, 100],
-    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "tierThresholds": [
+      3,
+      5,
+      10,
+      15,
+      25,
+      50,
+      75,
+      100
+    ],
+    "tierPoints": [
+      10,
+      25,
+      50,
+      100,
+      250,
+      500,
+      750,
+      1000
+    ],
     "tierDescriptionPrefix": "Score birdie on",
     "tierDescriptionSuffix": "different courses",
     "difficulty": [
@@ -86,8 +122,26 @@
       "Bullseye Champion",
       "Bullseye Grandmaster"
     ],
-    "tierThresholds": [5, 25, 50, 100, 250, 500, 1000, 2000],
-    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "tierThresholds": [
+      5,
+      25,
+      50,
+      100,
+      250,
+      500,
+      1000,
+      2000
+    ],
+    "tierPoints": [
+      10,
+      25,
+      50,
+      100,
+      250,
+      500,
+      750,
+      1000
+    ],
     "tierDescriptionPrefix": "Hit the bullseye",
     "tierDescriptionSuffix": "times",
     "difficulty": [
@@ -119,8 +173,26 @@
       "Course Vagabond",
       "Course Globetrotter"
     ],
-    "tierThresholds": [1, 5, 10, 25, 50, 100, 200, 500],
-    "tierPoints": [10, 25, 50, 250, 500, 1000, 2000, 5000],
+    "tierThresholds": [
+      1,
+      5,
+      10,
+      25,
+      50,
+      100,
+      200,
+      500
+    ],
+    "tierPoints": [
+      10,
+      25,
+      50,
+      250,
+      500,
+      1000,
+      2000,
+      5000
+    ],
     "tierDescriptionPrefix": "Score birdie on",
     "tierDescriptionSuffix": "different courses",
     "difficulty": [
@@ -194,8 +266,26 @@
       "Ace Champion",
       "Ace Grandmaster"
     ],
-    "tierThresholds": [1, 5, 10, 25, 50, 75, 100, 200],
-    "tierPoints": [25, 50, 100, 250, 500, 750, 1000, 1250],
+    "tierThresholds": [
+      1,
+      5,
+      10,
+      25,
+      50,
+      75,
+      100,
+      200
+    ],
+    "tierPoints": [
+      25,
+      50,
+      100,
+      250,
+      500,
+      750,
+      1000,
+      1250
+    ],
     "difficulty": [
       "easy",
       "medium",
@@ -239,8 +329,26 @@
       "OB Champion",
       "OB Grandmaster"
     ],
-    "tierThresholds": [1, 5, 10, 25, 50, 100, 200, 500],
-    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
+    "tierThresholds": [
+      1,
+      5,
+      10,
+      25,
+      50,
+      100,
+      200,
+      500
+    ],
+    "tierPoints": [
+      10,
+      25,
+      50,
+      100,
+      250,
+      500,
+      750,
+      1000
+    ],
     "difficulty": [
       "easy",
       "easy",
@@ -253,5 +361,23 @@
     ],
     "tier": "bronze",
     "animation": "pulse"
+  },
+  {
+    "id": "new_badge",
+    "name": "New Badge",
+    "icon": "new-badge",
+    "type": "allRounds",
+    "quote": "A new badge description",
+    "description": "",
+    "tier": "bronze",
+    "difficulty": "easy",
+    "animation": "pulse",
+    "points": 0,
+    "isUnique": false,
+    "tierDescriptionPrefix": "",
+    "tierDescriptionSuffix": "",
+    "tierThresholds": [],
+    "tierPoints": [],
+    "tierNames": []
   }
 ]
