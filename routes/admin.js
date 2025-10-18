@@ -10,24 +10,52 @@ const router = express.Router();
 // Path to the badges JSON file
 const BADGES_FILE_PATH = path.join(__dirname, '../data/badges.json');
 
-// Helper function to read badges from JSON file
-async function readBadgesFromFile() {
+// Helper function to read badges from database
+async function readBadgesFromDatabase() {
     try {
-        const data = await fs.readFile(BADGES_FILE_PATH, 'utf8');
-        return JSON.parse(data);
+        const db = getDatabase();
+        const badgesCollection = db.collection('badgeDefinitions');
+        
+        // Get the single document containing all badges
+        const result = await badgesCollection.findOne({ type: 'badges' });
+        
+        if (result && result.badges) {
+            return result.badges;
+        }
+        
+        // If no badges found, try to load from JSON file and initialize
+        try {
+            const data = await fs.readFile(BADGES_FILE_PATH, 'utf8');
+            const badges = JSON.parse(data);
+            
+            // Save to database for future use
+            await writeBadgesToDatabase(badges);
+            return badges;
+        } catch (fileError) {
+            console.log('No badges file found, starting with empty array');
+            return [];
+        }
     } catch (error) {
-        console.error('Error reading badges file:', error);
+        console.error('Error reading badges from database:', error);
         return [];
     }
 }
 
-// Helper function to write badges to JSON file
-async function writeBadgesToFile(badges) {
+// Helper function to write badges to database
+async function writeBadgesToDatabase(badges) {
     try {
-        await fs.writeFile(BADGES_FILE_PATH, JSON.stringify(badges, null, 2), 'utf8');
+        const db = getDatabase();
+        const badgesCollection = db.collection('badgeDefinitions');
+        
+        // Save as a single document with type identifier
+        await badgesCollection.replaceOne(
+            { type: 'badges' },
+            { type: 'badges', badges: badges },
+            { upsert: true }
+        );
         return true;
     } catch (error) {
-        console.error('Error writing badges file:', error);
+        console.error('Error writing badges to database:', error);
         return false;
     }
 }
@@ -552,12 +580,6 @@ router.get('/badges', (req, res) => {
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="badgeIsUnique" name="isUnique"> 
-                            Unique Badge (one-time achievement)
-                        </label>
-                    </div>
                     
                     <!-- Tier Information (for non-unique badges) -->
                     <div class="tier-section" id="tierSection">
@@ -617,7 +639,7 @@ router.get('/badges', (req, res) => {
 // GET /api/badges - Get all badges
 router.get('/api/badges', async (req, res) => {
    try {
-      const badges = await readBadgesFromFile();
+      const badges = await readBadgesFromDatabase();
       res.json(badges);
    } catch (error) {
       console.error('Error loading badges:', error);
@@ -634,7 +656,7 @@ router.post('/api/badges', async (req, res) => {
          return res.status(400).json({ error: 'Badges must be an array' });
       }
       
-      const success = await writeBadgesToFile(badges);
+      const success = await writeBadgesToDatabase(badges);
       
       if (success) {
          res.json({ success: true, message: 'Badges updated successfully' });
@@ -657,7 +679,7 @@ router.post('/api/badges/save', async (req, res) => {
       }
       
       // Load existing badges
-      const existingBadges = await readBadgesFromFile();
+      const existingBadges = await readBadgesFromDatabase();
       
       if (action === 'create') {
          // Add new badge
@@ -673,7 +695,7 @@ router.post('/api/badges/save', async (req, res) => {
       } else if (action === 'delete') {
          // Remove badge
          const filteredBadges = existingBadges.filter(b => b.id !== badge.id);
-         const success = await writeBadgesToFile(filteredBadges);
+         const success = await writeBadgesToDatabase(filteredBadges);
          
          if (success) {
             res.json({ success: true, message: 'Badge deleted successfully' });
@@ -684,7 +706,7 @@ router.post('/api/badges/save', async (req, res) => {
       }
       
       // Save updated badges
-      const success = await writeBadgesToFile(existingBadges);
+      const success = await writeBadgesToDatabase(existingBadges);
       
       if (success) {
          res.json({ success: true, message: `Badge ${action}d successfully` });
