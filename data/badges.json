@@ -17,26 +17,8 @@
       "Birdie Champion",
       "Birdie Grandmaster"
     ],
-    "tierThresholds": [
-      5,
-      50,
-      100,
-      500,
-      1000,
-      2000,
-      5000,
-      10000
-    ],
-    "tierPoints": [
-      10,
-      25,
-      50,
-      100,
-      250,
-      500,
-      750,
-      1000
-    ],
+    "tierThresholds": [5, 50, 100, 500, 1000, 2000, 5000, 10000],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
     "tierDescriptionPrefix": "Make",
     "tierDescriptionSuffix": "birdies",
     "difficulty": [
@@ -49,7 +31,8 @@
       "hard",
       "extreme"
     ],
-    "animation": "pulse"
+    "animation": "pulse",
+    "condition": "function (results, layout) { // Return the *number* of birdies to support tier progression\n  const birdies = results.filter((r) => {\n    const hole = layout.holes.find((h) => h.number === r.hole);\n    return hole && r.score === hole.par - 1;\n  }).length;\n  return birdies;\n}"
   },
   {
     "id": "bird_collector",
@@ -69,26 +52,8 @@
       "Master Birdie Hunter",
       "Grandmaster Birdie Hunter"
     ],
-    "tierThresholds": [
-      3,
-      5,
-      10,
-      15,
-      25,
-      50,
-      75,
-      100
-    ],
-    "tierPoints": [
-      10,
-      25,
-      50,
-      100,
-      250,
-      500,
-      750,
-      1000
-    ],
+    "tierThresholds": [3, 5, 10, 15, 25, 50, 75, 100],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
     "tierDescriptionPrefix": "Score birdie on",
     "tierDescriptionSuffix": "different courses",
     "difficulty": [
@@ -102,7 +67,8 @@
       "extreme"
     ],
     "points": 500,
-    "animation": "bounce"
+    "animation": "bounce",
+    "condition": "function (results, layout) { // Example: unlock if player made a birdie on 3+ distinct courses\n  const distinctCourses = new Set(results.map((r) => r.courseId));\n  return distinctCourses.size >= 3;\n}"
   },
   {
     "id": "bullseye_hunter",
@@ -122,26 +88,8 @@
       "Bullseye Champion",
       "Bullseye Grandmaster"
     ],
-    "tierThresholds": [
-      5,
-      25,
-      50,
-      100,
-      250,
-      500,
-      1000,
-      2000
-    ],
-    "tierPoints": [
-      10,
-      25,
-      50,
-      100,
-      250,
-      500,
-      750,
-      1000
-    ],
+    "tierThresholds": [5, 25, 50, 100, 250, 500, 1000, 2000],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
     "tierDescriptionPrefix": "Hit the bullseye",
     "tierDescriptionSuffix": "times",
     "difficulty": [
@@ -154,7 +102,8 @@
       "extreme",
       "extreme"
     ],
-    "animation": "rotate"
+    "animation": "rotate",
+    "condition": "function (results) { return results.some((r) => r.hitBullseye === true); }"
   },
   {
     "id": "course_collector",
@@ -173,26 +122,8 @@
       "Course Vagabond",
       "Course Globetrotter"
     ],
-    "tierThresholds": [
-      1,
-      5,
-      10,
-      25,
-      50,
-      100,
-      200,
-      500
-    ],
-    "tierPoints": [
-      10,
-      25,
-      50,
-      250,
-      500,
-      1000,
-      2000,
-      5000
-    ],
+    "tierThresholds": [1, 5, 10, 25, 50, 100, 200, 500],
+    "tierPoints": [10, 25, 50, 250, 500, 1000, 2000, 5000],
     "tierDescriptionPrefix": "Score birdie on",
     "tierDescriptionSuffix": "different courses",
     "difficulty": [
@@ -206,7 +137,8 @@
       "extreme"
     ],
     "tier": "bronze",
-    "animation": "glow"
+    "animation": "glow",
+    "condition": "function (results) { const uniqueCourses = new Set(results.map((r) => r.courseId)); return uniqueCourses.size; }"
   },
   {
     "id": "eagle_man",
@@ -220,7 +152,8 @@
     "tier": "diamond",
     "difficulty": "hard",
     "points": 500,
-    "animation": "glow"
+    "animation": "glow",
+    "condition": "function (results, layout) { return results.some((r) => { const hole = layout.holes.find((h) => h.number === r.hole); return hole && r.score !== 1 && r.score === hole.par - 2; }); }"
   },
   {
     "id": "round_rollercoaster",
@@ -233,7 +166,8 @@
     "tier": "emerald",
     "difficulty": "hard",
     "points": 250,
-    "animation": "glow"
+    "animation": "glow",
+    "condition": "function (results) { let streak = 0; for (let i = 1; i < results.length; i++) { const prev = results[i - 1].score;\n const curr = results[i].score;\n if ((prev < 0 && curr > 0) || (prev > 0 && curr < 0)) { streak++; } } return streak >= 2; }"
   },
   {
     "id": "three_wishes",
@@ -247,7 +181,8 @@
     "tier": "ruby",
     "difficulty": "hard",
     "points": 500,
-    "animation": "bounce"
+    "animation": "bounce",
+    "condition": "function (results, layout) { // Example: triggered externally once player has 3 hidden conditions met\n  return results.filter((r) => r.isSecretAchieved).length >= 3;\n}"
   },
   {
     "id": "basket_marksman",
@@ -266,26 +201,8 @@
       "Ace Champion",
       "Ace Grandmaster"
     ],
-    "tierThresholds": [
-      1,
-      5,
-      10,
-      25,
-      50,
-      75,
-      100,
-      200
-    ],
-    "tierPoints": [
-      25,
-      50,
-      100,
-      250,
-      500,
-      750,
-      1000,
-      1250
-    ],
+    "tierThresholds": [1, 5, 10, 25, 50, 75, 100, 200],
+    "tierPoints": [25, 50, 100, 250, 500, 750, 1000, 1250],
     "difficulty": [
       "easy",
       "medium",
@@ -297,7 +214,8 @@
       "extreme"
     ],
     "tier": "cosmic",
-    "animation": "glow"
+    "animation": "glow",
+    "condition": "function (results) { return results.some((r) => r.score === 1 && r.isAce === true); }"
   },
   {
     "id": "comeback",
@@ -310,7 +228,8 @@
     "tier": "gold",
     "difficulty": "medium",
     "points": 150,
-    "animation": "glow"
+    "animation": "glow",
+    "condition": "function (results, layout) { for (let i = 2; i < results.length; i++) { const hole1 = layout.holes.find((h) => h.number === results[i - 2].hole); const hole2 = layout.holes.find((h) => h.number === results[i - 1].hole); const hole3 = layout.holes.find((h) => h.number === results[i].hole); const dblBogey = hole1 && results[i - 2].score === hole1.par + 2; const birdie1 = hole2 && results[i - 1].score === hole2.par - 1; const birdie2 = hole3 && results[i].score === hole3.par - 1; if (dblBogey && birdie1 && birdie2) return true; } return false; }"
   },
   {
     "id": "ob_hunter",
@@ -329,26 +248,8 @@
       "OB Champion",
       "OB Grandmaster"
     ],
-    "tierThresholds": [
-      1,
-      5,
-      10,
-      25,
-      50,
-      100,
-      200,
-      500
-    ],
-    "tierPoints": [
-      10,
-      25,
-      50,
-      100,
-      250,
-      500,
-      750,
-      1000
-    ],
+    "tierThresholds": [1, 5, 10, 25, 50, 100, 200, 500],
+    "tierPoints": [10, 25, 50, 100, 250, 500, 750, 1000],
     "difficulty": [
       "easy",
       "easy",
@@ -360,24 +261,7 @@
       "extreme"
     ],
     "tier": "bronze",
-    "animation": "pulse"
-  },
-  {
-    "id": "new_badge",
-    "name": "New Badge",
-    "icon": "new-badge",
-    "type": "allRounds",
-    "quote": "A new badge description",
-    "description": "",
-    "tier": "bronze",
-    "difficulty": "easy",
     "animation": "pulse",
-    "points": 0,
-    "isUnique": false,
-    "tierDescriptionPrefix": "",
-    "tierDescriptionSuffix": "",
-    "tierThresholds": [],
-    "tierPoints": [],
-    "tierNames": []
+    "condition": "function (results) { const obHits = results.filter((r) => r.obCount).length; return obHits; }"
   }
 ]

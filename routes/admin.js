@@ -752,8 +752,33 @@ router.post('/api/badges/test', (req, res) => {
       const results = testData || [];
       const layoutData = layout || { holes: [] };
       
+      // Handle condition field - it might be a string (source code) or function
+      let conditionFunction;
+      if (typeof badge.condition === 'function') {
+         conditionFunction = badge.condition;
+      } else if (typeof badge.condition === 'string') {
+         // Try to create a function from the string
+         try {
+            // Extract function body from string like "function (results, layout) { ... }"
+            const trimmed = badge.condition.trim();
+            const functionStart = trimmed.indexOf('{');
+            const functionEnd = trimmed.lastIndexOf('}');
+            
+            if (functionStart !== -1 && functionEnd !== -1) {
+               const functionBody = trimmed.substring(functionStart + 1, functionEnd).trim();
+               conditionFunction = new Function('results', 'layout', functionBody);
+            } else {
+               throw new Error('Invalid condition function format');
+            }
+         } catch (error) {
+            throw new Error(`Invalid condition function: ${error.message}`);
+         }
+      } else {
+         throw new Error('Condition field is missing or invalid');
+      }
+      
       // Test the condition function
-      const result = badge.condition(results, layoutData);
+      const result = conditionFunction(results, layoutData);
       
       res.json({
          success: true,

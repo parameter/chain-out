@@ -54,20 +54,55 @@ const conditionFunctionSources = {
 }`
 };
 
-// Helper function to get condition function by badge ID or fallback to default
+// Helper function to get condition function by badge ID or from condition string
 function getConditionFunction(badgeId, conditionString) {
     console.log('Getting condition function for badge:', badgeId);
     console.log('Condition string:', conditionString);
     
-    // Try to get predefined function by badge ID
+    // If we have a condition string from the database/JSON, use it
+    if (conditionString && typeof conditionString === 'string') {
+        console.log('Using condition string from database/JSON for badge:', badgeId);
+        return createConditionFunctionFromString(conditionString);
+    }
+    
+    // Try to get predefined function by badge ID as fallback
     if (conditionFunctions[badgeId]) {
         console.log('Using predefined function for badge:', badgeId);
         return conditionFunctions[badgeId];
     }
     
-    // For now, return default function since we can't parse arbitrary code
+    // Default fallback
     console.log('Using default function for badge:', badgeId);
     return conditionFunctions['default'];
+}
+
+// Helper function to create condition functions from JSON string (CSP-safe)
+function createConditionFunctionFromString(conditionString) {
+    console.log('Creating condition function from JSON string:', conditionString);
+    
+    try {
+        // The condition string from JSON is a function string like "function (results, layout) { ... }"
+        // We need to safely convert this to an executable function
+        const trimmed = conditionString.trim();
+        
+        // Extract the function body from the string
+        const functionStart = trimmed.indexOf('{');
+        const functionEnd = trimmed.lastIndexOf('}');
+        
+        if (functionStart !== -1 && functionEnd !== -1) {
+            const functionBody = trimmed.substring(functionStart + 1, functionEnd).trim();
+            console.log('Extracted function body:', functionBody);
+            
+            // Create a safe function using Function constructor
+            return new Function('results', 'layout', functionBody);
+        } else {
+            console.warn('Could not parse function from string, using default');
+            return conditionFunctions['default'];
+        }
+    } catch (error) {
+        console.error('Error creating function from string:', error);
+        return conditionFunctions['default'];
+    }
 }
 
 // Helper function to create condition functions from text (CSP-safe)
@@ -520,6 +555,7 @@ function populateBadgeForm(badge) {
                 conditionText = badge.condition.toString();
             }
         } else {
+            // It's already a string (source code from database/JSON)
             conditionText = badge.condition;
         }
     }
@@ -650,18 +686,14 @@ function collectBadgeFormData() {
         badge.tierNames = names ? names.split('\n').map(n => n.trim()).filter(n => n) : [];
     }
     
-    // Handle condition function
+    // Handle condition function - store as string for JSON serialization
     const conditionText = document.getElementById('badgeCondition').value.trim();
     if (conditionText) {
-        // Try to create a function from the text
-        try {
-            badge.condition = createConditionFunction(conditionText);
-        } catch (error) {
-            console.error('Error creating condition function:', error);
-            badge.condition = conditionFunctions['default'];
-        }
+        // Store the condition as a string (source code) for JSON serialization
+        badge.condition = conditionText;
     } else {
-        badge.condition = conditionFunctions['default'];
+        // Use default condition source code
+        badge.condition = conditionFunctionSources['default'];
     }
     
     return badge;
