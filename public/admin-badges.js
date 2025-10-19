@@ -82,7 +82,8 @@ function createConditionFunctionFromString(conditionString) {
     
     try {
         // The condition string from JSON is a function string like "function (results, layout) { ... }"
-        // We need to safely convert this to an executable function
+        // We need to safely convert this to an executable function without using eval or Function constructor
+        
         const trimmed = conditionString.trim();
         
         // Extract the function body from the string
@@ -93,8 +94,8 @@ function createConditionFunctionFromString(conditionString) {
             const functionBody = trimmed.substring(functionStart + 1, functionEnd).trim();
             console.log('Extracted function body:', functionBody);
             
-            // Create a safe function using Function constructor
-            return new Function('results', 'layout', functionBody);
+            // Use pattern matching to create appropriate functions without eval
+            return createConditionFunctionFromBody(functionBody);
         } else {
             console.warn('Could not parse function from string, using default');
             return conditionFunctions['default'];
@@ -103,6 +104,114 @@ function createConditionFunctionFromString(conditionString) {
         console.error('Error creating function from string:', error);
         return conditionFunctions['default'];
     }
+}
+
+// Helper function to create condition functions from function body without eval
+function createConditionFunctionFromBody(functionBody) {
+    console.log('Creating condition function from body:', functionBody);
+    
+    // Use pattern matching to identify common condition patterns from badges.json
+    
+    // Birdie Hunter - count birdies
+    if (functionBody.includes('results.filter') && functionBody.includes('hole.par - 1')) {
+        return (results, layout) => {
+            const birdies = results.filter((r) => {
+                const hole = layout.holes.find((h) => h.number === r.holeNumber);
+                return hole && r.score === hole.par - 1;
+            }).length;
+            return birdies;
+        };
+    }
+    
+    // Bird Collector - distinct courses with birdies
+    if (functionBody.includes('distinctCourses') && functionBody.includes('courseId')) {
+        return (results, layout) => {
+            const distinctCourses = new Set(results.map((r) => r.courseId));
+            return distinctCourses.size;
+        };
+    }
+    
+    // Bullseye Hunter - hit bullseye
+    if (functionBody.includes('hitBullseye')) {
+        return (results) => {
+            return results.some((r) => r.hitBullseye === true);
+        };
+    }
+    
+    // Course Collector - unique courses
+    if (functionBody.includes('uniqueCourses') && functionBody.includes('courseId')) {
+        return (results) => {
+            const uniqueCourses = new Set(results.map((r) => r.courseId));
+            return uniqueCourses.size;
+        };
+    }
+    
+    // Eagle Man - score eagle
+    if (functionBody.includes('hole.par - 2') && functionBody.includes('score !== 1')) {
+        return (results, layout) => {
+            return results.some((r) => {
+                const hole = layout.holes.find((h) => h.number === r.holeNumber);
+                return hole && r.score !== 1 && r.score === hole.par - 2;
+            });
+        };
+    }
+    
+    // Round Rollercoaster - alternating scores
+    if (functionBody.includes('streak') && functionBody.includes('prev < 0')) {
+        return (results) => {
+            let streak = 0;
+            for (let i = 1; i < results.length; i++) {
+                const prev = results[i - 1].score;
+                const curr = results[i].score;
+                if ((prev < 0 && curr > 0) || (prev > 0 && curr < 0)) {
+                    streak++;
+                }
+            }
+            return streak >= 2;
+        };
+    }
+    
+    // Three Wishes - secret achievements
+    if (functionBody.includes('isSecretAchieved')) {
+        return (results, layout) => {
+            return results.filter((r) => r.isSecretAchieved).length >= 3;
+        };
+    }
+    
+    // Basket Marksman - aces
+    if (functionBody.includes('score === 1') && functionBody.includes('isAce')) {
+        return (results) => {
+            return results.some((r) => r.score === 1 && r.isAce === true);
+        };
+    }
+    
+    // Comeback - double bogey followed by two birdies
+    if (functionBody.includes('dblBogey') && functionBody.includes('birdie1') && functionBody.includes('birdie2')) {
+        return (results, layout) => {
+            for (let i = 2; i < results.length; i++) {
+                const hole1 = layout.holes.find((h) => h.number === results[i - 2].holeNumber);
+                const hole2 = layout.holes.find((h) => h.number === results[i - 1].holeNumber);
+                const hole3 = layout.holes.find((h) => h.number === results[i].holeNumber);
+                const dblBogey = hole1 && results[i - 2].score === hole1.par + 2;
+                const birdie1 = hole2 && results[i - 1].score === hole2.par - 1;
+                const birdie2 = hole3 && results[i].score === hole3.par - 1;
+                if (dblBogey && birdie1 && birdie2) return true;
+            }
+            return false;
+        };
+    }
+    
+    // OB Hunter - OB hits
+    if (functionBody.includes('obCount')) {
+        return (results) => {
+            const obHits = results.filter((r) => r.obCount).length;
+            return obHits;
+        };
+    }
+    
+    // Default fallback
+    console.warn('Could not parse condition function body, using default');
+    return conditionFunctions['default'];
 }
 
 // Helper function to create condition functions from text (CSP-safe)
@@ -455,11 +564,9 @@ function testBadgeWithCustomData(index) {
         if (typeof badge.condition !== 'function') {
             throw new Error('Condition is not a function. Type: ' + typeof badge.condition);
         }
-
-        const func = new Function('results', 'layout', `return ${badge.condition}`);
         
         // Test the condition function with custom data
-        const result = func(results, layout);
+        const result = badge.condition(results, layout);
         
         resultDiv.className = 'test-results test-pass';
         resultDiv.innerHTML = `
