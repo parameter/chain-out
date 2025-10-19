@@ -4,7 +4,7 @@ const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
-const searchForEarnedBadges = require('../lib/badges');
+const { searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements } = require('../lib/badges');
 
 const router = express.Router();
 
@@ -939,6 +939,39 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
   }
 
   res.json({ notifications });
+});
+
+// GET /api/user/:userId/badge/:badgeId/tier/:tierIndex - Check if specific tier was achieved
+router.get('/api/user/:userId/badge/:badgeId/tier/:tierIndex', async (req, res) => {
+  try {
+    const { userId, badgeId, tierIndex } = req.params;
+    const targetTierIndex = parseInt(tierIndex);
+    
+    if (isNaN(targetTierIndex) || targetTierIndex < 0) {
+      return res.status(400).json({ error: 'Invalid tier index' });
+    }
+    
+    const result = await checkTierAchievement(userId, badgeId, targetTierIndex);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error checking tier achievement:', error);
+    res.status(500).json({ error: 'Failed to check tier achievement' });
+  }
+});
+
+// GET /api/user/:userId/badge/:badgeId/tiers - Get all tier achievements for a badge
+router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
+  try {
+    const { userId, badgeId } = req.params;
+    
+    const result = await getUserBadgeTierAchievements(userId, badgeId);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error getting tier achievements:', error);
+    res.status(500).json({ error: 'Failed to get tier achievements' });
+  }
 });
 
 module.exports = router;
