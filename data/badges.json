@@ -32,7 +32,7 @@
       "extreme"
     ],
     "animation": "pulse",
-    "condition": "function (results, layout) { // Return the *number* of birdies to support tier progression\n  const birdies = results.filter((r) => {\n    const hole = layout.holes.find((h) => h.number === r.hole);\n    return hole && r.score === hole.par - 1;\n  }).length;\n  return birdies;\n}"
+    "condition": "function (results, layout) { // Return the *number* of birdies to support tier progression\n  const birdies = results.filter((r) => {\n    const hole = layout.holes.find((h) => h.number === r.holeNumber);\n    return hole && r.score === hole.par - 1;\n  }).length;\n  return birdies;\n}"
   },
   {
     "id": "bird_collector",
