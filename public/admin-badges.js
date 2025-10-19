@@ -455,9 +455,11 @@ function testBadgeWithCustomData(index) {
         if (typeof badge.condition !== 'function') {
             throw new Error('Condition is not a function. Type: ' + typeof badge.condition);
         }
+
+        const func = new Function('results', 'layout', `return ${badge.condition}`);
         
         // Test the condition function with custom data
-        const result = badge.condition(results, layout);
+        const result = func(results, layout);
         
         resultDiv.className = 'test-results test-pass';
         resultDiv.innerHTML = `
