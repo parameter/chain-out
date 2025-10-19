@@ -821,7 +821,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     if (updatedResult) {
       
-      searchForEarnedBadges(updatedResult);
+      await searchForEarnedBadges(updatedResult);
 
     }
 
