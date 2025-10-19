@@ -243,12 +243,13 @@ function loadBadges() {
         .then(response => response.json())
         .then(data => {
             console.log('Loaded badges from API:', data);
-            // Convert string conditions back to functions
+            // Convert string conditions back to functions, but preserve original string
             currentBadges = data.map(badge => {
                 console.log('Processing badge:', badge.name, 'Condition string:', badge.condition);
                 const parsedBadge = {
                     ...badge,
-                    condition: getConditionFunction(badge.id, badge.condition)
+                    condition: getConditionFunction(badge.id, badge.condition),
+                    conditionString: badge.condition // Preserve original string for editing
                 };
                 console.log('Parsed badge condition type:', typeof parsedBadge.condition);
                 console.log('Parsed condition function:', parsedBadge.condition);
@@ -543,7 +544,10 @@ function populateBadgeForm(badge) {
     
     // Condition function - show the actual function source code
     let conditionText = '';
-    if (badge.condition) {
+    if (badge.conditionString) {
+        // Use the preserved condition string from database/JSON
+        conditionText = badge.conditionString;
+    } else if (badge.condition) {
         if (typeof badge.condition === 'function') {
             // Check if it's one of our predefined functions
             const functionName = Object.keys(conditionFunctions).find(key => 
@@ -695,6 +699,9 @@ function collectBadgeFormData() {
         // Use default condition source code
         badge.condition = conditionFunctionSources['default'];
     }
+    
+    // Remove the conditionString field as it's only used for display
+    delete badge.conditionString;
     
     return badge;
 }
