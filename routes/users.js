@@ -4,7 +4,7 @@ const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
-const { searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements } = require('../lib/badges');
+const { searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges } = require('../lib/badges');
 
 const router = express.Router();
 
@@ -830,6 +830,14 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     console.error('Error completing round:', e);
     res.status(500).json({ message: 'Failed to complete round' });
   }
+});
+
+router.get('/badges', requireAuth, async (req, res) => {
+
+  const userId = req.user._id.toString();
+  const badges = await getUserAllBadges(userId);
+
+  res.json({ badges });
 });
 
 router.get('/user', requireAuth, async (req, res) => {
