@@ -369,92 +369,7 @@ function loadBadges() {
         .catch(error => {
             console.error('Error loading badges:', error);
             // Load sample badges if API fails
-            currentBadges = [
-                {
-                    id: "birdie_hunter",
-                    name: "Birdie Hunter",
-                    quote: "You're a true predator of the fairway, hunting down birdies with skill and precision.",
-                    icon: "birdiehunter",
-                    isUnique: false,
-                    type: "allRounds",
-                    tier: "bronze",
-                    tierNames: [
-                        "Birdie Hunter",
-                        "Birdie Pioneer",
-                        "Birdie Master",
-                        "Birdie Legend",
-                        "Birdie Trailblazer",
-                        "Birdie Conqueror",
-                        "Birdie Champion",
-                        "Birdie Grandmaster",
-                    ],
-                    tierThresholds: [5, 50, 100, 500, 1000, 2000, 5000, 10000],
-                    tierPoints: [10, 25, 50, 100, 250, 500, 750, 1000],
-                    tierDescriptionPrefix: "Make",
-                    tierDescriptionSuffix: "birdies",
-                    difficulty: [
-                        "easy",
-                        "easy",
-                        "easy",
-                        "medium",
-                        "medium",
-                        "hard",
-                        "hard",
-                        "extreme",
-                    ],
-                    animation: "pulse",
-                    condition: conditionFunctions['birdie_hunter'],
-                },
-                {
-                    id: "eagle_man",
-                    name: "Eagle Man",
-                    quote: "You just caught a really rare bird man, be proud of yourself!",
-                    description: "Score your first eagle",
-                    icon: "eagle-man",
-                    isUnique: true,
-                    type: "lastRound",
-                    unlockCondition: 1,
-                    tier: "diamond",
-                    difficulty: "hard",
-                    points: 500,
-                    animation: "glow",
-                    condition: conditionFunctions['eagle_man'],
-                },
-                {
-                    id: "basket_marksman",
-                    name: "Basket Marksman",
-                    quote: "You just found the holy grale of disc golf, now that's something to tell the kids about.",
-                    icon: "basket-marksman",
-                    isUnique: false,
-                    type: "allRounds",
-                    tierNames: [
-                        "Ace Hunter",
-                        "Ace Pioneer",
-                        "Ace Master",
-                        "Ace Legend",
-                        "Ace Trailblazer",
-                        "Ace Conqueror",
-                        "Ace Champion",
-                        "Ace Grandmaster",
-                    ],
-                    tierThresholds: [1, 5, 10, 25, 50, 75, 100, 200],
-                    tierPoints: [25, 50, 100, 250, 500, 750, 1000, 1250],
-                    difficulty: [
-                        "easy",
-                        "medium",
-                        "medium",
-                        "medium",
-                        "hard",
-                        "hard",
-                        "extreme",
-                        "extreme",
-                    ],
-                    tier: "cosmic",
-                    animation: "glow",
-                    condition: conditionFunctions['basket_marksman'],
-                }
-            ];
-            displayBadges();
+            
         });
 }
 
@@ -477,6 +392,7 @@ function displayBadges() {
             <div><strong>Type:</strong> ${badge.type || 'N/A'}</div>
             <div><strong>Unique:</strong> ${badge.isUnique ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
+            <div><strong>Test Data Count:</strong> ${badge['test-data'] ? badge['test-data'].length : 0}</div>
             
             <!-- Individual Test Section -->
             <div class="badge-test-section">
@@ -494,8 +410,26 @@ function displayBadges() {
                 <div class="test-actions">
                     <button class="btn btn-primary test-individual-btn" data-index="${index}">Test with Custom Data</button>
                     <button class="btn btn-secondary load-sample-test-btn" data-index="${index}">Load Sample Data</button>
+                    <button class="btn btn-success save-test-data-btn" data-index="${index}">Save Test Data to Badge</button>
+                    ${badge['test-data'] && badge['test-data'].length > 0 ? `<button class="btn btn-warning clear-test-data-btn" data-index="${index}">Clear All Test Data</button>` : ''}
                 </div>
                 <div id="testResult-${index}" class="test-results hidden"></div>
+                
+                <!-- Show existing test data if available -->
+                ${badge['test-data'] && badge['test-data'].length > 0 ? `
+                <div class="existing-test-data">
+                    <h6>📊 Saved Test Data (${badge['test-data'].length} entries)</h6>
+                    <div class="test-data-list">
+                        ${badge['test-data'].map((testData, testIndex) => `
+                            <div class="test-data-item">
+                                <strong>Test ${testIndex + 1}:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes
+                                <br><small>Saved: ${new Date(testData.savedAt).toLocaleString()}</small>
+                                <button class="btn btn-sm btn-secondary load-saved-test-btn" data-badge-index="${index}" data-test-index="${testIndex}">Load This Test</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
             </div>
         `;
         badgeList.appendChild(badgeItem);
@@ -513,6 +447,28 @@ function displayBadges() {
         btn.addEventListener('click', (e) => {
             const index = parseInt(e.target.getAttribute('data-index'));
             loadSampleTestData(index);
+        });
+    });
+
+    document.querySelectorAll('.save-test-data-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            saveTestDataToBadge(index);
+        });
+    });
+
+    document.querySelectorAll('.load-saved-test-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const badgeIndex = parseInt(e.target.getAttribute('data-badge-index'));
+            const testIndex = parseInt(e.target.getAttribute('data-test-index'));
+            loadSavedTestData(badgeIndex, testIndex);
+        });
+    });
+
+    document.querySelectorAll('.clear-test-data-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            clearTestData(index);
         });
     });
 
@@ -597,6 +553,131 @@ function loadSampleTestData(index) {
     document.getElementById(`testLayout-${index}`).value = JSON.stringify(defaultLayout, null, 2);
 }
 
+async function saveTestDataToBadge(index) {
+    const badge = currentBadges[index];
+    const resultDiv = document.getElementById(`testResult-${index}`);
+    
+    try {
+        // Get test data from textareas
+        const resultsText = document.getElementById(`testResults-${index}`).value;
+        const layoutText = document.getElementById(`testLayout-${index}`).value;
+        
+        let results, layout;
+        
+        // Parse JSON data
+        try {
+            results = JSON.parse(resultsText);
+        } catch (error) {
+            throw new Error('Invalid JSON in test results: ' + error.message);
+        }
+        
+        try {
+            layout = JSON.parse(layoutText);
+        } catch (error) {
+            throw new Error('Invalid JSON in test layout: ' + error.message);
+        }
+        
+        // Create test data object
+        const testData = {
+            results: results,
+            layout: layout,
+            savedAt: new Date().toISOString(),
+            savedBy: 'admin'
+        };
+        
+        // Add test-data field to badge if it doesn't exist
+        if (!badge['test-data']) {
+            badge['test-data'] = [];
+        }
+        
+        // Add new test data to the array
+        badge['test-data'].push(testData);
+        
+        // Save the updated badge to server
+        await saveSingleBadgeToServer(badge, 'update');
+        
+        resultDiv.className = 'test-results test-pass';
+        resultDiv.innerHTML = `
+            <strong>✅ Test Data Saved Successfully!</strong><br>
+            <strong>Badge:</strong> ${badge.name}<br>
+            <strong>Test Data Count:</strong> ${badge['test-data'].length}<br>
+            <strong>Results Count:</strong> ${results.length}<br>
+            <strong>Layout Holes:</strong> ${layout.holes ? layout.holes.length : 'N/A'}<br>
+            <strong>Saved At:</strong> ${new Date().toLocaleString()}
+        `;
+        resultDiv.classList.remove('hidden');
+        
+    } catch (error) {
+        resultDiv.className = 'test-results test-fail';
+        resultDiv.innerHTML = `
+            <strong>❌ Failed to Save Test Data:</strong> ${error.message}<br>
+            <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+        `;
+        resultDiv.classList.remove('hidden');
+    }
+}
+
+function loadSavedTestData(badgeIndex, testIndex) {
+    const badge = currentBadges[badgeIndex];
+    
+    if (!badge['test-data'] || !badge['test-data'][testIndex]) {
+        alert('Test data not found');
+        return;
+    }
+    
+    const testData = badge['test-data'][testIndex];
+    
+    // Load the saved test data into the textareas
+    document.getElementById(`testResults-${badgeIndex}`).value = JSON.stringify(testData.results, null, 2);
+    document.getElementById(`testLayout-${badgeIndex}`).value = JSON.stringify(testData.layout, null, 2);
+    
+    // Show a success message
+    const resultDiv = document.getElementById(`testResult-${badgeIndex}`);
+    resultDiv.className = 'test-results test-pass';
+    resultDiv.innerHTML = `
+        <strong>✅ Loaded Saved Test Data!</strong><br>
+        <strong>Test Data:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes<br>
+        <strong>Originally Saved:</strong> ${new Date(testData.savedAt).toLocaleString()}<br>
+        <strong>Loaded At:</strong> ${new Date().toLocaleString()}
+    `;
+    resultDiv.classList.remove('hidden');
+}
+
+async function clearTestData(index) {
+    if (!confirm('Are you sure you want to clear all test data for this badge?')) {
+        return;
+    }
+    
+    const badge = currentBadges[index];
+    const resultDiv = document.getElementById(`testResult-${index}`);
+    
+    try {
+        // Clear the test-data array
+        badge['test-data'] = [];
+        
+        // Save the updated badge to server
+        await saveSingleBadgeToServer(badge, 'update');
+        
+        resultDiv.className = 'test-results test-pass';
+        resultDiv.innerHTML = `
+            <strong>✅ Test Data Cleared Successfully!</strong><br>
+            <strong>Badge:</strong> ${badge.name}<br>
+            <strong>Cleared At:</strong> ${new Date().toLocaleString()}
+        `;
+        resultDiv.classList.remove('hidden');
+        
+        // Refresh the badge display to update the UI
+        displayBadges();
+        
+    } catch (error) {
+        resultDiv.className = 'test-results test-fail';
+        resultDiv.innerHTML = `
+            <strong>❌ Failed to Clear Test Data:</strong> ${error.message}<br>
+            <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+        `;
+        resultDiv.classList.remove('hidden');
+    }
+}
 
 function editBadge(index) {
     const badge = currentBadges[index];

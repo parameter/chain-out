@@ -240,6 +240,13 @@ router.get('/badges', (req, res) => {
         .btn-danger:hover {
             background: #c82333;
         }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
         .btn-success {
             background: #28a745;
             color: white;
@@ -492,6 +499,45 @@ router.get('/badges', (req, res) => {
         .test-actions .btn {
             padding: 6px 12px;
             font-size: 12px;
+        }
+        
+        .existing-test-data {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e8f4fd;
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+        }
+        
+        .existing-test-data h6 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #004085;
+        }
+        
+        .test-data-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .test-data-item {
+            padding: 10px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .test-data-item small {
+            color: #6c757d;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 11px;
         }
     </style>
 </head>
