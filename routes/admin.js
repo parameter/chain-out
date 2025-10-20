@@ -24,7 +24,7 @@ async function readBadgesFromDatabase() {
             const badgesWithIds = ensureBadgeIds(result.badges);
             // Save back to database if any badges were missing _id
             if (badgesWithIds !== result.badges) {
-                await writeBadgesToDatabase(badgesWithIds);
+                await writeBadgesToDatabase(badgesWithIds, result['test-data'] || []);
             }
             return badgesWithIds;
         }
@@ -38,7 +38,7 @@ async function readBadgesFromDatabase() {
             const badgesWithIds = ensureBadgeIds(badges);
             
             // Save to database for future use
-            await writeBadgesToDatabase(badgesWithIds);
+            await writeBadgesToDatabase(badgesWithIds, []);
             return badgesWithIds;
         } catch (fileError) {
             console.log('No badges file found, starting with empty array');
@@ -50,16 +50,44 @@ async function readBadgesFromDatabase() {
     }
 }
 
-// Helper function to write badges to database
-async function writeBadgesToDatabase(badges) {
+// Helper function to read test data from database
+async function readTestDataFromDatabase() {
     try {
         const db = getDatabase();
         const badgesCollection = db.collection('badgeDefinitions');
         
+        // Get the single document containing test data
+        const result = await badgesCollection.findOne({ type: 'badges' });
+        
+        if (result && result['test-data']) {
+            return result['test-data'];
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('Error reading test data from database:', error);
+        return [];
+    }
+}
+
+// Helper function to write badges to database
+async function writeBadgesToDatabase(badges, testData = null) {
+    try {
+        const db = getDatabase();
+        const badgesCollection = db.collection('badgeDefinitions');
+        
+        // Prepare the document to save
+        const document = { type: 'badges', badges: badges };
+        
+        // Include test-data if provided
+        if (testData !== null) {
+            document['test-data'] = testData;
+        }
+        
         // Save as a single document with type identifier
         await badgesCollection.replaceOne(
             { type: 'badges' },
-            { type: 'badges', badges: badges },
+            document,
             { upsert: true }
         );
         return true;
@@ -748,8 +776,9 @@ router.post('/api/badges/save', async (req, res) => {
          return res.status(400).json({ error: 'Badge data is required' });
       }
       
-      // Load existing badges
+      // Load existing badges and test data
       const existingBadges = await readBadgesFromDatabase();
+      const existingTestData = await readTestDataFromDatabase();
       
       if (action === 'create') {
          // Add new badge
@@ -765,7 +794,9 @@ router.post('/api/badges/save', async (req, res) => {
       } else if (action === 'delete') {
          // Remove badge using _id for matching
          const filteredBadges = existingBadges.filter(b => b._id !== badge._id);
-         const success = await writeBadgesToDatabase(filteredBadges);
+         // Also remove any test data associated with this badge
+         const filteredTestData = existingTestData.filter(td => td.badgeId !== badge._id);
+         const success = await writeBadgesToDatabase(filteredBadges, filteredTestData);
          
          if (success) {
             res.json({ success: true, message: 'Badge deleted successfully' });
@@ -775,8 +806,8 @@ router.post('/api/badges/save', async (req, res) => {
          return;
       }
       
-      // Save updated badges
-      const success = await writeBadgesToDatabase(existingBadges);
+      // Save updated badges with existing test data
+      const success = await writeBadgesToDatabase(existingBadges, existingTestData);
       
       if (success) {
          res.json({ success: true, message: `Badge ${action}d successfully` });
@@ -785,6 +816,84 @@ router.post('/api/badges/save', async (req, res) => {
       }
    } catch (error) {
       console.error(`Error ${req.body.action} badge:`, error);
+      res.status(500).json({ error: error.message });
+   }
+});
+
+// POST /api/badges/test-data/save - Save test data for a badge
+router.post('/api/badges/test-data/save', async (req, res) => {
+   try {
+      const { badgeId, testData } = req.body;
+      
+      if (!badgeId || !testData) {
+         return res.status(400).json({ error: 'Badge ID and test data are required' });
+      }
+      
+      // Load existing badges and test data
+      const existingBadges = await readBadgesFromDatabase();
+      const existingTestData = await readTestDataFromDatabase();
+      
+      // Add test data with badge association
+      const newTestData = {
+         ...testData,
+         badgeId: badgeId,
+         id: 'test_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+      };
+      
+      existingTestData.push(newTestData);
+      
+      // Save updated test data
+      const success = await writeBadgesToDatabase(existingBadges, existingTestData);
+      
+      if (success) {
+         res.json({ success: true, message: 'Test data saved successfully', testDataId: newTestData.id });
+      } else {
+         res.status(500).json({ error: 'Failed to save test data' });
+      }
+   } catch (error) {
+      console.error('Error saving test data:', error);
+      res.status(500).json({ error: error.message });
+   }
+});
+
+// GET /api/badges/test-data/:badgeId - Get test data for a specific badge
+router.get('/api/badges/test-data/:badgeId', async (req, res) => {
+   try {
+      const { badgeId } = req.params;
+      const testData = await readTestDataFromDatabase();
+      
+      // Filter test data for this specific badge
+      const badgeTestData = testData.filter(td => td.badgeId === badgeId);
+      
+      res.json(badgeTestData);
+   } catch (error) {
+      console.error('Error getting test data:', error);
+      res.status(500).json({ error: error.message });
+   }
+});
+
+// DELETE /api/badges/test-data/:badgeId - Clear all test data for a badge
+router.delete('/api/badges/test-data/:badgeId', async (req, res) => {
+   try {
+      const { badgeId } = req.params;
+      
+      // Load existing badges and test data
+      const existingBadges = await readBadgesFromDatabase();
+      const existingTestData = await readTestDataFromDatabase();
+      
+      // Remove test data for this badge
+      const filteredTestData = existingTestData.filter(td => td.badgeId !== badgeId);
+      
+      // Save updated test data
+      const success = await writeBadgesToDatabase(existingBadges, filteredTestData);
+      
+      if (success) {
+         res.json({ success: true, message: 'Test data cleared successfully' });
+      } else {
+         res.status(500).json({ error: 'Failed to clear test data' });
+      }
+   } catch (error) {
+      console.error('Error clearing test data:', error);
       res.status(500).json({ error: error.message });
    }
 });

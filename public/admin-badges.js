@@ -347,10 +347,10 @@ function getDefaultTestLayout() {
 
 
 // Load badges
-function loadBadges() {
+async function loadBadges() {
     fetch('/admin/api/badges')
         .then(response => response.json())
-        .then(data => {
+        .then(async data => {
             console.log('Loaded badges from API:', data);
             // Convert string conditions back to functions, but preserve original string
             currentBadges = data.map(badge => {
@@ -364,7 +364,7 @@ function loadBadges() {
                 console.log('Parsed condition function:', parsedBadge.condition);
                 return parsedBadge;
             });
-            displayBadges();
+            await displayBadges();
         })
         .catch(error => {
             console.error('Error loading badges:', error);
@@ -373,7 +373,7 @@ function loadBadges() {
         });
 }
 
-function displayBadges() {
+async function displayBadges() {
     const badgeList = document.getElementById('badgeList');
     badgeList.innerHTML = '';
 
@@ -392,7 +392,7 @@ function displayBadges() {
             <div><strong>Type:</strong> ${badge.type || 'N/A'}</div>
             <div><strong>Unique:</strong> ${badge.isUnique ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
-            <div><strong>Test Data Count:</strong> ${badge['test-data'] ? badge['test-data'].length : 0}</div>
+            <div><strong>Test Data Count:</strong> <span id="testDataCount-${index}">Loading...</span></div>
             
             <!-- Individual Test Section -->
             <div class="badge-test-section">
@@ -411,29 +411,24 @@ function displayBadges() {
                     <button class="btn btn-primary test-individual-btn" data-index="${index}">Test with Custom Data</button>
                     <button class="btn btn-secondary load-sample-test-btn" data-index="${index}">Load Sample Data</button>
                     <button class="btn btn-success save-test-data-btn" data-index="${index}">Save Test Data to Badge</button>
-                    ${badge['test-data'] && badge['test-data'].length > 0 ? `<button class="btn btn-warning clear-test-data-btn" data-index="${index}">Clear All Test Data</button>` : ''}
+                    <button class="btn btn-warning clear-test-data-btn" data-index="${index}" style="display: none;">Clear All Test Data</button>
                 </div>
                 <div id="testResult-${index}" class="test-results hidden"></div>
                 
                 <!-- Show existing test data if available -->
-                ${badge['test-data'] && badge['test-data'].length > 0 ? `
-                <div class="existing-test-data">
-                    <h6>📊 Saved Test Data (${badge['test-data'].length} entries)</h6>
-                    <div class="test-data-list">
-                        ${badge['test-data'].map((testData, testIndex) => `
-                            <div class="test-data-item">
-                                <strong>Test ${testIndex + 1}:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes
-                                <br><small>Saved: ${new Date(testData.savedAt).toLocaleString()}</small>
-                                <button class="btn btn-sm btn-secondary load-saved-test-btn" data-badge-index="${index}" data-test-index="${testIndex}">Load This Test</button>
-                            </div>
-                        `).join('')}
+                <div class="existing-test-data" id="existingTestData-${index}" style="display: none;">
+                    <h6>📊 Saved Test Data (<span id="testDataCountDisplay-${index}">0</span> entries)</h6>
+                    <div class="test-data-list" id="testDataList-${index}">
+                        <!-- Test data will be loaded here -->
                     </div>
                 </div>
-                ` : ''}
             </div>
         `;
         badgeList.appendChild(badgeItem);
     });
+
+    // Load test data for each badge
+    await loadTestDataForAllBadges();
 
     // Add event listeners for badge buttons
     document.querySelectorAll('.test-individual-btn').forEach(btn => {
@@ -545,6 +540,83 @@ function testBadgeWithCustomData(index) {
     }
 }
 
+async function loadTestDataForAllBadges() {
+    for (let i = 0; i < currentBadges.length; i++) {
+        await loadTestDataForBadge(i);
+    }
+}
+
+async function loadTestDataForBadge(badgeIndex) {
+    const badge = currentBadges[badgeIndex];
+    
+    try {
+        // Fetch test data for this badge
+        const response = await fetch(`/admin/api/badges/test-data/${badge._id}`);
+        
+        if (response.ok) {
+            const testDataArray = await response.json();
+            
+            // Update test data count
+            const countElement = document.getElementById(`testDataCount-${badgeIndex}`);
+            if (countElement) {
+                countElement.textContent = testDataArray.length;
+            }
+            
+            // Update test data count display
+            const countDisplayElement = document.getElementById(`testDataCountDisplay-${badgeIndex}`);
+            if (countDisplayElement) {
+                countDisplayElement.textContent = testDataArray.length;
+            }
+            
+            // Show/hide existing test data section
+            const existingTestDataElement = document.getElementById(`existingTestData-${badgeIndex}`);
+            if (existingTestDataElement) {
+                if (testDataArray.length > 0) {
+                    existingTestDataElement.style.display = 'block';
+                    
+                    // Update test data list
+                    const testDataListElement = document.getElementById(`testDataList-${badgeIndex}`);
+                    if (testDataListElement) {
+                        testDataListElement.innerHTML = testDataArray.map((testData, testIndex) => `
+                            <div class="test-data-item">
+                                <strong>Test ${testIndex + 1}:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes
+                                <br><small>Saved: ${new Date(testData.savedAt).toLocaleString()}</small>
+                                <button class="btn btn-sm btn-secondary load-saved-test-btn" data-badge-index="${badgeIndex}" data-test-index="${testIndex}">Load This Test</button>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    // Show clear button if there's test data
+                    const clearButton = document.querySelector(`[data-index="${badgeIndex}"].clear-test-data-btn`);
+                    if (clearButton) {
+                        clearButton.style.display = 'inline-block';
+                    }
+                } else {
+                    existingTestDataElement.style.display = 'none';
+                    
+                    // Hide clear button if no test data
+                    const clearButton = document.querySelector(`[data-index="${badgeIndex}"].clear-test-data-btn`);
+                    if (clearButton) {
+                        clearButton.style.display = 'none';
+                    }
+                }
+            }
+        } else {
+            // If no test data or error, set count to 0
+            const countElement = document.getElementById(`testDataCount-${badgeIndex}`);
+            if (countElement) {
+                countElement.textContent = '0';
+            }
+        }
+    } catch (error) {
+        console.error(`Error loading test data for badge ${badge.name}:`, error);
+        const countElement = document.getElementById(`testDataCount-${badgeIndex}`);
+        if (countElement) {
+            countElement.textContent = 'Error';
+        }
+    }
+}
+
 function loadSampleTestData(index) {
     const defaultData = getDefaultTestData();
     const defaultLayout = getDefaultTestLayout();
@@ -585,27 +657,37 @@ async function saveTestDataToBadge(index) {
             savedBy: 'admin'
         };
         
-        // Add test-data field to badge if it doesn't exist
-        if (!badge['test-data']) {
-            badge['test-data'] = [];
+        // Save test data using the new API endpoint
+        const response = await fetch('/admin/api/badges/test-data/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                badgeId: badge._id, 
+                testData: testData 
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to save test data: ${response.statusText}`);
         }
         
-        // Add new test data to the array
-        badge['test-data'].push(testData);
-        
-        // Save the updated badge to server
-        await saveSingleBadgeToServer(badge, 'update');
+        const result = await response.json();
         
         resultDiv.className = 'test-results test-pass';
         resultDiv.innerHTML = `
             <strong>✅ Test Data Saved Successfully!</strong><br>
             <strong>Badge:</strong> ${badge.name}<br>
-            <strong>Test Data Count:</strong> ${badge['test-data'].length}<br>
+            <strong>Test Data ID:</strong> ${result.testDataId}<br>
             <strong>Results Count:</strong> ${results.length}<br>
             <strong>Layout Holes:</strong> ${layout.holes ? layout.holes.length : 'N/A'}<br>
             <strong>Saved At:</strong> ${new Date().toLocaleString()}
         `;
         resultDiv.classList.remove('hidden');
+        
+        // Refresh the badge display to show updated test data count
+        await loadBadges();
         
     } catch (error) {
         resultDiv.className = 'test-results test-fail';
@@ -617,30 +699,49 @@ async function saveTestDataToBadge(index) {
     }
 }
 
-function loadSavedTestData(badgeIndex, testIndex) {
+async function loadSavedTestData(badgeIndex, testIndex) {
     const badge = currentBadges[badgeIndex];
-    
-    if (!badge['test-data'] || !badge['test-data'][testIndex]) {
-        alert('Test data not found');
-        return;
-    }
-    
-    const testData = badge['test-data'][testIndex];
-    
-    // Load the saved test data into the textareas
-    document.getElementById(`testResults-${badgeIndex}`).value = JSON.stringify(testData.results, null, 2);
-    document.getElementById(`testLayout-${badgeIndex}`).value = JSON.stringify(testData.layout, null, 2);
-    
-    // Show a success message
     const resultDiv = document.getElementById(`testResult-${badgeIndex}`);
-    resultDiv.className = 'test-results test-pass';
-    resultDiv.innerHTML = `
-        <strong>✅ Loaded Saved Test Data!</strong><br>
-        <strong>Test Data:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes<br>
-        <strong>Originally Saved:</strong> ${new Date(testData.savedAt).toLocaleString()}<br>
-        <strong>Loaded At:</strong> ${new Date().toLocaleString()}
-    `;
-    resultDiv.classList.remove('hidden');
+    
+    try {
+        // Fetch test data for this badge from the API
+        const response = await fetch(`/admin/api/badges/test-data/${badge._id}`);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load test data: ${response.statusText}`);
+        }
+        
+        const testDataArray = await response.json();
+        
+        if (!testDataArray || testDataArray.length === 0 || !testDataArray[testIndex]) {
+            alert('Test data not found');
+            return;
+        }
+        
+        const testData = testDataArray[testIndex];
+        
+        // Load the saved test data into the textareas
+        document.getElementById(`testResults-${badgeIndex}`).value = JSON.stringify(testData.results, null, 2);
+        document.getElementById(`testLayout-${badgeIndex}`).value = JSON.stringify(testData.layout, null, 2);
+        
+        // Show a success message
+        resultDiv.className = 'test-results test-pass';
+        resultDiv.innerHTML = `
+            <strong>✅ Loaded Saved Test Data!</strong><br>
+            <strong>Test Data:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes<br>
+            <strong>Originally Saved:</strong> ${new Date(testData.savedAt).toLocaleString()}<br>
+            <strong>Loaded At:</strong> ${new Date().toLocaleString()}
+        `;
+        resultDiv.classList.remove('hidden');
+        
+    } catch (error) {
+        resultDiv.className = 'test-results test-fail';
+        resultDiv.innerHTML = `
+            <strong>❌ Failed to Load Test Data:</strong> ${error.message}<br>
+            <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+        `;
+        resultDiv.classList.remove('hidden');
+    }
 }
 
 async function clearTestData(index) {
@@ -652,11 +753,14 @@ async function clearTestData(index) {
     const resultDiv = document.getElementById(`testResult-${index}`);
     
     try {
-        // Clear the test-data array
-        badge['test-data'] = [];
+        // Clear test data using the new API endpoint
+        const response = await fetch(`/admin/api/badges/test-data/${badge._id}`, {
+            method: 'DELETE'
+        });
         
-        // Save the updated badge to server
-        await saveSingleBadgeToServer(badge, 'update');
+        if (!response.ok) {
+            throw new Error(`Failed to clear test data: ${response.statusText}`);
+        }
         
         resultDiv.className = 'test-results test-pass';
         resultDiv.innerHTML = `
@@ -667,7 +771,7 @@ async function clearTestData(index) {
         resultDiv.classList.remove('hidden');
         
         // Refresh the badge display to update the UI
-        displayBadges();
+        await loadBadges();
         
     } catch (error) {
         resultDiv.className = 'test-results test-fail';
