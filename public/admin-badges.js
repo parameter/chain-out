@@ -591,6 +591,24 @@ async function loadTestDataForBadge(badgeIndex) {
                     if (clearButton) {
                         clearButton.style.display = 'inline-block';
                     }
+                    
+                    // Auto-load the most recent test data into the textareas
+                    const mostRecentTestData = testDataArray[testDataArray.length - 1]; // Get the last (most recent) test data
+                    if (mostRecentTestData) {
+                        document.getElementById(`testResults-${badgeIndex}`).value = JSON.stringify(mostRecentTestData.results, null, 2);
+                        document.getElementById(`testLayout-${badgeIndex}`).value = JSON.stringify(mostRecentTestData.layout, null, 2);
+                        
+                        // Show a notification that test data was auto-loaded
+                        const resultDiv = document.getElementById(`testResult-${badgeIndex}`);
+                        resultDiv.className = 'test-results test-pass';
+                        resultDiv.innerHTML = `
+                            <strong>🔄 Auto-loaded Saved Test Data</strong><br>
+                            <strong>Test Data:</strong> ${mostRecentTestData.results.length} results, ${mostRecentTestData.layout.holes ? mostRecentTestData.layout.holes.length : 0} holes<br>
+                            <strong>Originally Saved:</strong> ${new Date(mostRecentTestData.savedAt).toLocaleString()}<br>
+                            <strong>Auto-loaded At:</strong> ${new Date().toLocaleString()}
+                        `;
+                        resultDiv.classList.remove('hidden');
+                    }
                 } else {
                     existingTestDataElement.style.display = 'none';
                     
@@ -602,11 +620,17 @@ async function loadTestDataForBadge(badgeIndex) {
                 }
             }
         } else {
-            // If no test data or error, set count to 0
+            // If no test data or error, set count to 0 and load default test data
             const countElement = document.getElementById(`testDataCount-${badgeIndex}`);
             if (countElement) {
                 countElement.textContent = '0';
             }
+            
+            // Load default test data when no saved test data exists
+            const defaultData = getDefaultTestData();
+            const defaultLayout = getDefaultTestLayout();
+            document.getElementById(`testResults-${badgeIndex}`).value = JSON.stringify(defaultData, null, 2);
+            document.getElementById(`testLayout-${badgeIndex}`).value = JSON.stringify(defaultLayout, null, 2);
         }
     } catch (error) {
         console.error(`Error loading test data for badge ${badge.name}:`, error);
@@ -614,6 +638,12 @@ async function loadTestDataForBadge(badgeIndex) {
         if (countElement) {
             countElement.textContent = 'Error';
         }
+        
+        // Load default test data when there's an error
+        const defaultData = getDefaultTestData();
+        const defaultLayout = getDefaultTestLayout();
+        document.getElementById(`testResults-${badgeIndex}`).value = JSON.stringify(defaultData, null, 2);
+        document.getElementById(`testLayout-${badgeIndex}`).value = JSON.stringify(defaultLayout, null, 2);
     }
 }
 
