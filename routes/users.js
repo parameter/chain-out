@@ -833,12 +833,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 });
 
 router.get('/badges', requireAuth, async (req, res) => {
-
-  console.log('HERE');
-
-  const userId = req.user._id.toString();
-  const badges = await getUserAllBadges(userId);
-
+  const badges = await getUserAllBadges(req.user._id);
   res.json({ badges });
 });
 
