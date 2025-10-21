@@ -678,6 +678,17 @@ router.get('/badges', (req, res) => {
                         </div>
                     </div>
                     
+                    <!-- Track Unique Courses -->
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="trackUniqueCourses" name="trackUniqueCourses" style="margin-right: 8px;">
+                            Track Unique Courses
+                        </label>
+                        <small style="display: block; color: #666; margin-top: 5px;">
+                            When enabled, this badge will only count progress once per unique course played.
+                        </small>
+                    </div>
+                    
                     
                     <!-- Tier Information (for non-unique badges) -->
                     <div class="tier-section" id="tierSection">

@@ -41,6 +41,7 @@
     "icon": "bird-collector",
     "isUnique": false,
     "type": "allRounds",
+    "trackUniqueCourses": true,
     "tier": "silver",
     "tierNames": [
       "Novice Bird Collector",
@@ -68,7 +69,7 @@
     ],
     "points": 500,
     "animation": "bounce",
-    "condition": "function (results, layout, courseId) {const birdies = results.filter((r) => { const hole = layout.holes.find((h) => h.number === r.holeNumber); return hole && r.score === hole.par - 1;}).length; return birdies;}"
+    "condition": "function (results, layout, courseId) {const birdies = results.filter((r) => { const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber); return hole && r.score === hole.par - 1;}).length; return birdies >= 3 ? 1 : 0;}"
   },
   {
     "id": "bullseye_hunter",

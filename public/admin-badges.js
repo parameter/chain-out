@@ -391,6 +391,7 @@ async function displayBadges() {
             <div><strong>ID:</strong> ${badge.id}</div>
             <div><strong>Type:</strong> ${badge.type || 'N/A'}</div>
             <div><strong>Unique:</strong> ${badge.isUnique ? 'Yes' : 'No'}</div>
+            <div><strong>Track Unique Courses:</strong> ${badge.trackUniqueCourses ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
             <div><strong>Test Data Count:</strong> <span id="testDataCount-${index}">Loading...</span></div>
             
@@ -859,6 +860,12 @@ function populateBadgeForm(badge) {
         isUniqueCheckbox.checked = badge.isUnique || false;
     }
     
+    // Handle trackUniqueCourses checkbox
+    const trackUniqueCoursesCheckbox = document.getElementById('trackUniqueCourses');
+    if (trackUniqueCoursesCheckbox) {
+        trackUniqueCoursesCheckbox.checked = badge.trackUniqueCourses || false;
+    }
+    
     // Tier information
     document.getElementById('tierDescriptionPrefix').value = badge.tierDescriptionPrefix || '';
     document.getElementById('tierDescriptionSuffix').value = badge.tierDescriptionSuffix || '';
@@ -987,7 +994,8 @@ function collectBadgeFormData() {
         difficulty: document.getElementById('badgeDifficulty').value,
         animation: document.getElementById('badgeAnimation').value,
         points: parseInt(document.getElementById('badgePoints').value) || 0,
-        isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false
+        isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false,
+        trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false
     };
     
     // Use existing _id if editing, or generate new one for new badges
