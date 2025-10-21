@@ -68,7 +68,7 @@
     ],
     "points": 500,
     "animation": "bounce",
-    "condition": "function (results, layout) { // Example: unlock if player made a birdie on 3+ distinct courses\n  const distinctCourses = new Set(results.map((r) => r.courseId));\n  return distinctCourses.size >= 3;\n}"
+    "condition": "function (results, layout, courseId) {const birdies = results.filter((r) => { const hole = layout.holes.find((h) => h.number === r.holeNumber); return hole && r.score === hole.par - 1;}).length; return birdies;}"
   },
   {
     "id": "bullseye_hunter",
