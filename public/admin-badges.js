@@ -841,7 +841,14 @@ function populateBadgeForm(badge) {
     document.getElementById('badgeId').value = badge.id || '';
     document.getElementById('badgeName').value = badge.name || '';
     document.getElementById('badgeIcon').value = badge.icon || '';
-    document.getElementById('badgeType').value = badge.type || 'allRounds';
+    
+    // Set the new Type field (unique, tiered, secret)
+    const badgeType = badge.type || 'unique';
+    document.getElementById('badgeType').value = badgeType;
+    
+    // Set the category field (renamed from the old type field)
+    document.getElementById('badgeCategory').value = badge.category || 'allRounds';
+    
     document.getElementById('badgeQuote').value = badge.quote || '';
     document.getElementById('badgeDescription').value = badge.description || '';
     
@@ -901,10 +908,21 @@ function populateBadgeForm(badge) {
 }
 
 function toggleTierSection() {
-    const tierSection = document.getElementById('tierSection');
-    const isUniqueCheckbox = document.getElementById('badgeIsUnique');
-    const isUnique = isUniqueCheckbox ? isUniqueCheckbox.checked : false;
-    tierSection.style.display = isUnique ? 'none' : 'block';
+    const badgeType = document.getElementById('badgeType').value;
+    const uniqueBadgeSection = document.getElementById('uniqueBadgeSection');
+    const tieredBadgeSection = document.getElementById('tieredBadgeSection');
+    
+    // Hide both sections first
+    if (uniqueBadgeSection) uniqueBadgeSection.style.display = 'none';
+    if (tieredBadgeSection) tieredBadgeSection.style.display = 'none';
+    
+    // Show appropriate section based on type
+    if (badgeType === 'unique') {
+        if (uniqueBadgeSection) uniqueBadgeSection.style.display = 'block';
+    } else if (badgeType === 'tiered') {
+        if (tieredBadgeSection) tieredBadgeSection.style.display = 'block';
+    }
+    // For 'secret' type, both sections remain hidden
 }
 
 async function saveBadge() {
@@ -987,7 +1005,8 @@ function collectBadgeFormData() {
         id: document.getElementById('badgeId').value,
         name: document.getElementById('badgeName').value,
         icon: document.getElementById('badgeIcon').value,
-        type: document.getElementById('badgeType').value,
+        type: document.getElementById('badgeType').value, // Now contains unique/tiered/secret
+        category: document.getElementById('badgeCategory').value, // Renamed from old type field
         quote: document.getElementById('badgeQuote').value,
         description: document.getElementById('badgeDescription').value,
         tier: document.getElementById('badgeTier').value,
@@ -1007,8 +1026,8 @@ function collectBadgeFormData() {
         badge._id = 'badge_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
     
-    // Add tier information if not unique
-    if (!badge.isUnique) {
+    // Add tier information if tiered badge
+    if (badge.type === 'tiered') {
         badge.tierDescriptionPrefix = document.getElementById('tierDescriptionPrefix').value;
         badge.tierDescriptionSuffix = document.getElementById('tierDescriptionSuffix').value;
         
@@ -1064,7 +1083,8 @@ function addNewBadge() {
         quote: "A new badge description",
         icon: "new-badge",
         isUnique: false,
-        type: "allRounds",
+        type: "unique", // New type field
+        category: "allRounds", // Renamed from type
         tier: "bronze",
         difficulty: "easy",
         animation: "pulse",
@@ -1089,6 +1109,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('closeModal').addEventListener('click', closeBadgeModal);
     document.getElementById('cancelEdit').addEventListener('click', closeBadgeModal);
     document.getElementById('saveBadge').addEventListener('click', saveBadge);
+    
+    // Toggle tier section when Type field changes
+    const badgeTypeSelect = document.getElementById('badgeType');
+    if (badgeTypeSelect) {
+        badgeTypeSelect.addEventListener('change', toggleTierSection);
+    }
     
     // Toggle tier section when unique checkbox changes (if it exists)
     const isUniqueCheckbox = document.getElementById('badgeIsUnique');

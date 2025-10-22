@@ -599,6 +599,16 @@ router.get('/badges', (req, res) => {
             </div>
             <div class="modal-body">
                 <form id="badgeEditForm">
+                    <!-- Type Selection - Moved to top -->
+                    <div class="form-group">
+                        <label for="badgeType">Type:</label>
+                        <select id="badgeType" name="type">
+                            <option value="unique">Unique</option>
+                            <option value="tiered">Tiered</option>
+                            <option value="secret">Secret</option>
+                        </select>
+                    </div>
+                    
                     <!-- Basic Information -->
                     <div class="form-row">
                         <div class="form-group">
@@ -617,8 +627,8 @@ router.get('/badges', (req, res) => {
                             <input type="text" id="badgeIcon" name="icon">
                         </div>
                         <div class="form-group">
-                            <label for="badgeType">Type:</label>
-                            <select id="badgeType" name="type">
+                            <label for="badgeCategory">Category:</label>
+                            <select id="badgeCategory" name="category">
                                 <option value="allRounds">All Rounds</option>
                                 <option value="lastRound">Last Round</option>
                                 <option value="courseSpecific">Course Specific</option>
@@ -636,47 +646,6 @@ router.get('/badges', (req, res) => {
                         <textarea id="badgeDescription" name="description" placeholder="Enter badge description..."></textarea>
                     </div>
                     
-                    <!-- Badge Properties -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="badgeTier">Tier:</label>
-                            <select id="badgeTier" name="tier">
-                                <option value="bronze">Bronze</option>
-                                <option value="silver">Silver</option>
-                                <option value="gold">Gold</option>
-                                <option value="platinum">Platinum</option>
-                                <option value="diamond">Diamond</option>
-                                <option value="emerald">Emerald</option>
-                                <option value="ruby">Ruby</option>
-                                <option value="cosmic">Cosmic</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="badgeDifficulty">Difficulty:</label>
-                            <select id="badgeDifficulty" name="difficulty">
-                                <option value="easy">Easy</option>
-                                <option value="medium">Medium</option>
-                                <option value="hard">Hard</option>
-                                <option value="extreme">Extreme</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="badgeAnimation">Animation:</label>
-                            <select id="badgeAnimation" name="animation">
-                                <option value="pulse">Pulse</option>
-                                <option value="bounce">Bounce</option>
-                                <option value="rotate">Rotate</option>
-                                <option value="glow">Glow</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="badgePoints">Points:</label>
-                            <input type="number" id="badgePoints" name="points" min="0">
-                        </div>
-                    </div>
                     
                     <!-- Track Unique Courses -->
                     <div class="form-group">
@@ -689,9 +658,53 @@ router.get('/badges', (req, res) => {
                         </small>
                     </div>
                     
+                    <!-- Tier, Difficulty and Points (for unique badges) -->
+                    <div class="tier-section" id="uniqueBadgeSection" style="display: none;">
+                        <h4>Tier, Difficulty and Points</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="badgeTier">Tier:</label>
+                                <select id="badgeTier" name="tier">
+                                    <option value="bronze">Bronze</option>
+                                    <option value="silver">Silver</option>
+                                    <option value="gold">Gold</option>
+                                    <option value="platinum">Platinum</option>
+                                    <option value="diamond">Diamond</option>
+                                    <option value="emerald">Emerald</option>
+                                    <option value="ruby">Ruby</option>
+                                    <option value="cosmic">Cosmic</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="badgeDifficulty">Difficulty:</label>
+                                <select id="badgeDifficulty" name="difficulty">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="hard">Hard</option>
+                                    <option value="extreme">Extreme</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="badgeAnimation">Animation:</label>
+                                <select id="badgeAnimation" name="animation">
+                                    <option value="pulse">Pulse</option>
+                                    <option value="bounce">Bounce</option>
+                                    <option value="rotate">Rotate</option>
+                                    <option value="glow">Glow</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="badgePoints">Points:</label>
+                                <input type="number" id="badgePoints" name="points" min="0">
+                            </div>
+                        </div>
+                    </div>
                     
-                    <!-- Tier Information (for non-unique badges) -->
-                    <div class="tier-section" id="tierSection">
+                    <!-- Tier Configuration (for tiered badges) -->
+                    <div class="tier-section" id="tieredBadgeSection" style="display: none;">
                         <h4>Tier Configuration</h4>
                         <div class="form-group">
                             <label for="tierDescriptionPrefix">Tier Description Prefix:</label>
