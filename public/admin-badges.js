@@ -1026,20 +1026,18 @@ function collectBadgeFormData() {
         badge._id = 'badge_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
     
-    // Add tier information if tiered badge
-    if (badge.type === 'tiered') {
-        badge.tierDescriptionPrefix = document.getElementById('tierDescriptionPrefix').value;
-        badge.tierDescriptionSuffix = document.getElementById('tierDescriptionSuffix').value;
-        
-        const thresholds = document.getElementById('tierThresholds').value;
-        badge.tierThresholds = thresholds ? thresholds.split(',').map(t => parseInt(t.trim())) : [];
-        
-        const points = document.getElementById('tierPoints').value;
-        badge.tierPoints = points ? points.split(',').map(p => parseInt(p.trim())) : [];
-        
-        const names = document.getElementById('tierNames').value;
-        badge.tierNames = names ? names.split('\n').map(n => n.trim()).filter(n => n) : [];
-    }
+    // Always include tier configuration so switching type doesn't overwrite stored values
+    badge.tierDescriptionPrefix = document.getElementById('tierDescriptionPrefix').value;
+    badge.tierDescriptionSuffix = document.getElementById('tierDescriptionSuffix').value;
+    
+    const thresholds = document.getElementById('tierThresholds').value;
+    badge.tierThresholds = thresholds ? thresholds.split(',').map(t => parseInt(t.trim())) : [];
+    
+    const points = document.getElementById('tierPoints').value;
+    badge.tierPoints = points ? points.split(',').map(p => parseInt(p.trim())) : [];
+    
+    const names = document.getElementById('tierNames').value;
+    badge.tierNames = names ? names.split('\n').map(n => n.trim()).filter(n => n) : [];
     
     // Handle condition function - store as string for JSON serialization
     const conditionText = document.getElementById('badgeCondition').value.trim();

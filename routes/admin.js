@@ -648,7 +648,7 @@ router.get('/badges', (req, res) => {
                     
                     
                     <!-- Track Unique Courses -->
-                    <div class="form-group">
+                    <div style="flex-direction: row;" class="form-group">
                         <label>
                             <input type="checkbox" id="trackUniqueCourses" name="trackUniqueCourses" style="margin-right: 8px;">
                             Track Unique Courses
