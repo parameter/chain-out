@@ -794,50 +794,65 @@ router.post('/api/badges', async (req, res) => {
 // POST /api/badges/save - Save a single badge
 router.post('/api/badges/save', async (req, res) => {
    try {
-      const { badge, action } = req.body; // action: 'create', 'update', 'delete'
-      
-      if (!badge) {
-         return res.status(400).json({ error: 'Badge data is required' });
-      }
-      
-      // Load existing badges and test data
-      const existingBadges = await readBadgesFromDatabase();
-      const existingTestData = await readTestDataFromDatabase();
-      
-      if (action === 'create') {
-         // Add new badge
-         existingBadges.push(badge);
-      } else if (action === 'update') {
-         // Update existing badge using _id for matching
-         const index = existingBadges.findIndex(b => b._id === badge._id);
-         if (index !== -1) {
-            existingBadges[index] = badge;
-         } else {
-            return res.status(404).json({ error: 'Badge not found' });
-         }
-      } else if (action === 'delete') {
-         // Remove badge using _id for matching
-         const filteredBadges = existingBadges.filter(b => b._id !== badge._id);
-         // Also remove any test data associated with this badge
-         const filteredTestData = existingTestData.filter(td => td.badgeId !== badge._id);
-         const success = await writeBadgesToDatabase(filteredBadges, filteredTestData);
-         
-         if (success) {
-            res.json({ success: true, message: 'Badge deleted successfully' });
-         } else {
-            res.status(500).json({ error: 'Failed to delete badge' });
-         }
-         return;
-      }
-      
-      // Save updated badges with existing test data
-      const success = await writeBadgesToDatabase(existingBadges, existingTestData);
-      
-      if (success) {
-         res.json({ success: true, message: `Badge ${action}d successfully` });
-      } else {
-         res.status(500).json({ error: `Failed to ${action} badge` });
-      }
+		const { badge, action } = req.body; // action: 'create', 'update', 'delete'
+		
+		if (!badge) {
+			return res.status(400).json({ error: 'Badge data is required' });
+		}
+		
+		const db = getDatabase();
+		const badgesCollection = db.collection('badgeDefinitions');
+		
+		// Ensure an _id for new badges
+		const ensureId = (b) => {
+			if (!b._id) {
+				b._id = 'badge_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+			}
+			return b;
+		};
+		
+		if (action === 'create') {
+			const toInsert = ensureId({ ...badge });
+			const result = await badgesCollection.updateOne(
+				{ type: 'badges' },
+				{ $push: { badges: toInsert } },
+				{ upsert: true }
+			);
+			return res.json({ success: true, message: 'Badge created successfully', upserted: result.upsertedId || null, id: toInsert._id });
+		}
+		
+		if (action === 'update') {
+			if (!badge._id) {
+				return res.status(400).json({ error: 'Badge _id is required for update' });
+			}
+			const result = await badgesCollection.updateOne(
+				{ type: 'badges', 'badges._id': badge._id },
+				{ $set: { 'badges.$': badge } }
+			);
+			if (result.matchedCount === 0) {
+				return res.status(404).json({ error: 'Badge not found' });
+			}
+			return res.json({ success: true, message: 'Badge updated successfully' });
+		}
+		
+		if (action === 'delete') {
+			if (!badge._id) {
+				return res.status(400).json({ error: 'Badge _id is required for delete' });
+			}
+			// Pull the badge from badges array and associated test data from test-data array
+			const result = await badgesCollection.updateOne(
+				{ type: 'badges' },
+				{ 
+					$pull: { 
+						badges: { _id: badge._id },
+						['test-data']: { badgeId: badge._id }
+					}
+				}
+			);
+			return res.json({ success: true, message: 'Badge deleted successfully' });
+		}
+		
+		return res.status(400).json({ error: 'Invalid action' });
    } catch (error) {
       console.error(`Error ${req.body.action} badge:`, error);
       res.status(500).json({ error: error.message });
