@@ -514,7 +514,7 @@ async function testBadgeWithCustomData(index) {
         console.log('Custom layout:', layout);
         
         // Use the API route to test the badge
-        const response = await fetch('/api/badges/test', {
+        const response = await fetch('/admin/api/badges/test', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
