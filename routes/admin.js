@@ -941,11 +941,11 @@ router.post('/api/badges/test', (req, res) => {
       let conditionFunction;
       if (typeof badge.condition === 'function') {
          conditionFunction = badge.condition;
-      } else if (typeof badge.condition === 'string') {
+      } else if (typeof badge.conditionString === 'string') {
          // Try to create a function from the string
          try {
             // Extract function body from string like "function (results, layout) { ... }"
-            const trimmed = badge.condition.trim();
+            const trimmed = badge.conditionString.trim();
             const functionStart = trimmed.indexOf('{');
             const functionEnd = trimmed.lastIndexOf('}');
             
