@@ -955,6 +955,8 @@ async function saveBadge() {
 }
 
 async function saveSingleBadgeToServer(badge, action) {
+
+    console.log('saveSingleBadgeToServer: ', badge, action);
     try {
         const response = await fetch('/admin/api/badges/save', {
             method: 'POST',

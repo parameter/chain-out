@@ -9,7 +9,7 @@ const initializeDatabase = async () => {
     const mongoUrl = process.env.MONGODB_URI
       || process.env.MONGO_URL
       || process.env.SCALINGO_MONGO_URL
-      || 'mongodb://localhost:27017/chain-out-db';
+      || 'mongodb+srv://safeout:c0jWv3m8ePkKEtJE@chain-out-db.ner4w1x.mongodb.net/chain-out-db?retryWrites=true&w=majority';
     client = new MongoClient(mongoUrl);
 
     console.log('mongoUrl', mongoUrl);

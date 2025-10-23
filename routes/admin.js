@@ -17,33 +17,11 @@ async function readBadgesFromDatabase() {
         const badgesCollection = db.collection('badgeDefinitions');
         
         // Get the single document containing all badges
-        const result = await badgesCollection.findOne({ type: 'badges' });
+        const result = await badgesCollection.find({}).toArray();
+
+        console.log(result);
         
-        if (result && result.badges) {
-            // Ensure all badges have _id
-            const badgesWithIds = ensureBadgeIds(result.badges);
-            // Save back to database if any badges were missing _id
-            if (badgesWithIds !== result.badges) {
-                await writeBadgesToDatabase(badgesWithIds, result['test-data'] || []);
-            }
-            return badgesWithIds;
-        }
-        
-        // If no badges found, try to load from JSON file and initialize
-        try {
-            const data = await fs.readFile(BADGES_FILE_PATH, 'utf8');
-            const badges = JSON.parse(data);
-            
-            // Ensure all badges have _id
-            const badgesWithIds = ensureBadgeIds(badges);
-            
-            // Save to database for future use
-            await writeBadgesToDatabase(badgesWithIds, []);
-            return badgesWithIds;
-        } catch (fileError) {
-            console.log('No badges file found, starting with empty array');
-            return [];
-        }
+        return result;
     } catch (error) {
         console.error('Error reading badges from database:', error);
         return [];
@@ -812,22 +790,26 @@ router.post('/api/badges/save', async (req, res) => {
 		};
 		
 		if (action === 'create') {
-			const toInsert = ensureId({ ...badge });
-			const result = await badgesCollection.updateOne(
-				{ type: 'badges' },
-				{ $push: { badges: toInsert } },
-				{ upsert: true }
+
+			// const toInsert = ensureId({ ...badge });
+
+			const result = await badgesCollection.insertOne(
+				toInsert
 			);
-			return res.json({ success: true, message: 'Badge created successfully', upserted: result.upsertedId || null, id: toInsert._id });
+			return res.json({ success: true, message: 'Badge created successfully', insertedId: result.insertedId || null, id: toInsert.id });
 		}
 		
 		if (action === 'update') {
-			if (!badge._id) {
-				return res.status(400).json({ error: 'Badge _id is required for update' });
-			}
+
+            console.log('update badge: ', badge);
+
+            let id = new ObjectId(badge._id);
+            delete badge._id;
+
 			const result = await badgesCollection.updateOne(
-				{ type: 'badges', 'badges._id': badge._id },
-				{ $set: { 'badges.$': badge } }
+				{ _id: id },
+				{ $set: { ...badge } },
+				{ upsert: true }
 			);
 			if (result.matchedCount === 0) {
 				return res.status(404).json({ error: 'Badge not found' });
@@ -840,14 +822,8 @@ router.post('/api/badges/save', async (req, res) => {
 				return res.status(400).json({ error: 'Badge _id is required for delete' });
 			}
 			// Pull the badge from badges array and associated test data from test-data array
-			const result = await badgesCollection.updateOne(
-				{ type: 'badges' },
-				{ 
-					$pull: { 
-						badges: { _id: badge._id },
-						['test-data']: { badgeId: badge._id }
-					}
-				}
+			const result = await badgesCollection.deleteOne(
+				{ _id: new ObjectId(badge._id) }
 			);
 			return res.json({ success: true, message: 'Badge deleted successfully' });
 		}
