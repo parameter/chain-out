@@ -599,20 +599,6 @@ router.get('/badges', (req, res) => {
                         </div>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="badgeIcon">Icon:</label>
-                            <input type="text" id="badgeIcon" name="icon">
-                        </div>
-                        <div class="form-group">
-                            <label for="badgeCategory">Category:</label>
-                            <select id="badgeCategory" name="category">
-                                <option value="allRounds">All Rounds</option>
-                                <option value="lastRound">Last Round</option>
-                                <option value="courseSpecific">Course Specific</option>
-                            </select>
-                        </div>
-                    </div>
                     
                     <div class="form-group">
                         <label for="badgeQuote">Quote:</label>
@@ -624,15 +610,30 @@ router.get('/badges', (req, res) => {
                         <textarea id="badgeDescription" name="description" placeholder="Enter badge description..."></textarea>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="badgeFunctionalDescription">Functional description:</label>
+                        <textarea id="badgeFunctionalDescription" name="functionalDescription" placeholder="Enter functional description..."></textarea>
+                    </div>
                     
                     <!-- Track Unique Courses -->
                     <div style="flex-direction: row;" class="form-group">
-                        <label>
-                            <input type="checkbox" id="trackUniqueCourses" name="trackUniqueCourses" style="margin-right: 8px;">
-                            Track Unique Courses
+                        <label style="display: flex; flex-direction: row; align-items: center;">
+                            <input style="width: auto;" type="checkbox" id="trackUniqueCourses" name="trackUniqueCourses" style="margin-right: 8px;">
+                            <p style="margin:0;">Track Unique Courses</p>
                         </label>
                         <small style="display: block; color: #666; margin-top: 5px;">
                             When enabled, this badge will only count progress once per unique course played.
+                        </small>
+                    </div>
+                    
+                    <!-- Unique Badge Setting -->
+                    <div style="flex-direction: row;" class="form-group">
+                        <label style="display: flex; flex-direction: row; align-items: center;">
+                            <input style="width: auto;" type="checkbox" id="badgeIsUnique" name="isUnique" style="margin-right: 8px;">
+                            <p style="margin:0;">Unique</p>
+                        </label>
+                        <small style="display: block; color: #666; margin-top: 5px;">
+                            When enabled, this badge can only be earned once and has no tiers.
                         </small>
                     </div>
                     

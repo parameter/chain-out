@@ -840,17 +840,14 @@ function populateBadgeForm(badge) {
     // Basic information
     document.getElementById('badgeId').value = badge.id || '';
     document.getElementById('badgeName').value = badge.name || '';
-    document.getElementById('badgeIcon').value = badge.icon || '';
     
     // Set the new Type field (unique, tiered, secret)
     const badgeType = badge.type || 'unique';
     document.getElementById('badgeType').value = badgeType;
     
-    // Set the category field (renamed from the old type field)
-    document.getElementById('badgeCategory').value = badge.category || 'allRounds';
-    
     document.getElementById('badgeQuote').value = badge.quote || '';
     document.getElementById('badgeDescription').value = badge.description || '';
+    document.getElementById('badgeFunctionalDescription').value = badge.functionalDescription || '';
     
     // Store the _id for later use
     document.getElementById('badgeEditModal').dataset.badgeId = badge._id || '';
@@ -1006,11 +1003,10 @@ function collectBadgeFormData() {
     const badge = {
         id: document.getElementById('badgeId').value,
         name: document.getElementById('badgeName').value,
-        icon: document.getElementById('badgeIcon').value,
         type: document.getElementById('badgeType').value, // Now contains unique/tiered/secret
-        category: document.getElementById('badgeCategory').value, // Renamed from old type field
         quote: document.getElementById('badgeQuote').value,
         description: document.getElementById('badgeDescription').value,
+        functionalDescription: document.getElementById('badgeFunctionalDescription').value,
         tier: document.getElementById('badgeTier').value,
         difficulty: document.getElementById('badgeDifficulty').value,
         animation: document.getElementById('badgeAnimation').value,
@@ -1081,10 +1077,8 @@ function addNewBadge() {
         id: "new_badge",
         name: "New Badge",
         quote: "A new badge description",
-        icon: "new-badge",
         isUnique: false,
         type: "unique", // New type field
-        category: "allRounds", // Renamed from type
         tier: "bronze",
         difficulty: "easy",
         animation: "pulse",
