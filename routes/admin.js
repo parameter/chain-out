@@ -921,7 +921,21 @@ router.post('/api/badges/test', (req, res) => {
       
       // Create a safe evaluation environment
       const results = testData || [];
-      const layoutData = layout || { holes: [] };
+      // Ensure that each hole's "number" property is renamed to "holeNumber" in layoutData
+      let layoutData = layout || { holes: [] };
+      if (layoutData && Array.isArray(layoutData.holes)) {
+         layoutData = {
+            ...layoutData,
+            holes: layoutData.holes.map(hole => {
+               if ('number' in hole) {
+                  // Copy and rename "number" to "holeNumber"
+                  const { number, ...rest } = hole;
+                  return { ...rest, holeNumber: number };
+               }
+               return hole;
+            })
+         };
+      }
       
       // Handle condition field - it might be a string (source code) or function
       let conditionFunction;

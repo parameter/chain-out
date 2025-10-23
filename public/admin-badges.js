@@ -484,7 +484,7 @@ async function displayBadges() {
 }
 
 
-function testBadgeWithCustomData(index) {
+async function testBadgeWithCustomData(index) {
     const badge = currentBadges[index];
     const resultDiv = document.getElementById(`testResult-${index}`);
     
@@ -508,29 +508,44 @@ function testBadgeWithCustomData(index) {
             throw new Error('Invalid JSON in test layout: ' + error.message);
         }
         
-        // Debug: Check if condition is a function
-        console.log('Badge condition type:', typeof badge.condition);
+        // Debug: Log test data
+        console.log('Testing badge via API:', badge.name);
         console.log('Custom test data:', results);
         console.log('Custom layout:', layout);
-
-        console.log('badge.condition', badge.condition);
         
-        if (typeof badge.condition !== 'function') {
-            throw new Error('Condition is not a function. Type: ' + typeof badge.condition);
+        // Use the API route to test the badge
+        const response = await fetch('/api/badges/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                badge: badge,
+                testData: results,
+                layout: layout
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.statusText}`);
         }
         
-        // Test the condition function with custom data
-        const result = badge.condition(results, layout);
+        const apiResult = await response.json();
         
-        resultDiv.className = 'test-results test-pass';
-        resultDiv.innerHTML = `
-            <strong>✅ Test Result (Custom Data):</strong> ${result}<br>
-            <strong>Type:</strong> ${typeof result}<br>
-            <strong>Data Source:</strong> Custom test data<br>
-            <strong>Results Count:</strong> ${results.length}<br>
-            <strong>Layout Holes:</strong> ${layout.holes ? layout.holes.length : 'N/A'}<br>
-            <strong>Timestamp:</strong> ${new Date().toLocaleString()}
-        `;
+        if (apiResult.success) {
+            resultDiv.className = 'test-results test-pass';
+            resultDiv.innerHTML = `
+                <strong>✅ Test Result (API):</strong> ${apiResult.result}<br>
+                <strong>Type:</strong> ${apiResult.resultType}<br>
+                <strong>Data Source:</strong> API test data<br>
+                <strong>Results Count:</strong> ${apiResult.testDataCount}<br>
+                <strong>Layout Holes:</strong> ${apiResult.layoutHolesCount}<br>
+                <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+            `;
+        } else {
+            throw new Error(apiResult.error || 'Unknown API error');
+        }
+        
         resultDiv.classList.remove('hidden');
         
     } catch (error) {
