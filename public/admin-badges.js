@@ -512,6 +512,8 @@ function testBadgeWithCustomData(index) {
         console.log('Badge condition type:', typeof badge.condition);
         console.log('Custom test data:', results);
         console.log('Custom layout:', layout);
+
+        console.log('badge.condition', badge.condition);
         
         if (typeof badge.condition !== 'function') {
             throw new Error('Condition is not a function. Type: ' + typeof badge.condition);
