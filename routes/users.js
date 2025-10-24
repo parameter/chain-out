@@ -821,7 +821,9 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     if (updatedResult) {
       
-      await searchForEarnedBadges(updatedResult);
+      const earnedBadges = await searchForEarnedBadges(updatedResult);
+
+      console.log('earnedBadges', earnedBadges);
 
 
       updatedResult.invites.forEach(invite => {
