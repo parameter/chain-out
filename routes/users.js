@@ -823,6 +823,29 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       
       await searchForEarnedBadges(updatedResult);
 
+
+      updatedResult.invites.forEach(invite => {
+
+        // if (invite.status === 'accepted') {
+
+          pusher.trigger(invite.invitedUserId, "scorecard-completed", {
+            scorecardId: scorecardId
+          });
+
+        // }
+
+      });
+
+      // Skicka till alla på kortet, TODO: 
+      // FIxa så vi bara skickar till de som har svarat på inviteringen
+
+      /*
+      pusher.trigger(note.fromUser.toString(), "scorecard-invite", {
+        message: note.message,
+        scorecardId: scorecardId,
+        courseName: course.name
+      }); */
+
     }
 
     res.status(200).json({ message: 'Round completed', scorecard: updatedResult });
