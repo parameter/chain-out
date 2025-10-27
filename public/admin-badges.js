@@ -1092,7 +1092,7 @@ function addNewBadge() {
         animation: "pulse",
         condition: (results, layout) => {
             // Your condition logic here
-            return results.length > 0;
+            return 0;
         }
     };
     

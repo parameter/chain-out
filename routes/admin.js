@@ -719,7 +719,7 @@ router.get('/badges', (req, res) => {
     // Your condition logic here
     // Return true/false for unique badges
     // Return number for tiered badges
-    return results.length > 0;
+    return 0;
 }"></textarea>
                     </div>
                 </form>
