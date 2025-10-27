@@ -970,7 +970,6 @@ async function saveBadge() {
 
 async function saveSingleBadgeToServer(badge, action) {
 
-    console.log('saveSingleBadgeToServer: ', badge, action);
     try {
         const response = await fetch('/admin/api/badges/save', {
             method: 'POST',
@@ -1031,15 +1030,7 @@ function collectBadgeFormData() {
         isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false,
         trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false
     };
-    
-    // Use existing _id if editing, or generate new one for new badges
-    const modal = document.getElementById('badgeEditModal');
-    const existingId = modal.dataset.badgeId;
-    if (existingId) {
-        badge._id = existingId;
-    } else if (!badge._id) {
-        badge._id = 'badge_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    }
+
     
     // Always include tier configuration so switching type doesn't overwrite stored values
     badge.tierDescriptionPrefix = document.getElementById('tierDescriptionPrefix').value;

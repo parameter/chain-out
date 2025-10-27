@@ -795,9 +795,9 @@ router.post('/api/badges/save', async (req, res) => {
 			// const toInsert = ensureId({ ...badge });
 
 			const result = await badgesCollection.insertOne(
-				toInsert
+				badge
 			);
-			return res.json({ success: true, message: 'Badge created successfully', insertedId: result.insertedId || null, id: toInsert.id });
+			return res.json({ success: true, message: 'Badge created successfully', insertedId: result.insertedId || null, id: badge.id });
 		}
 		
 		if (action === 'update') {
