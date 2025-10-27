@@ -805,7 +805,7 @@ router.post('/api/badges/save', async (req, res) => {
             console.log('update badge: ', badge);
 
             let id = new ObjectId(badge._id);
-            delete badge._id;
+            // delete badge._id;
 
 			const result = await badgesCollection.updateOne(
 				{ _id: id },
