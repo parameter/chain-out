@@ -1031,6 +1031,12 @@ function collectBadgeFormData() {
         trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false
     };
 
+    // Preserve MongoDB _id for updates by retrieving it from the modal dataset
+    const modalEl = document.getElementById('badgeEditModal');
+    if (modalEl && modalEl.dataset && modalEl.dataset.badgeId) {
+        badge._id = modalEl.dataset.badgeId;
+    }
+
     
     // Always include tier configuration so switching type doesn't overwrite stored values
     badge.tierDescriptionPrefix = document.getElementById('tierDescriptionPrefix').value;
