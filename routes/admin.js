@@ -553,6 +553,8 @@ router.get('/badges', (req, res) => {
             <h1>🏆 Badge Admin Panel</h1>
             <p>Test, edit, and manage disc golf badge conditions</p>
         </div>
+
+        <button style="align-self: flex-end;justify-self: end;display: flex;margin: 20px;" class="btn btn-success" id="addNewBadgeBtn">+ Add New Badge</button>
         
         <div class="content">
 
@@ -562,7 +564,7 @@ router.get('/badges', (req, res) => {
                 <div class="badge-list" id="badgeList">
                     <!-- Badges will be loaded here -->
                 </div>
-                <button class="btn btn-success" id="addNewBadgeBtn">+ Add New Badge</button>
+                
             </div>
 
         </div>
@@ -809,8 +811,7 @@ router.post('/api/badges/save', async (req, res) => {
 
 			const result = await badgesCollection.updateOne(
 				{ _id: id },
-				{ $set: { ...badge } },
-				{ upsert: true }
+				{ $set: { ...badge } }
 			);
 			if (result.matchedCount === 0) {
 				return res.status(404).json({ error: 'Badge not found' });
