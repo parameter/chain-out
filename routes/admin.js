@@ -203,6 +203,27 @@ router.get('/badges', (req, res) => {
             padding: 15px;
             background: #fafafa;
         }
+        .badge-item.done {
+            border: 3px solid #28a745;
+            background: #f0fff4;
+        }
+        .badge-item.being-edited {
+            border: 3px solid #ffc107;
+            background: #fff8e1;
+            position: relative;
+        }
+        .badge-item.being-edited::before {
+            content: "✏️ Being edited by another user";
+            position: absolute;
+            top: -8px;
+            right: 10px;
+            background: #ffc107;
+            color: #212529;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
         .badge-header {
             display: flex;
             justify-content: space-between;
@@ -260,6 +281,13 @@ router.get('/badges', (req, res) => {
         .btn-success:hover {
             background: #218838;
         }
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-info:hover {
+            background: #138496;
+        }
         .test-results {
             margin-top: 10px;
             padding: 10px;
@@ -306,6 +334,49 @@ router.get('/badges', (req, res) => {
         }
         .hidden {
             display: none;
+        }
+        
+        /* Loader Styles */
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loader-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .loader-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loader-text {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
         }
         .test-data-section {
             background: #f8f9fa;
@@ -733,6 +804,14 @@ router.get('/badges', (req, res) => {
         </div>
     </div>
 
+    <!-- Loader Overlay -->
+    <div id="loaderOverlay" class="loader-overlay">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text" id="loaderText">Loading...</div>
+        </div>
+    </div>
+
     <script src="/admin-badges.js"></script>
 </body>
 </html>
@@ -768,6 +847,80 @@ router.post('/api/badges', async (req, res) => {
       }
    } catch (error) {
       console.error('Error saving badges:', error);
+      res.status(500).json({ error: error.message });
+   }
+});
+
+// POST /api/badges/start-edit - Mark badge as being edited and return latest data
+router.post('/api/badges/start-edit', async (req, res) => {
+   try {
+      const { badgeId } = req.body;
+      
+      if (!badgeId) {
+         return res.status(400).json({ error: 'Badge ID is required' });
+      }
+      
+      const db = getDatabase();
+      const badgesCollection = db.collection('badgeDefinitions');
+      
+      // Check if badge is already being edited
+      const existingBadge = await badgesCollection.findOne({ _id: new ObjectId(badgeId) });
+      
+      if (!existingBadge) {
+         return res.status(404).json({ error: 'Badge not found' });
+      }
+      
+      if (existingBadge.beingEdited && existingBadge.beingEditedBy) {
+         return res.status(409).json({ 
+            error: 'Badge is already being edited by another user',
+            beingEditedBy: existingBadge.beingEditedBy,
+            beingEditedAt: existingBadge.beingEditedAt
+         });
+      }
+      
+      // Mark badge as being edited
+      const editInfo = {
+         beingEdited: true,
+         beingEditedBy: req.ip || 'unknown',
+         beingEditedAt: new Date()
+      };
+      
+      await badgesCollection.updateOne(
+         { _id: new ObjectId(badgeId) },
+         { $set: editInfo }
+      );
+      
+      // Return the latest badge data
+      const updatedBadge = await badgesCollection.findOne({ _id: new ObjectId(badgeId) });
+      res.json({ success: true, badge: updatedBadge });
+      
+   } catch (error) {
+      console.error('Error starting badge edit:', error);
+      res.status(500).json({ error: error.message });
+   }
+});
+
+// POST /api/badges/stop-edit - Clear being edited status
+router.post('/api/badges/stop-edit', async (req, res) => {
+   try {
+      const { badgeId } = req.body;
+      
+      if (!badgeId) {
+         return res.status(400).json({ error: 'Badge ID is required' });
+      }
+      
+      const db = getDatabase();
+      const badgesCollection = db.collection('badgeDefinitions');
+      
+      await badgesCollection.updateOne(
+         { _id: new ObjectId(badgeId) },
+         { $unset: { beingEdited: "", beingEditedBy: "", beingEditedAt: "" } }
+      );
+      
+      res.json({ success: true, message: 'Edit status cleared' });
+      
+   } catch (error) {
+      console.error('Error stopping badge edit:', error);
       res.status(500).json({ error: error.message });
    }
 });
@@ -809,7 +962,7 @@ router.post('/api/badges/save', async (req, res) => {
 
 			const result = await badgesCollection.updateOne(
 				{ _id: id },
-				{ $set: { ...badge } }
+				{ $set: { ...badge }, $unset: { beingEdited: "", beingEditedBy: "", beingEditedAt: "" } }
 			);
 			if (result.matchedCount === 0) {
 				return res.status(404).json({ error: 'Badge not found' });

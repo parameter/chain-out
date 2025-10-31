@@ -1,5 +1,22 @@
 let currentBadges = [];
 
+// Loader functions
+function showLoader(text = 'Loading...') {
+    const loader = document.getElementById('loaderOverlay');
+    const loaderText = document.getElementById('loaderText');
+    if (loader && loaderText) {
+        loaderText.textContent = text;
+        loader.style.display = 'flex';
+    }
+}
+
+function hideLoader() {
+    const loader = document.getElementById('loaderOverlay');
+    if (loader) {
+        loader.style.display = 'none';
+    }
+}
+
 // Predefined condition functions to avoid CSP issues
 const conditionFunctions = {
     // Birdie Hunter - counts birdies
@@ -348,29 +365,31 @@ function getDefaultTestLayout() {
 
 // Load badges
 async function loadBadges() {
-    fetch('/admin/api/badges')
-        .then(response => response.json())
-        .then(async data => {
-            console.log('Loaded badges from API:', data);
-            // Convert string conditions back to functions, but preserve original string
-            currentBadges = data.map(badge => {
-                console.log('Processing badge:', badge.name, 'Condition string:', badge.condition);
-                const parsedBadge = {
-                    ...badge,
-                    condition: getConditionFunction(badge.id, badge.condition),
-                    conditionString: badge.condition // Preserve original string for editing
-                };
-                console.log('Parsed badge condition type:', typeof parsedBadge.condition);
-                console.log('Parsed condition function:', parsedBadge.condition);
-                return parsedBadge;
-            });
-            await displayBadges();
-        })
-        .catch(error => {
-            console.error('Error loading badges:', error);
-            // Load sample badges if API fails
-            
+    showLoader('Loading badges...');
+    try {
+        const response = await fetch('/admin/api/badges');
+        const data = await response.json();
+        
+        console.log('Loaded badges from API:', data);
+        // Convert string conditions back to functions, but preserve original string
+        currentBadges = data.map(badge => {
+            console.log('Processing badge:', badge.name, 'Condition string:', badge.condition);
+            const parsedBadge = {
+                ...badge,
+                condition: getConditionFunction(badge.id, badge.condition),
+                conditionString: badge.condition // Preserve original string for editing
+            };
+            console.log('Parsed badge condition type:', typeof parsedBadge.condition);
+            console.log('Parsed condition function:', parsedBadge.condition);
+            return parsedBadge;
         });
+        await displayBadges();
+    } catch (error) {
+        console.error('Error loading badges:', error);
+        // Load sample badges if API fails
+    } finally {
+        hideLoader();
+    }
 }
 
 async function displayBadges() {
@@ -379,13 +398,17 @@ async function displayBadges() {
 
     currentBadges.forEach((badge, index) => {
         const badgeItem = document.createElement('div');
-        badgeItem.className = 'badge-item';
+        let className = 'badge-item';
+        if (badge.done) className += ' done';
+        if (badge.beingEdited) className += ' being-edited';
+        badgeItem.className = className;
         badgeItem.innerHTML = `
             <div class="badge-header">
                 <div class="badge-name">${badge.name}</div>
                 <div class="badge-actions">
-                    <button class="btn btn-secondary edit-badge-btn" data-index="${index}">Edit</button>
-                    <button class="btn btn-danger delete-badge-btn" data-index="${index}">Delete</button>
+                    <button class="btn ${badge.done ? 'btn-secondary' : 'btn-success'} toggle-done-btn hidden" data-index="${index}">${badge.done ? 'Mark as Not Done' : 'Mark as Done'}</button>
+                    <button class="btn btn-secondary edit-badge-btn hidden" data-index="${index}">Edit</button>
+                    <button class="btn btn-danger delete-badge-btn hidden" data-index="${index}">Delete</button>
                 </div>
             </div>
             <div><strong>ID:</strong> ${badge.id}</div>
@@ -409,10 +432,10 @@ async function displayBadges() {
                     </div>
                 </div>
                 <div class="test-actions">
-                    <button class="btn btn-primary test-individual-btn" data-index="${index}">Test with Custom Data</button>
-                    <button class="btn btn-secondary load-sample-test-btn" data-index="${index}">Load Sample Data</button>
-                    <button class="btn btn-success save-test-data-btn" data-index="${index}">Save Test Data to Badge</button>
-                    <button class="btn btn-warning clear-test-data-btn" data-index="${index}" style="display: none;">Clear All Test Data</button>
+                    <button class="btn btn-primary test-individual-btn hidden" data-index="${index}">Test with Custom Data</button>
+                    <button class="btn btn-secondary load-sample-test-btn hidden" data-index="${index}">Load Sample Data</button>
+                    <button class="btn btn-success save-test-data-btn hidden" data-index="${index}">Save Test Data to Badge</button>
+                    <button class="btn btn-warning clear-test-data-btn hidden" data-index="${index}" style="display: none;">Clear All Test Data</button>
                 </div>
                 <div id="testResult-${index}" class="test-results hidden"></div>
                 
@@ -481,13 +504,31 @@ async function displayBadges() {
             deleteBadge(index);
         });
     });
+
+    document.querySelectorAll('.toggle-done-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'));
+            toggleDoneStatus(index);
+        });
+    });
+
+
+    // Unhide all buttons after listeners have been attached
+    document.querySelectorAll('.badge-actions .btn, .test-actions .btn, .load-saved-test-btn').forEach(btn => {
+        btn.classList.remove('hidden');
+    });
+    
 }
 
 
 async function testBadgeWithCustomData(index) {
+
+    console.log('testBadgeWithCustomData', index);
+
     const badge = currentBadges[index];
     const resultDiv = document.getElementById(`testResult-${index}`);
     
+    showLoader('Testing badge...');
     try {
         // Get custom test data from textareas
         const resultsText = document.getElementById(`testResults-${index}`).value;
@@ -555,6 +596,8 @@ async function testBadgeWithCustomData(index) {
             <strong>Timestamp:</strong> ${new Date().toLocaleString()}
         `;
         resultDiv.classList.remove('hidden');
+    } finally {
+        hideLoader();
     }
 }
 
@@ -599,7 +642,7 @@ async function loadTestDataForBadge(badgeIndex) {
                             <div class="test-data-item">
                                 <strong>Test ${testIndex + 1}:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes
                                 <br><small>Saved: ${new Date(testData.savedAt).toLocaleString()}</small>
-                                <button class="btn btn-sm btn-secondary load-saved-test-btn" data-badge-index="${badgeIndex}" data-test-index="${testIndex}">Load This Test</button>
+                                <button class="btn btn-sm btn-secondary load-saved-test-btn hidden" data-badge-index="${badgeIndex}" data-test-index="${testIndex}">Load This Test</button>
                             </div>
                         `).join('');
                     }
@@ -677,6 +720,7 @@ async function saveTestDataToBadge(index) {
     const badge = currentBadges[index];
     const resultDiv = document.getElementById(`testResult-${index}`);
     
+    showLoader('Saving test data...');
     try {
         // Get test data from textareas
         const resultsText = document.getElementById(`testResults-${index}`).value;
@@ -744,6 +788,8 @@ async function saveTestDataToBadge(index) {
             <strong>Timestamp:</strong> ${new Date().toLocaleString()}
         `;
         resultDiv.classList.remove('hidden');
+    } finally {
+        hideLoader();
     }
 }
 
@@ -800,6 +846,7 @@ async function clearTestData(index) {
     const badge = currentBadges[index];
     const resultDiv = document.getElementById(`testResult-${index}`);
     
+    showLoader('Clearing test data...');
     try {
         // Clear test data using the new API endpoint
         const response = await fetch(`/admin/api/badges/test-data/${badge._id}`, {
@@ -828,12 +875,58 @@ async function clearTestData(index) {
             <strong>Timestamp:</strong> ${new Date().toLocaleString()}
         `;
         resultDiv.classList.remove('hidden');
+    } finally {
+        hideLoader();
     }
 }
 
-function editBadge(index) {
+async function editBadge(index) {
     const badge = currentBadges[index];
-    openBadgeModal(badge, index);
+    
+    // Check if badge is already being edited
+    if (badge.beingEdited) {
+        alert('This badge is already being edited by another user.');
+        return;
+    }
+    
+    showLoader('Loading latest badge data...');
+    try {
+        // Load latest badge data and mark as being edited
+        const response = await fetch('/admin/api/badges/start-edit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ badgeId: badge._id })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            if (response.status === 409) {
+                alert(`Cannot edit badge: ${errorData.error}`);
+                // Refresh the badge list to show updated beingEdited status
+                await loadBadges();
+                return;
+            }
+            throw new Error(errorData.error || 'Failed to start editing');
+        }
+        
+        const result = await response.json();
+        
+        // Update the badge in currentBadges with latest data
+        currentBadges[index] = result.badge;
+        
+        // Track the currently editing badge
+        currentlyEditingBadgeId = result.badge._id;
+        
+        // Open modal with latest data
+        openBadgeModal(result.badge, index);
+        
+    } catch (error) {
+        alert('Error loading badge data: ' + error.message);
+    } finally {
+        hideLoader();
+    }
 }
 
 function openBadgeModal(badge, index = null) {
@@ -943,6 +1036,7 @@ async function saveBadge() {
     const modal = document.getElementById('badgeEditModal');
     const index = modal.dataset.badgeIndex;
     
+    showLoader('Saving badge...');
     try {
         const badge = collectBadgeFormData();
         
@@ -960,11 +1054,33 @@ async function saveBadge() {
         // Save single badge to server
         await saveSingleBadgeToServer(badge, action);
         
-        displayBadges();
+        // Locally clear editing lock on the saved badge
+        if (action === 'update') {
+
+            console.log('trying to unlock');
+
+            const idx = parseInt(index);
+            if (!Number.isNaN(idx) && currentBadges[idx]) {
+                currentBadges[idx].beingEdited = false;
+                delete currentBadges[idx].beingEditedBy;
+                delete currentBadges[idx].beingEditedAt;
+            } else if (badge && badge._id) {
+                const found = currentBadges.find(b => b._id === badge._id);
+                if (found) {
+                    found.beingEdited = false;
+                    delete found.beingEditedBy;
+                    delete found.beingEditedAt;
+                }
+            }
+        }
+        
+        await displayBadges();
         closeBadgeModal();
         
     } catch (error) {
         alert('Error saving badge: ' + error.message);
+    } finally {
+        hideLoader();
     }
 }
 
@@ -1028,7 +1144,8 @@ function collectBadgeFormData() {
         animation: document.getElementById('badgeAnimation').value,
         points: parseInt(document.getElementById('badgePoints').value) || 0,
         isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false,
-        trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false
+        trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false,
+        done: document.getElementById('badgeDone') ? document.getElementById('badgeDone').checked : false
     };
 
     // Preserve MongoDB _id for updates by retrieving it from the modal dataset
@@ -1067,21 +1184,86 @@ function collectBadgeFormData() {
     return badge;
 }
 
-function closeBadgeModal() {
+async function toggleDoneStatus(index) {
+    const badge = currentBadges[index];
+    
+    // Ensure badge has an _id before attempting to update
+    if (!badge._id) {
+        alert('Cannot update badge: Badge must be saved first.');
+        return;
+    }
+    
+    // Toggle the done status
+    const newDoneStatus = !badge.done;
+    badge.done = newDoneStatus;
+    
+    showLoader('Updating badge status...');
+    try {
+        // Create a badge object with only the fields we need to update
+        const badgeToUpdate = {
+            _id: badge._id,
+            done: newDoneStatus
+        };
+        
+        // Save the updated badge to the server
+        await saveSingleBadgeToServer(badgeToUpdate, 'update');
+        
+        // Refresh the display to show the updated status
+        await displayBadges();
+    } catch (error) {
+        // Revert the change if save failed
+        badge.done = !newDoneStatus;
+        alert('Error updating done status: ' + error.message);
+    } finally {
+        hideLoader();
+    }
+}
+
+async function closeBadgeModal() {
     const modal = document.getElementById('badgeEditModal');
+    const index = modal.dataset.badgeIndex;
+    
+    // If we're closing an edit session, clear the beingEdited status
+    if (index !== null && index !== 'null') {
+        const badge = currentBadges[parseInt(index)];
+        if (badge && badge._id) {
+            try {
+                await fetch('/admin/api/badges/stop-edit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ badgeId: badge._id })
+                });
+                // Locally clear editing lock on the badge being closed
+                badge.beingEdited = false;
+                delete badge.beingEditedBy;
+                delete badge.beingEditedAt;
+            } catch (error) {
+                console.error('Error clearing edit status:', error);
+            }
+        }
+    }
+    
     modal.style.display = 'none';
     modal.dataset.badgeIndex = null;
+    
+    // Clear the currently editing badge tracking
+    currentlyEditingBadgeId = null;
 }
 
 async function deleteBadge(index) {
     if (confirm('Are you sure you want to delete this badge?')) {
+        showLoader('Deleting badge...');
         try {
             const badge = currentBadges[index];
             currentBadges.splice(index, 1);
             await saveSingleBadgeToServer(badge, 'delete');
-            displayBadges();
+            await displayBadges();
         } catch (error) {
             alert('Error deleting badge: ' + error.message);
+        } finally {
+            hideLoader();
         }
     }
 }
@@ -1105,6 +1287,26 @@ function addNewBadge() {
     openBadgeModal(newBadgeTemplate, null);
 }
 
+
+// Track currently editing badge for cleanup
+let currentlyEditingBadgeId = null;
+
+// Cleanup function to clear edit status
+async function cleanupEditStatus() {
+    if (currentlyEditingBadgeId) {
+        try {
+            await fetch('/admin/api/badges/stop-edit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ badgeId: currentlyEditingBadgeId })
+            });
+        } catch (error) {
+            console.error('Error clearing edit status on cleanup:', error);
+        }
+    }
+}
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
@@ -1136,4 +1338,8 @@ document.addEventListener('DOMContentLoaded', function() {
             closeBadgeModal();
         }
     });
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanupEditStatus);
+    window.addEventListener('unload', cleanupEditStatus);
 });
