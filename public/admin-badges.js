@@ -780,7 +780,7 @@ async function saveTestDataToBadge(index) {
         resultDiv.classList.remove('hidden');
         
         // Refresh the badge display to show updated test data count
-        await loadBadges();
+        // await loadBadges();
         
     } catch (error) {
         resultDiv.className = 'test-results test-fail';
