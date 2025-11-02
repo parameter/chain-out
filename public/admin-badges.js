@@ -1074,7 +1074,7 @@ async function saveBadge() {
             }
         }
         
-        await displayBadges();
+        // await displayBadges();
         closeBadgeModal();
         
     } catch (error) {
@@ -1209,7 +1209,7 @@ async function toggleDoneStatus(index) {
         await saveSingleBadgeToServer(badgeToUpdate, 'update');
         
         // Refresh the display to show the updated status
-        await displayBadges();
+        // await displayBadges();
     } catch (error) {
         // Revert the change if save failed
         badge.done = !newDoneStatus;
