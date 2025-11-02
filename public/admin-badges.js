@@ -383,31 +383,8 @@ async function loadBadges() {
             console.log('Parsed condition function:', parsedBadge.condition);
             return parsedBadge;
         });
-        
-        // Fetch all test data in parallel after badges are loaded
-        showLoader('Loading test data...');
-        const testDataPromises = currentBadges.map(async (badge, index) => {
-            try {
-                const testResponse = await fetch(`/admin/api/badges/test-data/${badge._id}`);
-                if (testResponse.ok) {
-                    const testDataArray = await testResponse.json();
-                    badge.testDataArray = testDataArray;
-                    return { index, testDataArray };
-                } else {
-                    badge.testDataArray = [];
-                    return { index, testDataArray: [] };
-                }
-            } catch (error) {
-                console.error(`Error loading test data for badge ${badge.name}:`, error);
-                badge.testDataArray = [];
-                return { index, testDataArray: [] };
-            }
-        });
-        
-        // Wait for all test data to load
-        await Promise.all(testDataPromises);
-        
         await displayBadges();
+        await loadTestDataForAllBadges();
     } catch (error) {
         console.error('Error loading badges:', error);
         // Load sample badges if API fails
@@ -475,10 +452,8 @@ async function displayBadges() {
         badgeList.appendChild(badgeItem);
     });
 
-    // Update UI with test data that was already loaded in loadBadges()
-    currentBadges.forEach((badge, index) => {
-        updateBadgeTestDataUI(index, badge.testDataArray || []);
-    });
+    // Load test data for each badge
+    // await loadTestDataForAllBadges();
 
     // Add event listeners for badge buttons
     document.querySelectorAll('.test-individual-btn').forEach(btn => {
@@ -624,85 +599,6 @@ async function testBadgeWithCustomData(index) {
         resultDiv.classList.remove('hidden');
     } finally {
         hideLoader();
-    }
-}
-
-// Helper function to update badge test data UI without fetching from server
-function updateBadgeTestDataUI(badgeIndex, testDataArray) {
-    // Update test data count
-    const countElement = document.getElementById(`testDataCount-${badgeIndex}`);
-    if (countElement) {
-        countElement.textContent = testDataArray ? testDataArray.length : 0;
-    }
-    
-    // Update test data count display
-    const countDisplayElement = document.getElementById(`testDataCountDisplay-${badgeIndex}`);
-    if (countDisplayElement) {
-        countDisplayElement.textContent = testDataArray ? testDataArray.length : 0;
-    }
-    
-    // Show/hide existing test data section
-    const existingTestDataElement = document.getElementById(`existingTestData-${badgeIndex}`);
-    if (existingTestDataElement) {
-        if (testDataArray && testDataArray.length > 0) {
-            existingTestDataElement.style.display = 'block';
-            
-            // Update test data list
-            const testDataListElement = document.getElementById(`testDataList-${badgeIndex}`);
-            if (testDataListElement) {
-                testDataListElement.innerHTML = testDataArray.map((testData, testIndex) => `
-                    <div class="test-data-item">
-                        <strong>Test ${testIndex + 1}:</strong> ${testData.results.length} results, ${testData.layout.holes ? testData.layout.holes.length : 0} holes
-                        <br><small>Saved: ${new Date(testData.savedAt).toLocaleString()}</small>
-                        <button class="btn btn-sm btn-secondary load-saved-test-btn hidden" data-badge-index="${badgeIndex}" data-test-index="${testIndex}">Load This Test</button>
-                    </div>
-                `).join('');
-            }
-            
-            // Show clear button if there's test data
-            const clearButton = document.querySelector(`[data-index="${badgeIndex}"].clear-test-data-btn`);
-            if (clearButton) {
-                clearButton.style.display = 'inline-block';
-            }
-            
-            // Auto-load the most recent test data into the textareas
-            const mostRecentTestData = testDataArray[testDataArray.length - 1]; // Get the last (most recent) test data
-            if (mostRecentTestData) {
-                document.getElementById(`testResults-${badgeIndex}`).value = JSON.stringify(mostRecentTestData.results, null, 2);
-                document.getElementById(`testLayout-${badgeIndex}`).value = JSON.stringify(mostRecentTestData.layout, null, 2);
-                
-                // Show a notification that test data was auto-loaded
-                const resultDiv = document.getElementById(`testResult-${badgeIndex}`);
-                resultDiv.className = 'test-results test-pass';
-                resultDiv.innerHTML = `
-                    <strong>🔄 Auto-loaded Saved Test Data</strong><br>
-                    <strong>Test Data:</strong> ${mostRecentTestData.results.length} results, ${mostRecentTestData.layout.holes ? mostRecentTestData.layout.holes.length : 0} holes<br>
-                    <strong>Originally Saved:</strong> ${new Date(mostRecentTestData.savedAt).toLocaleString()}<br>
-                    <strong>Auto-loaded At:</strong> ${new Date().toLocaleString()}
-                `;
-                resultDiv.classList.remove('hidden');
-            }
-        } else {
-            existingTestDataElement.style.display = 'none';
-            
-            // Hide clear button if no test data
-            const clearButton = document.querySelector(`[data-index="${badgeIndex}"].clear-test-data-btn`);
-            if (clearButton) {
-                clearButton.style.display = 'none';
-            }
-            
-            // Load default test data when no saved test data exists
-            const defaultData = getDefaultTestData();
-            const defaultLayout = getDefaultTestLayout();
-            const testResultsElement = document.getElementById(`testResults-${badgeIndex}`);
-            const testLayoutElement = document.getElementById(`testLayout-${badgeIndex}`);
-            if (testResultsElement) {
-                testResultsElement.value = JSON.stringify(defaultData, null, 2);
-            }
-            if (testLayoutElement) {
-                testLayoutElement.value = JSON.stringify(defaultLayout, null, 2);
-            }
-        }
     }
 }
 
@@ -1179,7 +1075,7 @@ async function saveBadge() {
             }
         }
         
-        // await displayBadges();
+        await displayBadges();
         closeBadgeModal();
         
     } catch (error) {
@@ -1317,7 +1213,7 @@ async function toggleDoneStatus(index) {
         currentBadges[index].done = newDoneStatus;
         
         // Refresh the display to show the updated status
-        // await displayBadges();
+        await displayBadges();
     } catch (error) {
         // Revert the change if save failed
         badge.done = !newDoneStatus;
