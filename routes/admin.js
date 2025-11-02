@@ -1088,18 +1088,16 @@ router.post('/api/badges/test', (req, res) => {
             })
          };
       }
-
-      console.log('badge', badge);
       
       // Handle condition field - it might be a string (source code) or function
       let conditionFunction;
       if (typeof badge.condition === 'function') {
          conditionFunction = badge.condition;
-      } else if (typeof badge.conditionString === 'string') {
+      } else if (typeof badge.condition === 'string') {
          // Try to create a function from the string
          try {
             // Extract function body from string like "function (results, layout) { ... }"
-            const trimmed = badge.conditionString.trim();
+            const trimmed = badge.condition.trim();
             const functionStart = trimmed.indexOf('{');
             const functionEnd = trimmed.lastIndexOf('}');
             
