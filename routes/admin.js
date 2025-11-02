@@ -1088,6 +1088,8 @@ router.post('/api/badges/test', (req, res) => {
             })
          };
       }
+
+      console.log('badge', badge);
       
       // Handle condition field - it might be a string (source code) or function
       let conditionFunction;
