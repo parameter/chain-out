@@ -6,9 +6,8 @@ const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
 const { searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges } = require('../lib/badges');
 
+
 const router = express.Router();
-
-
 
 const Pusher = require("pusher");
 
