@@ -1093,7 +1093,7 @@ router.post('/api/badges/test', (req, res) => {
                if ('number' in hole) {
                   // Copy and rename "number" to "holeNumber"
                   const { number, ...rest } = hole;
-                  return { ...rest, holeNumber: number };
+                  return { ...rest, holeNumber: number, length: hole.length, measureInMeters: hole.measureInMeters };
                }
                return hole;
             })
