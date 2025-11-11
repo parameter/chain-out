@@ -342,6 +342,66 @@ function getDefaultTestData() {
                 "throwIn": false
             },
             "timestamp": new Date("2025-01-15T10:15:20.467Z")
+        },
+        {
+            "playerId": "68da392e41254148ddea8883",
+            "holeNumber": 3,
+            "score": 3, // Par for par 4
+            "putt": "inside",
+            "obCount": 0,
+            "specifics": {
+                "c1": false,
+                "c2": false,
+                "bullseye": false,
+                "scramble": false,
+                "throwIn": false
+            },
+            "timestamp": new Date("2025-01-15T10:15:20.467Z")
+        },
+        {
+            "playerId": "68da392e41254148ddea8883",
+            "holeNumber": 4,
+            "score": 3, // Par for par 4
+            "putt": "inside",
+            "obCount": 0,
+            "specifics": {
+                "c1": false,
+                "c2": false,
+                "bullseye": false,
+                "scramble": false,
+                "throwIn": false
+            },
+            "timestamp": new Date("2025-01-15T10:15:20.467Z")
+        },
+        {
+            "playerId": "68da392e41254148ddea8883",
+            "holeNumber": 5,
+            "score": 3, // Par for par 4
+            "putt": "inside",
+            "obCount": 0,
+            "specifics": {
+                "c1": false,
+                "c2": false,
+                "bullseye": false,
+                "scramble": false,
+                "throwIn": false
+            },
+            "timestamp": new Date("2025-01-15T10:15:20.467Z")
+        },
+        {
+            "playerId": "68da392e41254148ddea8883",
+            "holeNumber": 6,
+            "score": 3, // Par for par 4
+            "putt": "inside",
+            "obCount": 0,
+            "specifics": {
+                "c1": false,
+                "c2": false,
+                "bullseye": false,
+                "scramble": false,
+                "throwIn": false
+            },
+            "timestamp": new Date("2025-01-15T10:15:20.467Z")
         }
     ];
 }
