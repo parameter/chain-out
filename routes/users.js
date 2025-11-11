@@ -819,8 +819,23 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     );
 
     if (updatedResult) {
+
+      // Get the latest result for each unique holeNumber (by timestamp)
+      let rawResults = updatedResult.results || [];
+      // Group by holeNumber, keeping only the latest by timestamp
+      const latestByHole = {};
+      for (const result of rawResults) {
+        if (
+          !latestByHole[result.holeNumber] ||
+          (result.timestamp && latestByHole[result.holeNumber].timestamp < result.timestamp)
+        ) {
+          latestByHole[result.holeNumber] = result;
+        }
+      }
+      // Create a sorted array of results by timestamp
+      const results = Object.values(latestByHole).sort((a, b) => new Date(a.holeNumber) - new Date(b.holeNumber));
       
-      const earnedBadges = await searchForEarnedBadges(updatedResult);
+      const earnedBadges = await searchForEarnedBadges(results);
 
       console.log('earnedBadges', earnedBadges);
 
