@@ -461,7 +461,7 @@ async function displayBadges() {
         const badgeItem = document.createElement('div');
         let className = 'badge-item';
         if (badge.done) className += ' done';
-        if (badge.beingEdited) className += ' being-edited';
+        
         badgeItem.className = className;
         badgeItem.innerHTML = `
             <div class="badge-header">
@@ -945,12 +945,6 @@ async function clearTestData(index) {
 async function editBadge(index) {
     const badge = currentBadges[index];
     
-    // Check if badge is already being edited
-    if (badge.beingEdited) {
-        alert('This badge is already being edited by another user.');
-        return;
-    }
-    
     showLoader('Loading latest badge data...');
     try {
         // Load latest badge data and mark as being edited
@@ -966,7 +960,6 @@ async function editBadge(index) {
             const errorData = await response.json();
             if (response.status === 409) {
                 alert(`Cannot edit badge: ${errorData.error}`);
-                // Refresh the badge list to show updated beingEdited status
                 await loadBadges();
                 return;
             }
@@ -1124,22 +1117,7 @@ async function saveBadge() {
         
         // Locally clear editing lock on the saved badge
         if (action === 'update') {
-
-            console.log('trying to unlock');
-
-            const idx = parseInt(index);
-            if (!Number.isNaN(idx) && currentBadges[idx]) {
-                currentBadges[idx].beingEdited = false;
-                delete currentBadges[idx].beingEditedBy;
-                delete currentBadges[idx].beingEditedAt;
-            } else if (badge && badge._id) {
-                const found = currentBadges.find(b => b._id === badge._id);
-                if (found) {
-                    found.beingEdited = false;
-                    delete found.beingEditedBy;
-                    delete found.beingEditedAt;
-                }
-            }
+            // Lock cleared on server
         }
         
         await displayBadges();
@@ -1295,7 +1273,7 @@ async function closeBadgeModal() {
     const modal = document.getElementById('badgeEditModal');
     const index = modal.dataset.badgeIndex;
     
-    // If we're closing an edit session, clear the beingEdited status
+    // If we're closing an edit session, clear the edit status
     if (index !== null && index !== 'null') {
         const badge = currentBadges[parseInt(index)];
         if (badge && badge._id) {
@@ -1307,10 +1285,6 @@ async function closeBadgeModal() {
                     },
                     body: JSON.stringify({ badgeId: badge._id })
                 });
-                // Locally clear editing lock on the badge being closed
-                badge.beingEdited = false;
-                delete badge.beingEditedBy;
-                delete badge.beingEditedAt;
             } catch (error) {
                 console.error('Error clearing edit status:', error);
             }
