@@ -207,23 +207,6 @@ router.get('/badges', (req, res) => {
             border: 3px solid #28a745;
             background: #f0fff4;
         }
-        .badge-item.being-edited {
-            border: 3px solid #ffc107;
-            background: #fff8e1;
-            position: relative;
-        }
-        .badge-item.being-edited::before {
-            content: "✏️ Being edited by another user";
-            position: absolute;
-            top: -8px;
-            right: 10px;
-            background: #ffc107;
-            color: #212529;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
         .badge-header {
             display: flex;
             justify-content: space-between;
@@ -865,6 +848,7 @@ router.post('/api/badges', async (req, res) => {
 // POST /api/badges/start-edit - Mark badge as being edited and return latest data
 router.post('/api/badges/start-edit', async (req, res) => {
    try {
+      console.log('starting badge edit');
       const { badgeId } = req.body;
       
       if (!badgeId) {
@@ -874,36 +858,15 @@ router.post('/api/badges/start-edit', async (req, res) => {
       const db = getDatabase();
       const badgesCollection = db.collection('badgeDefinitions');
       
-      // Check if badge is already being edited
+      // Get the latest badge data
       const existingBadge = await badgesCollection.findOne({ _id: new ObjectId(badgeId) });
       
       if (!existingBadge) {
          return res.status(404).json({ error: 'Badge not found' });
       }
       
-      if (existingBadge.beingEdited && existingBadge.beingEditedBy) {
-         return res.status(409).json({ 
-            error: 'Badge is already being edited by another user',
-            beingEditedBy: existingBadge.beingEditedBy,
-            beingEditedAt: existingBadge.beingEditedAt
-         });
-      }
-      
-      // Mark badge as being edited
-      const editInfo = {
-         beingEdited: true,
-         beingEditedBy: req.ip || 'unknown',
-         beingEditedAt: new Date()
-      };
-      
-      await badgesCollection.updateOne(
-         { _id: new ObjectId(badgeId) },
-         { $set: editInfo }
-      );
-      
       // Return the latest badge data
-      const updatedBadge = await badgesCollection.findOne({ _id: new ObjectId(badgeId) });
-      res.json({ success: true, badge: updatedBadge });
+      res.json({ success: true, badge: existingBadge });
       
    } catch (error) {
       console.error('Error starting badge edit:', error);
@@ -911,7 +874,7 @@ router.post('/api/badges/start-edit', async (req, res) => {
    }
 });
 
-// POST /api/badges/stop-edit - Clear being edited status
+// POST /api/badges/stop-edit - Clear edit status (no-op, kept for compatibility)
 router.post('/api/badges/stop-edit', async (req, res) => {
    try {
       const { badgeId } = req.body;
@@ -919,14 +882,6 @@ router.post('/api/badges/stop-edit', async (req, res) => {
       if (!badgeId) {
          return res.status(400).json({ error: 'Badge ID is required' });
       }
-      
-      const db = getDatabase();
-      const badgesCollection = db.collection('badgeDefinitions');
-      
-      await badgesCollection.updateOne(
-         { _id: new ObjectId(badgeId) },
-         { $unset: { beingEdited: "", beingEditedBy: "", beingEditedAt: "" } }
-      );
       
       res.json({ success: true, message: 'Edit status cleared' });
       
@@ -973,7 +928,7 @@ router.post('/api/badges/save', async (req, res) => {
 
 			const result = await badgesCollection.updateOne(
 				{ _id: id },
-				{ $set: { ...badge }, $unset: { beingEdited: "", beingEditedBy: "", beingEditedAt: "" } }
+				{ $set: { ...badge } }
 			);
 			if (result.matchedCount === 0) {
 				return res.status(404).json({ error: 'Badge not found' });
