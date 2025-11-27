@@ -842,9 +842,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
         layout: updatedResult.layout 
       });
 
-      console.log('earnedBadges', earnedBadges);
-
-
       updatedResult.invites.forEach(invite => {
 
         // if (invite.status === 'accepted') {
@@ -869,7 +866,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     }
 
-    res.status(200).json({ message: 'Round completed', scorecard: updatedResult });
+    res.status(200).json({ message: 'Round completed', scorecard: rawResults });
   } catch (e) {
     console.error('Error completing round:', e);
     res.status(500).json({ message: 'Failed to complete round' });
