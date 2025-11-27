@@ -811,6 +811,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
+    const coursesCollection = db.collection('courses');
+    const usersCollection = db.collection('users');
 
     const updatedResult = await scorecardsCollection.findOneAndUpdate(
       { _id: new ObjectId(scorecardId) },
@@ -818,55 +820,126 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       { returnDocument: 'after' }
     );
 
-    if (updatedResult) {
-
-      // Get the latest result for each unique holeNumber (by timestamp)
-      let rawResults = updatedResult.results || [];
-      // Group by holeNumber, keeping only the latest by timestamp
-      const latestByHole = {};
-      for (const result of rawResults) {
-        if (
-          !latestByHole[result.holeNumber] ||
-          (result.timestamp && latestByHole[result.holeNumber].timestamp < result.timestamp)
-        ) {
-          latestByHole[result.holeNumber] = result;
-        }
-      }
-      // Create a sorted array of results by timestamp
-      const results = Object.values(latestByHole).sort((a, b) => new Date(a.holeNumber) - new Date(b.holeNumber));
-      
-      const earnedBadges = await searchForEarnedBadges({ 
-        scorecardId: updatedResult._id, 
-        results: results, 
-        courseId: updatedResult.courseId, 
-        layout: updatedResult.layout 
-      });
-
-      updatedResult.invites.forEach(invite => {
-
-        // if (invite.status === 'accepted') {
-
-          pusher.trigger(invite.invitedUserId, "scorecard-completed", {
-            scorecardId: scorecardId
-          });
-
-        // }
-
-      });
-
-      // Skicka till alla på kortet, TODO: 
-      // FIxa så vi bara skickar till de som har svarat på inviteringen
-
-      /*
-      pusher.trigger(note.fromUser.toString(), "scorecard-invite", {
-        message: note.message,
-        scorecardId: scorecardId,
-        courseName: course.name
-      }); */
-
+    if (!updatedResult) {
+      return res.status(404).json({ message: 'Scorecard not found' });
     }
 
-    res.status(200).json({ message: 'Round completed', scorecard: rawResults });
+    // Get the latest result for each unique holeNumber (by timestamp)
+    let rawResults = updatedResult.results || [];
+    // Group by holeNumber, keeping only the latest by timestamp
+    const latestByHole = {};
+    for (const result of rawResults) {
+      if (
+        !latestByHole[result.holeNumber] ||
+        (result.timestamp && latestByHole[result.holeNumber].timestamp < result.timestamp)
+      ) {
+        latestByHole[result.holeNumber] = result;
+      }
+    }
+    // Create a sorted array of results by timestamp
+    const results = Object.values(latestByHole).sort((a, b) => new Date(a.holeNumber) - new Date(b.holeNumber));
+    
+    const earnedBadges = await searchForEarnedBadges({ 
+      scorecardId: updatedResult._id, 
+      results: results, 
+      courseId: updatedResult.courseId, 
+      layout: updatedResult.layout 
+    });
+
+    /*
+    updatedResult.invites.forEach(invite => {
+      pusher.trigger(invite.invitedUserId, "scorecard-completed", {
+        scorecardId: scorecardId
+      });
+    }); */
+
+    // Fetch course information
+    const course = updatedResult.courseId 
+      ? await coursesCollection.findOne({ _id: new ObjectId(updatedResult.courseId) })
+      : null;
+
+    // Get participants (similar to /scorecard/get-by-id)
+    const invitedIds = Array.isArray(updatedResult.invites) && updatedResult.invites.length > 0
+      ? updatedResult.invites.map(i => i.invitedUserId)
+      : [];
+
+    const creatorId = updatedResult.creatorId ? [updatedResult.creatorId.toString()] : [];
+
+    let addedIds = [];
+    if (Array.isArray(updatedResult.added)) {
+      addedIds = updatedResult.added.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
+    } else if (Array.isArray(updatedResult.players)) {
+      addedIds = updatedResult.players.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
+    }
+
+    const allUserIds = Array.from(
+      new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
+    );
+
+    const users =
+      allUserIds.length > 0
+        ? await usersCollection
+            .find({ _id: { $in: allUserIds.map(id => new ObjectId(id)) } })
+            .project({ _id: 1, username: 1 })
+            .toArray()
+        : [];
+
+    const userMap = {};
+    users.forEach(u => (userMap[u._id.toString()] = u));
+
+    const participants = allUserIds.map(userId => {
+      const userObj = userMap[userId];
+      if (userObj) {
+        return { _id: userObj._id.toString(), id: userObj._id.toString(), username: userObj.username };
+      }
+      return { _id: userId, id: userId };
+    });
+
+    // Extract layout holes
+    let layoutHoles = [];
+    if (updatedResult.layout) {
+      if (updatedResult.layout.latestVersion && Array.isArray(updatedResult.layout.latestVersion.holes)) {
+        layoutHoles = updatedResult.layout.latestVersion.holes.map(hole => ({
+          holeNumber: hole.number || hole.holeNumber,
+          par: hole.par,
+          length: hole.length
+        }));
+      } else if (Array.isArray(updatedResult.layout.holes)) {
+        layoutHoles = updatedResult.layout.holes.map(hole => ({
+          holeNumber: hole.number || hole.holeNumber,
+          par: hole.par,
+          length: hole.length
+        }));
+      }
+    }
+
+    // Extract geolocation from course
+    let geolocation = null;
+    if (course && course.location && course.location.coordinates) {
+      geolocation = {
+        lat: course.location.coordinates[1],
+        lng: course.location.coordinates[0]
+      };
+    } else if (course && course.geolocation) {
+      geolocation = course.geolocation;
+    }
+
+    // Format response according to CompletedRoundData interface
+    const completedRoundData = {
+      scorecard: updatedResult,
+      results: results,
+      courseName: course?.name,
+      courseId: updatedResult.courseId?.toString(),
+      layout: layoutHoles.length > 0 ? { holes: layoutHoles } : undefined,
+      participants: participants,
+      createdAt: updatedResult.createdAt?.toISOString(),
+      date: updatedResult.date?.toISOString() || updatedResult.createdAt?.toISOString(),
+      status: updatedResult.status,
+      geolocation: geolocation,
+      country: course?.country
+    };
+
+    res.status(200).json(completedRoundData);
   } catch (e) {
     console.error('Error completing round:', e);
     res.status(500).json({ message: 'Failed to complete round' });
