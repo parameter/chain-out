@@ -12,9 +12,10 @@ const initializeDatabase = async () => {
     console.log('mongoUrl', mongoUrl);
     
     await client.connect();
-    db = client.db();
+    db = client.db('chain-out-db');
     
     console.log('Connected to MongoDB');
+    console.log('Database name:', db.databaseName);
     
     // Create collections and indexes
     await createCollections();
