@@ -15,6 +15,8 @@ async function readBadgesFromDatabase() {
     try {
         const db = getDatabase();
         const badgesCollection = db.collection('badgeDefinitions');
+
+        console.log('Here we are');
         
         // Get the single document containing all badges
         const result = await badgesCollection.find({}).toArray();

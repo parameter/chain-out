@@ -6,10 +6,7 @@ let client = null;
 
 const initializeDatabase = async () => {
   try {
-    const mongoUrl = process.env.MONGODB_URI
-      || process.env.MONGO_URI
-      || process.env.SCALINGO_MONGO_URL
-      || 'mongodb+srv://safeout:c0jWv3m8ePkKEtJE@chain-out-db.ner4w1x.mongodb.net/chain-out-db?retryWrites=true&w=majority';
+    const mongoUrl = process.env.MONGODB_URI;
     client = new MongoClient(mongoUrl);
 
     console.log('mongoUrl', mongoUrl);
