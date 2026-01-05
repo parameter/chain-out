@@ -355,18 +355,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         console.error('Error sending pusher notification 1:', e);
       }
 
-      try {
-
-        pusher.trigger(note.fromUser.toString(), "scorecard-invite", {
-          message: note.message,
-          scorecardId: scorecardId,
-          courseName: course.name
-        });
-
-      } catch (e) {
-        console.error('Error sending pusher notification 2:', e);
-      }
-
     });
 
     const localNotificationsCollection = db.collection('local-notifications');
