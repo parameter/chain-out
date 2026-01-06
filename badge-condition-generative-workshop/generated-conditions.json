@@ -1,0 +1,583 @@
+[
+  {
+    "id": "badge_hunter",
+    "name": "Badge Hunter",
+    "functionalDescription": "totalt antal badges man samlat (varje tier på en räknas som 1)",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: totalt antal badges man samlat (varje tier på en räknas som 1)\n    return 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: \n    return 0;\n}",
+    "isUnique": false,
+    "type": "badges"
+  },
+  {
+    "id": "year_hunter",
+    "name": "Year Hunter",
+    "functionalDescription": "antal år man spelat",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: antal år man spelat\n    return 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "birdies_on_a_wire",
+    "name": "Birdies On A Wire",
+    "functionalDescription": "hur många birdies man får på rad, hål efter hål.",
+    "condition": "(results, layout) => {\n    if (results.length === 0) {\n        return 0;\n    }\n    \n    let longestStreak = 0;\n    let currentStreak = 0;\n    \n    for (let i = 0; i < results.length; i++) {\n        const result = results[i];\n        const hole = layout.holes.find((h) => h.holeNumber === result.holeNumber);\n        \n        if (hole && result.score === hole.par - 1) {\n            currentStreak++;\n            if (currentStreak > longestStreak) {\n                longestStreak = currentStreak;\n            }\n        } else {\n            currentStreak = 0;\n        }\n    }\n    \n    return longestStreak;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "dominating",
+    "name": "Dominating",
+    "functionalDescription": "antal gånger man vunnit en match mot en eller flera. (singel)",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "ride_or_die",
+    "name": "Ride or Die",
+    "functionalDescription": "Antal gånger man vunnit i dubbel",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Group results by team (assuming teamId or similar exists)\n    // For now, treat as singles match\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "week_streak_hunter",
+    "name": "Week Streak Hunter",
+    "functionalDescription": "antal veckor man spelat minst en runda discgolf",
+    "condition": "(results, layout) => {\n    return 1;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "turkey_hunter",
+    "name": "Turkey Hunter",
+    "functionalDescription": "antal turkeys man gjort totalt",
+    "condition": "(results, layout) => {\n    if (results.length < 3) {\n        return 0;\n    }\n    \n    let turkeyCount = 0;\n    \n    for (let i = 2; i < results.length; i++) {\n        const result1 = results[i - 2];\n        const result2 = results[i - 1];\n        const result3 = results[i];\n        \n        const hole1 = layout.holes.find((h) => h.holeNumber === result1.holeNumber);\n        const hole2 = layout.holes.find((h) => h.holeNumber === result2.holeNumber);\n        const hole3 = layout.holes.find((h) => h.holeNumber === result3.holeNumber);\n        \n        const birdie1 = hole1 && result1.score === hole1.par - 1;\n        const birdie2 = hole2 && result2.score === hole2.par - 1;\n        const birdie3 = hole3 && result3.score === hole3.par - 1;\n        \n        if (birdie1 && birdie2 && birdie3) {\n            turkeyCount++;\n        }\n    }\n    \n    return turkeyCount;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "bullseye_hunter",
+    "name": "Bullseye Hunter",
+    "functionalDescription": "antal gånger man landar i bullseye.",
+    "condition": "(results, layout) => {\n    const bullseye = results.filter((r) => {\n        return r.specifics && r.specifics.bullseye === true;\n    }).length;\n    return bullseye || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "dead_center",
+    "name": "Dead Center",
+    "functionalDescription": "antal gånger man landar i bullseye i rad",
+    "condition": "(results, layout) => {\n    const bullseye = results.filter((r) => {\n        return r.specifics && r.specifics.bullseye === true;\n    }).length;\n    return bullseye || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "nail_on_the_head",
+    "name": "Nail on the head",
+    "functionalDescription": "antal gånger man landat i bullseye på en runda.",
+    "condition": "(results, layout) => {\n    const bullseye = results.filter((r) => {\n        return r.specifics && r.specifics.bullseye === true;\n    }).length;\n    return bullseye || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "dynamic_duo",
+    "name": "Dynamic Duo",
+    "functionalDescription": "antal gånger man spelat med samma dubbel partner",
+    "condition": "(results, layout) => {\n    const pars = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par;\n    }).length;\n    return pars || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "friendly_fire",
+    "name": "Friendly Fire",
+    "functionalDescription": "antal gånger man förlorat matcher mot tillagd kompis.",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "throw_in_hunter",
+    "name": "Throw-in Hunter",
+    "functionalDescription": "totala antal gånger man fått throw-in",
+    "condition": "(results, layout) => {\n    const totalAmount = results.reduce((accumulator, current) => accumulator + current.score, 0);\n    return totalAmount;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "scramble_hunter",
+    "name": "Scramble Hunter",
+    "functionalDescription": "antal gånger man lyckats rädda par efter en dålig lie",
+    "condition": "(results, layout) => {\n    const pars = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par;\n    }).length;\n    return pars || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "fairway_hunter",
+    "name": "Fairway Hunter",
+    "functionalDescription": "antal gånger man träffat fairway",
+    "condition": "(results, layout) => {\n    const fairways = results.filter((r) => {\n        return r.fairwayHit === true;\n    }).length;\n    return fairways || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "double_hunter",
+    "name": "Double Hunter",
+    "functionalDescription": "totala antalet dubbel matcher man spelat",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Group results by team (assuming teamId or similar exists)\n    // For now, treat as singles match\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "No_convertion_hunter",
+    "name": "No Convertion Hunter",
+    "functionalDescription": "totalt missade birdie chanser. man landar c1 men ändå tar par.",
+    "condition": "(results, layout) => {\n    const birdies = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par - 1;\n    }).length;\n    return birdies || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "smooth_criminal",
+    "name": "Smooth Criminal",
+    "functionalDescription": "totala antalet bogey fria rundor",
+    "condition": "(results, layout) => {\n    const bogeys = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par + 1;\n    }).length;\n    return bogeys || 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "regular",
+    "name": "Regular",
+    "functionalDescription": "antal gånger man spelat samma bana. \"hemmabana\"",
+    "condition": "(results, layout) => {\n    return 1;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "step_hunter",
+    "name": "Step Hunter",
+    "functionalDescription": "antal steg man tagit på banan totalt.",
+    "condition": "(results, layout) => {\n    return 1;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "evolution_hunter",
+    "name": "Evolution Hunter",
+    "functionalDescription": "baserad på vilken rating man har.",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: baserad på vilken rating man har.\n    return 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "tournament_hunter",
+    "name": "Tournament Hunter",
+    "functionalDescription": "antal turneringar man har spelat via PDGA",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: antal turneringar man har spelat via PDGA\n    return 0;\n}",
+    "isUnique": false,
+    "type": "tiered"
+  },
+  {
+    "id": "bounce_back",
+    "name": "Bounce Back",
+    "functionalDescription": "när man får birdie efter varje bogey på 18 hål. Minst 5 gånger.",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "ultimate_comeback",
+    "name": "Ultimate Comeback",
+    "functionalDescription": "gör 3 birdies i rad efter en trippel bogey",
+    "condition": "(results, layout) => {\n    if (results.length === 0) {\n        return 0;\n    }\n    \n    let longestStreak = 0;\n    let currentStreak = 0;\n    \n    for (let i = 0; i < results.length; i++) {\n        const result = results[i];\n        const hole = layout.holes.find((h) => h.holeNumber === result.holeNumber);\n        \n        if (hole && result.score === hole.par - 1) {\n            currentStreak++;\n            if (currentStreak > longestStreak) {\n                longestStreak = currentStreak;\n            }\n        } else {\n            currentStreak = 0;\n        }\n    }\n    \n    return longestStreak;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "double_eagle",
+    "name": "Double Eagle",
+    "functionalDescription": "Gör 2 eagles i samma runda",
+    "condition": "(results, layout) => {\n    const eagles = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par - 2;\n    }).length;\n    return eagles || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "good_amount",
+    "name": "Good Amount",
+    "functionalDescription": "Gör 60 kast på en dag.",
+    "condition": "(results, layout) => {\n    const totalAmount = results.reduce((accumulator, current) => accumulator + current.score, 0);\n    return totalAmount;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "arm_wrestler",
+    "name": "Arm Wrestler",
+    "functionalDescription": "gör 120 kast på en dag.",
+    "condition": "(results, layout) => {\n    const totalAmount = results.reduce((accumulator, current) => accumulator + current.score, 0);\n    return totalAmount;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "power_through",
+    "name": "Power Through",
+    "functionalDescription": "gör 180 kast på en dag.",
+    "condition": "(results, layout) => {\n    const totalAmount = results.reduce((accumulator, current) => accumulator + current.score, 0);\n    return totalAmount;\n}",
+    "isUnique": false,
+    "type": "unique"
+  },
+  {
+    "id": "eagle_eye",
+    "name": "Eagle Eye",
+    "functionalDescription": "Gör en eagle på en par 4.",
+    "condition": "(results, layout) => {\n    const eagles = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par - 2;\n    }).length;\n    return eagles || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "eagles_nest",
+    "name": "Eagles Nest",
+    "functionalDescription": "Gör en eagle på en par 5.",
+    "condition": "(results, layout) => {\n    const eagles = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par - 2;\n    }).length;\n    return eagles || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "hole_hopper",
+    "name": "Hole Hopper",
+    "functionalDescription": "spela 36 hål på en dag.",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "tee_tenacity",
+    "name": "Tee Tenacity",
+    "functionalDescription": "spela 54 hål på en dag.",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "hole_harmony",
+    "name": "Hole Harmony",
+    "functionalDescription": "Spela 72 hål på en dag.",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "infinite_round",
+    "name": "Infinite Round",
+    "functionalDescription": "Spela 90 hål på en dag.",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "tis_the_season",
+    "name": "Tis the Season",
+    "functionalDescription": "Spela på julafton.",
+    "condition": "(results, layout) => {\n    const christmasEve = results.some((r) => {\n        if (!r.timestamp) return false;\n        const date = new Date(r.timestamp);\n        return date.getMonth() === 11 && date.getDate() === 24;\n    });\n    return christmasEve ? 1 : 0;\n}",
+    "isUnique": false,
+    "type": "unique"
+  },
+  {
+    "id": "happy_new_year",
+    "name": "Happy New Year",
+    "functionalDescription": "spela på nyårsafton",
+    "condition": "(results, layout) => {\n    const newYearsEve = results.some((r) => {\n        if (!r.timestamp) return false;\n        const date = new Date(r.timestamp);\n        return date.getMonth() === 11 && date.getDate() === 31;\n    });\n    return newYearsEve ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "egg_hunt",
+    "name": "Egg Hunt",
+    "functionalDescription": "spela på påskafton",
+    "condition": "(results, layout) => {\n    const easter = results.some((r) => {\n        if (!r.timestamp) return false;\n        const date = new Date(r.timestamp);\n        const month = date.getMonth();\n        return month === 2 || month === 3;\n    });\n    return easter ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "greatful_turkey",
+    "name": "Greatful Turkey",
+    "functionalDescription": "spela på thanksgiving",
+    "condition": "(results, layout) => {\n    const thanksgiving = results.some((r) => {\n        if (!r.timestamp) return false;\n        const date = new Date(r.timestamp);\n        if (date.getMonth() !== 10) return false;\n        const day = date.getDate();\n        const dayOfWeek = date.getDay();\n        return day >= 22 && day <= 28 && dayOfWeek === 4;\n    });\n    return thanksgiving ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "bogey_man",
+    "name": "Bogey Man",
+    "functionalDescription": "Spela på halloween",
+    "condition": "(results, layout) => {\n    const halloween = results.some((r) => {\n        if (!r.timestamp) return false;\n        const date = new Date(r.timestamp);\n        return date.getMonth() === 9 && date.getDate() === 31;\n    });\n    return halloween ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "seasonal_spectacle",
+    "name": "Seasonal Spectacle",
+    "functionalDescription": "När man har spelat på alla högtider.",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: När man har spelat på alla högtider.\n    return 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "the_albatross",
+    "name": "The Albatross",
+    "functionalDescription": "gör en albatross",
+    "condition": "(results, layout) => {\n    const albatrosses = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par - 3;\n    }).length;\n    return albatrosses || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "were_sinking",
+    "name": "We're Sinking!",
+    "functionalDescription": "när man gör 4-7 kast över par på ett hål.",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "once_you_pop",
+    "name": "Once you pop..",
+    "functionalDescription": "gå 8-12 kast över par på ett hål",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "nuclear",
+    "name": "Nuclear",
+    "functionalDescription": "Gå mer än 13 kast över par på ett hål",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "clean_slate",
+    "name": "Clean Slate",
+    "functionalDescription": "Förlora en match trots att man gått bogey free.",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "theres_always_a_bigger_fish",
+    "name": "There's Always A Bigger Fish",
+    "functionalDescription": "Förlora trots att man lyckats få ett ace.",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "bumpy_ride",
+    "name": "Bumpy Ride",
+    "functionalDescription": "när man först får birde och sen bogey 3 gånger i rad. Eller bogey och sen birdie osv.",
+    "condition": "(results, layout) => {\n    if (results.length === 0) {\n        return 0;\n    }\n    \n    let longestStreak = 0;\n    let currentStreak = 0;\n    \n    for (let i = 0; i < results.length; i++) {\n        const result = results[i];\n        const hole = layout.holes.find((h) => h.holeNumber === result.holeNumber);\n        \n        if (hole && result.score === hole.par - 1) {\n            currentStreak++;\n            if (currentStreak > longestStreak) {\n                longestStreak = currentStreak;\n            }\n        } else {\n            currentStreak = 0;\n        }\n    }\n    \n    return longestStreak;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "megacoaster",
+    "name": "Megacoaster",
+    "functionalDescription": "När man vinner utan något par på sitt kort.",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Check if player has any pars\n    const hasPar = results.some((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par;\n    });\n    \n    if (hasPar) {\n        return 0;\n    }\n    \n    // Check if player won\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "double_loop",
+    "name": "Double Loop",
+    "functionalDescription": "När man vinner i en dubbel utan något par.",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Group results by team (assuming teamId or similar exists)\n    // For now, treat as singles match\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "ace_race",
+    "name": "Ace Race",
+    "functionalDescription": "Vinn med ett ace på kortet.",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "the_haul",
+    "name": "The Haul",
+    "functionalDescription": "man vinner trots att man har 7 bogeys.",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Count bogeys\n    const bogeys = results.filter((r) => {\n        const hole = layout.holes.find((h) => h.holeNumber === r.holeNumber);\n        return hole && r.score === hole.par + 1;\n    }).length;\n    \n    if (bogeys < 7) {\n        return 0;\n    }\n    \n    // Check if player won\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    return currentPlayerTotal < bestOpponentTotal ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "speedster",
+    "name": "Speedster",
+    "functionalDescription": "Spela 18 hål under 1 timme.",
+    "condition": "(results, layout) => {\n    return results.length;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "premium",
+    "name": "Premium",
+    "functionalDescription": "När man köper premium i appen",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: När man köper premium i appen\n    return 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "local_spark",
+    "name": "Local Spark",
+    "functionalDescription": "Man ligger 1a på leaderboard 1 dag. (24h)",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: Man ligger 1a på leaderboard 1 dag. (24h)\n    return 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "local_hero",
+    "name": "Local Hero",
+    "functionalDescription": "ligg 1a på leaderboarden i en vecka.",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: ligg 1a på leaderboarden i en vecka.\n    return 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "local_legend",
+    "name": "Local Legend",
+    "functionalDescription": "man ligger 1a på leaderboarden i en månad.",
+    "condition": "(results, layout) => {\n    // TODO: Implement condition for: man ligger 1a på leaderboarden i en månad.\n    return 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "under_the_stars",
+    "name": "Under the Stars",
+    "functionalDescription": "Spela en runda mellan 01.00 och 02.59",
+    "condition": "(results, layout) => {\n    return 1;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "rise_and_shine",
+    "name": "Rise And Shine",
+    "functionalDescription": "spela en runda mellan 03 och 04:59",
+    "condition": "(results, layout) => {\n    return 1;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "nightowl",
+    "name": "Nightowl",
+    "functionalDescription": "spela en runda mellan 23 och 00.59",
+    "condition": "(results, layout) => {\n    return 1;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "ying_yang",
+    "name": "Ying Yang",
+    "functionalDescription": "Spela 2 bogey-fria rundor i rad.",
+    "condition": "(results, layout) => {\n    if (results.length === 0) {\n        return 0;\n    }\n    \n    let longestStreak = 0;\n    let currentStreak = 0;\n    \n    for (let i = 0; i < results.length; i++) {\n        const result = results[i];\n        const hole = layout.holes.find((h) => h.holeNumber === result.holeNumber);\n        \n        if (hole && result.score === hole.par + 1) {\n            currentStreak++;\n            if (currentStreak > longestStreak) {\n                longestStreak = currentStreak;\n            }\n        } else {\n            currentStreak = 0;\n        }\n    }\n    \n    return longestStreak;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "lotus",
+    "name": "Lotus",
+    "functionalDescription": "Spela 3 bogey-fria rundor i rad.",
+    "condition": "(results, layout) => {\n    if (results.length === 0) {\n        return 0;\n    }\n    \n    let longestStreak = 0;\n    let currentStreak = 0;\n    \n    for (let i = 0; i < results.length; i++) {\n        const result = results[i];\n        const hole = layout.holes.find((h) => h.holeNumber === result.holeNumber);\n        \n        if (hole && result.score === hole.par + 1) {\n            currentStreak++;\n            if (currentStreak > longestStreak) {\n                longestStreak = currentStreak;\n            }\n        } else {\n            currentStreak = 0;\n        }\n    }\n    \n    return longestStreak;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "bonzai",
+    "name": "Bonzai",
+    "functionalDescription": "spela 4 bogey-fria rundor i rad.",
+    "condition": "(results, layout) => {\n    if (results.length === 0) {\n        return 0;\n    }\n    \n    let longestStreak = 0;\n    let currentStreak = 0;\n    \n    for (let i = 0; i < results.length; i++) {\n        const result = results[i];\n        const hole = layout.holes.find((h) => h.holeNumber === result.holeNumber);\n        \n        if (hole && result.score === hole.par + 1) {\n            currentStreak++;\n            if (currentStreak > longestStreak) {\n                longestStreak = currentStreak;\n            }\n        } else {\n            currentStreak = 0;\n        }\n    }\n    \n    return longestStreak;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "zen_mode",
+    "name": "Zen Mode",
+    "functionalDescription": "Spela 5 bogey-fria rundor i rad.",
+    "condition": "(results, layout) => {\n    if (results.length === 0) {\n        return 0;\n    }\n    \n    let longestStreak = 0;\n    let currentStreak = 0;\n    \n    for (let i = 0; i < results.length; i++) {\n        const result = results[i];\n        const hole = layout.holes.find((h) => h.holeNumber === result.holeNumber);\n        \n        if (hole && result.score === hole.par + 1) {\n            currentStreak++;\n            if (currentStreak > longestStreak) {\n                longestStreak = currentStreak;\n            }\n        } else {\n            currentStreak = 0;\n        }\n    }\n    \n    return longestStreak;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "the_turnaround",
+    "name": "The Turnaround",
+    "functionalDescription": "man vinner fast man man ligger 3 poäng bakom vid ett tillfälle",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Check if player won\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    // Check if player won\n    if (currentPlayerTotal >= bestOpponentTotal) {\n        return 0;\n    }\n    \n    // Check if player was ever X points behind during the round\n    let wasBehind = false;\n    let currentPlayerRunningTotal = 0;\n    const opponentRunningTotals = {};\n    \n    for (let i = 0; i < results.length; i++) {\n        currentPlayerRunningTotal += results[i].score;\n        \n        // Update opponent totals up to this point\n        const resultsSoFar = allOtherPlayersResults.filter(or => {\n            const resultIndex = results.findIndex(r => r.holeNumber === or.holeNumber);\n            return resultIndex !== -1 && resultIndex <= i;\n        });\n        \n        for (const otherResult of resultsSoFar) {\n            const playerId = String(otherResult.playerId);\n            if (!opponentRunningTotals[playerId]) {\n                opponentRunningTotals[playerId] = 0;\n            }\n            opponentRunningTotals[playerId] += otherResult.score;\n        }\n        \n        const bestOpponentRunningTotal = Math.min(...Object.values(opponentRunningTotals));\n        \n        if (currentPlayerRunningTotal - bestOpponentRunningTotal >= 3) {\n            wasBehind = true;\n            break;\n        }\n    }\n    \n    return wasBehind ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "momentum_shift",
+    "name": "Momentum Shift",
+    "functionalDescription": "man vinner fast man man ligger 4 poäng bakom vid ett tillfälle",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Check if player won\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    // Check if player won\n    if (currentPlayerTotal >= bestOpponentTotal) {\n        return 0;\n    }\n    \n    // Check if player was ever X points behind during the round\n    let wasBehind = false;\n    let currentPlayerRunningTotal = 0;\n    const opponentRunningTotals = {};\n    \n    for (let i = 0; i < results.length; i++) {\n        currentPlayerRunningTotal += results[i].score;\n        \n        // Update opponent totals up to this point\n        const resultsSoFar = allOtherPlayersResults.filter(or => {\n            const resultIndex = results.findIndex(r => r.holeNumber === or.holeNumber);\n            return resultIndex !== -1 && resultIndex <= i;\n        });\n        \n        for (const otherResult of resultsSoFar) {\n            const playerId = String(otherResult.playerId);\n            if (!opponentRunningTotals[playerId]) {\n                opponentRunningTotals[playerId] = 0;\n            }\n            opponentRunningTotals[playerId] += otherResult.score;\n        }\n        \n        const bestOpponentRunningTotal = Math.min(...Object.values(opponentRunningTotals));\n        \n        if (currentPlayerRunningTotal - bestOpponentRunningTotal >= 4) {\n            wasBehind = true;\n            break;\n        }\n    }\n    \n    return wasBehind ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "phoenix",
+    "name": "Phoenix",
+    "functionalDescription": "vinn fast man ligger 5 poäng efter vid ett tillfälle.",
+    "condition": "(results, layout, allOtherPlayersResults) => {\n    if (!allOtherPlayersResults || !allOtherPlayersResults.length) {\n        return 0;\n    }\n    \n    // Check if player won\n    const opponentTotals = {};\n    for (const otherResult of allOtherPlayersResults) {\n        const playerId = String(otherResult.playerId);\n        if (!opponentTotals[playerId]) {\n            opponentTotals[playerId] = 0;\n        }\n        opponentTotals[playerId] += otherResult.score;\n    }\n    \n    const bestOpponentTotal = Math.min(...Object.values(opponentTotals));\n    const currentPlayerTotal = results.reduce((sum, r) => sum + r.score, 0);\n    \n    // Check if player won\n    if (currentPlayerTotal >= bestOpponentTotal) {\n        return 0;\n    }\n    \n    // Check if player was ever X points behind during the round\n    let wasBehind = false;\n    let currentPlayerRunningTotal = 0;\n    const opponentRunningTotals = {};\n    \n    for (let i = 0; i < results.length; i++) {\n        currentPlayerRunningTotal += results[i].score;\n        \n        // Update opponent totals up to this point\n        const resultsSoFar = allOtherPlayersResults.filter(or => {\n            const resultIndex = results.findIndex(r => r.holeNumber === or.holeNumber);\n            return resultIndex !== -1 && resultIndex <= i;\n        });\n        \n        for (const otherResult of resultsSoFar) {\n            const playerId = String(otherResult.playerId);\n            if (!opponentRunningTotals[playerId]) {\n                opponentRunningTotals[playerId] = 0;\n            }\n            opponentRunningTotals[playerId] += otherResult.score;\n        }\n        \n        const bestOpponentRunningTotal = Math.min(...Object.values(opponentRunningTotals));\n        \n        if (currentPlayerRunningTotal - bestOpponentRunningTotal >= 5) {\n            wasBehind = true;\n            break;\n        }\n    }\n    \n    return wasBehind ? 1 : 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "lightning_doesnt_strike_twice",
+    "name": "Lightning doesn't strike twice?",
+    "functionalDescription": "2 aces samma runda",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "goat",
+    "name": "GOAT",
+    "functionalDescription": "3 aces samma runda",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "close_range",
+    "name": "Close Range",
+    "functionalDescription": "en ace på 20-39m",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "mid_range",
+    "name": "Mid Range",
+    "functionalDescription": "en ace på 40-69m",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "long_range",
+    "name": "Long Range",
+    "functionalDescription": "ace på 70-99m ",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  },
+  {
+    "id": "one_disc_great_length",
+    "name": "One Disc, Great Length",
+    "functionalDescription": "ace på 100m+",
+    "condition": "(results, layout) => {\n    const aces = results.filter((r) => {\n        return r.score === 1;\n    }).length;\n    return aces || 0;\n}",
+    "isUnique": true,
+    "type": "unique"
+  }
+]

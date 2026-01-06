@@ -476,7 +476,7 @@ async function displayBadges() {
             <div><strong>Type:</strong> ${badge.type || 'N/A'}</div>
             <div><strong>Unique:</strong> ${badge.isUnique ? 'Yes' : 'No'}</div>
             <div><strong>Track Unique Courses:</strong> ${badge.trackUniqueCourses ? 'Yes' : 'No'}</div>
-            <div><strong>Track tier threshold zync:</strong> ${badge.trackTierThresholdZync ? 'Yes' : 'No'}</div>
+            <div><strong>Track tier threshold zync over time and rounds:</strong> ${badge.trackTierThresholdZync ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
             <div><strong>Test Data Count:</strong> <span id="testDataCount-${index}">Loading...</span></div>
             

@@ -691,7 +691,7 @@ router.get('/badges', (req, res) => {
                             <p style="margin:0;">Track tier threshold zync</p>
                         </label>
                         <small style="display: block; color: #666; margin-top: 5px;">
-                            When enabled, this badge will track tier threshold zync.
+                            When you need to count points over time and rounds and tiers are acchieven when you reach a certain number of points.
                         </small>
                     </div>
                     
