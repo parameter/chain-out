@@ -341,24 +341,28 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       createdAt: now
     }));
 
-    new_notifications.map((note) => {
+    if (new_notifications) {
 
-      try {
+      new_notifications.map((note) => {
 
-        pusher.trigger(note.forUser, "scorecard-invite", {
-          message: note.message,
-          scorecardId: scorecardId,
-          courseName: course.name
-        });
+        try {
 
-      } catch (e) {
-        console.error('Error sending pusher notification 1:', e);
-      }
+          pusher.trigger(note.forUser, "scorecard-invite", {
+            message: note.message,
+            scorecardId: scorecardId,
+            courseName: course.name
+          });
 
-    });
+        } catch (e) {
+          console.error('Error sending pusher notification 1:', e);
+        }
 
-    const localNotificationsCollection = db.collection('local-notifications');
-    await localNotificationsCollection.insertMany(new_notifications);
+      });
+
+      const localNotificationsCollection = db.collection('local-notifications');
+      await localNotificationsCollection.insertMany(new_notifications);
+
+    }
 
     res.status(201).json({
       message: userIds.length > 1 ? 'Users invited to scorecard' : 'User invited to scorecard',
