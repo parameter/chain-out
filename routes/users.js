@@ -802,6 +802,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const coursesCollection = db.collection('courses');
     const usersCollection = db.collection('users');
 
+    console.log('check 000', scorecardId);
+
     const updatedResult = await scorecardsCollection.findOneAndUpdate(
       { _id: new ObjectId(scorecardId) },
       { $set: { status: 'completed' } },
@@ -841,6 +843,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       });
     }); */
 
+    console.log('check 0', updatedResult.courseId);
+
     // Fetch course information
     const course = updatedResult.courseId 
       ? await coursesCollection.findOne({ _id: new ObjectId(updatedResult.courseId) })
@@ -863,6 +867,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const allUserIds = Array.from(
       new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
     );
+
+    console.log('check 1', allUserIds);
 
     const users =
       allUserIds.length > 0
