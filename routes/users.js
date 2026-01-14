@@ -343,7 +343,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     console.log('new_notifications', new_notifications);
 
-    if (new_notifications) {
+    if (new_notifications.length) {
 
       new_notifications.map((note) => {
 
