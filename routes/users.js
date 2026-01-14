@@ -341,6 +341,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       createdAt: now
     }));
 
+    console.log('new_notifications', new_notifications);
+
     if (new_notifications) {
 
       new_notifications.map((note) => {
