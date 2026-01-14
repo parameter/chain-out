@@ -361,6 +361,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
       });
 
+      console.log('I am here');
+
       const localNotificationsCollection = db.collection('local-notifications');
       await localNotificationsCollection.insertMany(new_notifications);
 
