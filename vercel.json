@@ -1,24 +1,10 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "builds": [
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/admin/courses-admin/(.*)",
-      "dest": "/admin/courses-admin/$1"
-    },
-    {
-      "src": "/admin/api/(.*)",
-      "dest": "/admin/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/(.*)",
+      "destination": "/api"
     }
   ]
 }

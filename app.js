@@ -78,8 +78,14 @@ app.use((err, req, res, next) => {
 // Initialize DB once per cold start
 const ready = initializeDatabase();
 
-var server = app.listen(process.env.PORT || 5000, function () {
-  var host = server.address().address
-  var port = server.address().port
-  console.log('App listening at http://%s:%s', host, port)
-})
+// Export app for Vercel serverless functions
+module.exports = app;
+
+// Only start server if not in Vercel environment
+if (!process.env.VERCEL) {
+  var server = app.listen(process.env.PORT || 5000, function () {
+    var host = server.address().address
+    var port = server.address().port
+    console.log('App listening at http://%s:%s', host, port)
+  })
+}
