@@ -1185,33 +1185,47 @@ router.post('/api/courses', async (req, res) => {
 });
 
 // Serve courses-admin React app
-const coursesAdminBuildPath = path.join(__dirname, '../courses-admin/build');
+const coursesAdminBuildPath = path.resolve(__dirname, '../courses-admin/build');
 
 // Check if build directory exists
 const buildExists = fsSync.existsSync(coursesAdminBuildPath);
+const indexExists = buildExists ? fsSync.existsSync(path.join(coursesAdminBuildPath, 'index.html')) : false;
+
 console.log('Courses admin build path:', coursesAdminBuildPath);
 console.log('Courses admin build exists:', buildExists);
+console.log('Courses admin index.html exists:', indexExists);
+console.log('__dirname:', __dirname);
 
-if (buildExists) {
-  // Handle root path first (before static middleware)
-  router.get('/courses-admin', (req, res) => {
-    res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
-  });
+if (buildExists && indexExists) {
+  console.log('✓ Courses admin build found - Registering routes...');
   
-  router.get('/courses-admin/', (req, res) => {
-    res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
-  });
-
   // Serve static files from courses-admin build directory (JS, CSS, etc.)
+  // This must come BEFORE the specific routes so static files are served first
   router.use('/courses-admin', express.static(coursesAdminBuildPath, {
     index: false // Don't serve index.html automatically, we handle it manually
   }));
 
-  // Catch-all handler for courses-admin: serve index.html for client-side routing
-  router.get('/courses-admin/*', (req, res) => {
+  // Handle root path
+  router.get('/courses-admin', (req, res) => {
+    console.log('Serving /courses-admin');
     res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
   });
+  
+  router.get('/courses-admin/', (req, res) => {
+    console.log('Serving /courses-admin/');
+    res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
+  });
+
+  // Catch-all handler for courses-admin: serve index.html for client-side routing
+  router.get('/courses-admin/*', (req, res) => {
+    console.log('Serving /courses-admin/*:', req.path);
+    res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
+  });
+  
+  console.log('✓ Courses-admin routes registered successfully');
 } else {
+  console.warn('✗ Courses admin build not found or incomplete. Path:', coursesAdminBuildPath);
+  console.warn('  buildExists:', buildExists, 'indexExists:', indexExists);
   // If build doesn't exist, show helpful message
   router.get('/courses-admin', (req, res) => {
     res.status(503).send(`
@@ -1252,6 +1266,22 @@ if (buildExists) {
     `);
   });
 }
+
+// Debug route to check build status
+router.get('/courses-admin-debug', (req, res) => {
+  const buildPath = path.resolve(__dirname, '../courses-admin/build');
+  const buildExists = fsSync.existsSync(buildPath);
+  const indexExists = buildExists ? fsSync.existsSync(path.join(buildPath, 'index.html')) : false;
+  
+  res.json({
+    buildPath,
+    buildExists,
+    indexExists,
+    __dirname,
+    currentWorkingDir: process.cwd(),
+    filesInBuild: buildExists ? fsSync.readdirSync(buildPath) : []
+  });
+});
 
 module.exports = router;
 
