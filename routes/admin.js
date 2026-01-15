@@ -1226,41 +1226,59 @@ if (buildExists && indexExists) {
 } else {
   console.warn('✗ Courses admin build not found or incomplete. Path:', coursesAdminBuildPath);
   console.warn('  buildExists:', buildExists, 'indexExists:', indexExists);
+  console.warn('  __dirname:', __dirname);
+  console.warn('  process.cwd():', process.cwd());
+  
   // If build doesn't exist, show helpful message
   router.get('/courses-admin', (req, res) => {
+    const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+    const message = isVercel 
+      ? '<p>The React app build was not found. Make sure the build script runs during Vercel deployment.</p><p>Check that <code>vercel-build</code> script in package.json includes building the courses-admin app.</p>'
+      : '<p>The React app needs to be built first.</p><p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>';
+    
     res.status(503).send(`
       <html>
         <head><title>Courses Admin - Not Built</title></head>
         <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
           <h1>Courses Admin Not Available</h1>
-          <p>The React app needs to be built first.</p>
-          <p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>
+          ${message}
+          <p style="margin-top: 20px; color: #666; font-size: 12px;">Build path: ${coursesAdminBuildPath}</p>
         </body>
       </html>
     `);
   });
   
   router.get('/courses-admin/', (req, res) => {
+    const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+    const message = isVercel 
+      ? '<p>The React app build was not found. Make sure the build script runs during Vercel deployment.</p><p>Check that <code>vercel-build</code> script in package.json includes building the courses-admin app.</p>'
+      : '<p>The React app needs to be built first.</p><p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>';
+    
     res.status(503).send(`
       <html>
         <head><title>Courses Admin - Not Built</title></head>
         <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
           <h1>Courses Admin Not Available</h1>
-          <p>The React app needs to be built first.</p>
-          <p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>
+          ${message}
+          <p style="margin-top: 20px; color: #666; font-size: 12px;">Build path: ${coursesAdminBuildPath}</p>
         </body>
       </html>
     `);
   });
   
   router.get('/courses-admin/*', (req, res) => {
+    const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV;
+    const message = isVercel 
+      ? '<p>The React app build was not found. Make sure the build script runs during Vercel deployment.</p><p>Check that <code>vercel-build</code> script in package.json includes building the courses-admin app.</p>'
+      : '<p>The React app needs to be built first.</p><p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>';
+    
     res.status(503).send(`
       <html>
         <head><title>Courses Admin - Not Built</title></head>
         <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
           <h1>Courses Admin Not Available</h1>
-          <p>The React app needs to be built first.</p>
-          <p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>
+          ${message}
+          <p style="margin-top: 20px; color: #666; font-size: 12px;">Build path: ${coursesAdminBuildPath}</p>
         </body>
       </html>
     `);

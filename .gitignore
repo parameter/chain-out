@@ -1,7 +1,8 @@
 # Node dependencies
 node_modules/
 superadmin-page/
-courses-admin/
+courses-admin/node_modules/
+courses-admin/build/
 
 # Build output
 /dist/
