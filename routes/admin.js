@@ -4,6 +4,7 @@ const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 
 const router = express.Router();
 
@@ -1182,6 +1183,75 @@ router.post('/api/courses', async (req, res) => {
       });
    }
 });
+
+// Serve courses-admin React app
+const coursesAdminBuildPath = path.join(__dirname, '../courses-admin/build');
+
+// Check if build directory exists
+const buildExists = fsSync.existsSync(coursesAdminBuildPath);
+console.log('Courses admin build path:', coursesAdminBuildPath);
+console.log('Courses admin build exists:', buildExists);
+
+if (buildExists) {
+  // Handle root path first (before static middleware)
+  router.get('/courses-admin', (req, res) => {
+    res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
+  });
+  
+  router.get('/courses-admin/', (req, res) => {
+    res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
+  });
+
+  // Serve static files from courses-admin build directory (JS, CSS, etc.)
+  router.use('/courses-admin', express.static(coursesAdminBuildPath, {
+    index: false // Don't serve index.html automatically, we handle it manually
+  }));
+
+  // Catch-all handler for courses-admin: serve index.html for client-side routing
+  router.get('/courses-admin/*', (req, res) => {
+    res.sendFile(path.join(coursesAdminBuildPath, 'index.html'));
+  });
+} else {
+  // If build doesn't exist, show helpful message
+  router.get('/courses-admin', (req, res) => {
+    res.status(503).send(`
+      <html>
+        <head><title>Courses Admin - Not Built</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h1>Courses Admin Not Available</h1>
+          <p>The React app needs to be built first.</p>
+          <p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>
+        </body>
+      </html>
+    `);
+  });
+  
+  router.get('/courses-admin/', (req, res) => {
+    res.status(503).send(`
+      <html>
+        <head><title>Courses Admin - Not Built</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h1>Courses Admin Not Available</h1>
+          <p>The React app needs to be built first.</p>
+          <p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>
+        </body>
+      </html>
+    `);
+  });
+  
+  router.get('/courses-admin/*', (req, res) => {
+    res.status(503).send(`
+      <html>
+        <head><title>Courses Admin - Not Built</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h1>Courses Admin Not Available</h1>
+          <p>The React app needs to be built first.</p>
+          <p>Run: <code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px;">cd courses-admin && npm run build</code></p>
+        </body>
+      </html>
+    `);
+  });
+}
 
 module.exports = router;
 

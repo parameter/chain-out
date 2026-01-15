@@ -10,12 +10,40 @@ cd courses-admin
 npm install
 ```
 
-2. Start the development server:
+## Development Mode
+
+Start the development server:
 ```bash
 npm start
 ```
 
 The app will open at `http://localhost:3000` (or the next available port).
+
+## Production Mode (Served through Express)
+
+To serve the app through your Express server:
+
+1. Build the React app (from root directory):
+```bash
+npm run build:courses-admin
+```
+
+Or from the courses-admin directory:
+```bash
+cd courses-admin
+npm run build
+```
+
+2. The built files will be in `courses-admin/build/`
+
+3. Access the admin interface at:
+```
+http://localhost:5000/admin/courses-admin
+```
+
+**Important:** After making changes to the React app, you must rebuild it for the changes to appear when served through Express.
+
+The Express server will automatically serve the built React app from the `courses-admin/build` directory.
 
 ## Usage
 
@@ -24,7 +52,6 @@ The app will open at `http://localhost:3000` (or the next available port).
    - Course Name (required)
    - Address (required)
    - Type (PUBLIC or PRIVATE)
-   - Geolocation: Longitude and Latitude (required)
 
 2. Add Layouts:
    - Click "Add Layout" to add a new layout

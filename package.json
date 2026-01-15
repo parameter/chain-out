@@ -5,7 +5,8 @@
     "main": "app.js",
     "scripts": {
         "start": "node app.js",
-        "dev": "nodemon app.js"
+        "dev": "nodemon app.js",
+        "build:courses-admin": "cd courses-admin && npm run build"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.896.0",
