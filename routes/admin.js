@@ -1108,5 +1108,80 @@ router.post('/api/badges/test', (req, res) => {
    }
 });
 
+// POST /api/courses - Create a new course
+router.post('/api/courses', async (req, res) => {
+   try {
+      const courseData = req.body;
+
+      // Validate required fields
+      if (!courseData.name || !courseData.address) {
+         return res.status(400).json({ 
+            message: 'Missing required fields: name and address are required' 
+         });
+      }
+
+      if (!courseData.layouts || !Array.isArray(courseData.layouts) || courseData.layouts.length === 0) {
+         return res.status(400).json({ 
+            message: 'At least one layout is required' 
+         });
+      }
+
+      // Validate layouts
+      for (let i = 0; i < courseData.layouts.length; i++) {
+         const layout = courseData.layouts[i];
+         if (!layout.name || !layout.latestVersion || !layout.latestVersion.holes) {
+            return res.status(400).json({ 
+               message: `Layout ${i + 1}: name and latestVersion with holes are required` 
+            });
+         }
+         if (!Array.isArray(layout.latestVersion.holes) || layout.latestVersion.holes.length === 0) {
+            return res.status(400).json({ 
+               message: `Layout ${i + 1}: at least one hole is required` 
+            });
+         }
+      }
+
+      const db = getDatabase();
+      const coursesCollection = db.collection('courses');
+
+      // Handle geolocation and location if provided
+      if (courseData.geolocation && courseData.geolocation.lng && courseData.geolocation.lat) {
+         // Ensure geolocation values are numbers
+         courseData.geolocation = {
+            lng: parseFloat(courseData.geolocation.lng),
+            lat: parseFloat(courseData.geolocation.lat)
+         };
+         
+         // Ensure location is properly formatted as GeoJSON Point
+         if (!courseData.location) {
+            courseData.location = {
+               type: 'Point',
+               coordinates: [
+                  parseFloat(courseData.geolocation.lng),
+                  parseFloat(courseData.geolocation.lat)
+               ]
+            };
+         }
+      }
+
+      // Insert the course
+      const result = await coursesCollection.insertOne(courseData);
+      const course = await coursesCollection.findOne({ _id: result.insertedId });
+
+      res.status(201).json({ 
+         success: true,
+         message: 'Course created successfully',
+         course: course 
+      });
+   } catch (error) {
+      console.error('Error creating course:', error);
+      res.status(500).json({ 
+         success: false,
+         message: 'Failed to create course',
+         error: error.message 
+      });
+   }
+});
+
 module.exports = router;
 
