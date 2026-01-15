@@ -1095,4 +1095,32 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
   }
 });
 
+router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
+    try {
+
+      const { name, address, description, location } = req.body;
+
+      if (!name || !address || !description || !location) {
+        return res.status(400).json({ message: 'All fields are required' });
+      }
+
+      const db = getDatabase();
+      const coursesCollection = db.collection('course-applications');
+      const newCourse = {
+        name,
+        address,
+        description,
+        location
+      };
+      const result = await coursesCollection.insertOne(newCourse);
+      const course = await coursesCollection.findOne({ _id: result.insertedId });
+
+      res.status(201).json({ course });
+
+    } catch (e) {
+      console.error('Error saving new course suggestion:', e);
+      res.status(500).json({ message: 'Failed to save new course suggestion' });
+    }
+});
+
 module.exports = router;
