@@ -1107,6 +1107,7 @@ router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
       const db = getDatabase();
       const coursesCollection = db.collection('course-applications');
       const newCourse = {
+        userId: req.user._id,
         name,
         address,
         description,
