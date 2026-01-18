@@ -1124,4 +1124,227 @@ router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
     }
 });
 
+router.post('/stats/general', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+    const badgeProgressCollection = db.collection('userBadgeProgress');
+    
+    const userId = req.user._id;
+    const userIdString = userId.toString();
+
+    // Helper function to get ISO week number
+    function getISOWeek(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function getWeekKey(date) {
+      const year = date.getFullYear();
+      const week = getISOWeek(date);
+      return { year, week };
+    }
+
+    function getPreviousWeek(weekKey) {
+      if (weekKey.week > 1) {
+        return { year: weekKey.year, week: weekKey.week - 1 };
+      } else {
+        const lastWeekOfYear = getISOWeek(new Date(weekKey.year - 1, 11, 31));
+        return { year: weekKey.year - 1, week: lastWeekOfYear };
+      }
+    }
+
+    // Single aggregation for all scorecard stats
+    const [scorecardStats, badgeStats] = await Promise.all([
+      scorecardsCollection.aggregate([
+        {
+          $match: {
+            status: 'completed',
+            $or: [
+              { creatorId: userId },
+              { 'results.playerId': userIdString }
+            ]
+          }
+        },
+        {
+          $facet: {
+            roundsCount: [
+              { $group: { _id: '$_id' } },
+              { $count: 'count' }
+            ],
+            uniqueCourses: [
+              { $group: { _id: '$courseId' } },
+              { $count: 'count' }
+            ],
+            allRounds: [
+              {
+                $project: {
+                  createdAt: 1,
+                  updatedAt: 1,
+                  verified: 1
+                }
+              }
+            ]
+          }
+        }
+      ]).toArray(),
+      
+      // Single aggregation for all badge stats
+      badgeProgressCollection.aggregate([
+        {
+          $match: {
+            userId: userId
+          }
+        },
+        {
+          $lookup: {
+            from: 'badgeDefinitions',
+            localField: 'badgeId',
+            foreignField: 'id',
+            as: 'badgeDef'
+          }
+        },
+        {
+          $unwind: {
+            path: '$badgeDef',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $facet: {
+            totalBadges: [
+              {
+                $match: {
+                  $or: [
+                    { currentTier: { $gte: 0 } },
+                    { courseId: { $exists: true } }
+                  ]
+                }
+              },
+              { $count: 'count' }
+            ],
+            achievements: [
+              {
+                $match: {
+                  courseId: { $exists: true, $ne: null }
+                }
+              },
+              { $count: 'count' }
+            ],
+            badgesByTier: [
+              {
+                $match: {
+                  currentTier: { $gte: 0 },
+                  'badgeDef.tier': { $exists: true }
+                }
+              },
+              {
+                $group: {
+                  _id: { $toLower: '$badgeDef.tier' },
+                  count: { $sum: 1 }
+                }
+              }
+            ]
+          }
+        }
+      ]).toArray()
+    ]);
+
+    // Extract scorecard stats
+    const scorecardData = scorecardStats[0] || {};
+    const roundsCount = scorecardData.roundsCount?.[0]?.count || 0;
+    const uniqueCoursesCount = scorecardData.uniqueCourses?.[0]?.count || 0;
+    const allRounds = scorecardData.allRounds || [];
+
+    // Calculate verified percentage
+    const verifiedRounds = allRounds.filter(r => r.verified === 'verified' || r.verified === true).length;
+    const verifiedPercentage = roundsCount > 0 ? Math.round((verifiedRounds / roundsCount) * 100) : 0;
+
+    // Calculate weekly streak
+    const roundsByWeek = new Map();
+    allRounds.forEach(round => {
+      const date = round.createdAt || round.updatedAt;
+      if (date) {
+        const d = new Date(date);
+        const weekKey = getWeekKey(d);
+        const key = `${weekKey.year}-W${weekKey.week}`;
+        if (!roundsByWeek.has(key)) {
+          roundsByWeek.set(key, weekKey);
+        }
+      }
+    });
+
+    let weeklyStreak = 0;
+    if (roundsByWeek.size > 0) {
+      const now = new Date();
+      const currentWeek = getWeekKey(now);
+      const sortedWeeks = Array.from(roundsByWeek.values()).sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.week - a.week;
+      });
+      
+      if (sortedWeeks.length > 0) {
+        let checkWeek = sortedWeeks[0];
+        const weeksDiff = (currentWeek.year - checkWeek.year) * 52 + (currentWeek.week - checkWeek.week);
+        if (weeksDiff <= 1) {
+          weeklyStreak = 1;
+          let prevWeek = getPreviousWeek(checkWeek);
+          while (roundsByWeek.has(`${prevWeek.year}-W${prevWeek.week}`)) {
+            weeklyStreak++;
+            prevWeek = getPreviousWeek(prevWeek);
+          }
+        }
+      }
+    }
+
+    // Extract badge stats
+    const badgeData = badgeStats[0] || {};
+    const totalBadgesCount = badgeData.totalBadges?.[0]?.count || 0;
+    const achievementsCount = badgeData.achievements?.[0]?.count || 0;
+    
+    // Build tier counts from aggregation result
+    const tierCounts = {
+      bronze: 0,
+      silver: 0,
+      gold: 0,
+      platinum: 0,
+      diamond: 0,
+      emerald: 0,
+      ruby: 0,
+      cosmic: 0
+    };
+
+    (badgeData.badgesByTier || []).forEach(item => {
+      const tier = item._id;
+      if (tierCounts.hasOwnProperty(tier)) {
+        tierCounts[tier] = item.count;
+      }
+    });
+
+    res.json({
+      roundsCount,
+      uniqueCoursesCount,
+      totalBadgesCount,
+      verifiedPercentage,
+      weeklyStreak,
+      achievementsCount,
+      bronzeBadgesCount: tierCounts.bronze,
+      silverBadgesCount: tierCounts.silver,
+      goldBadgesCount: tierCounts.gold,
+      platinumBadgesCount: tierCounts.platinum,
+      diamondBadgesCount: tierCounts.diamond,
+      emeraldBadgesCount: tierCounts.emerald,
+      rubyBadgesCount: tierCounts.ruby,
+      cosmicBadgesCount: tierCounts.cosmic
+    });
+
+  } catch (e) {
+    console.error('Error fetching user stats:', e);
+    res.status(500).json({ message: 'Failed to fetch user stats' });
+  }
+});
+
 module.exports = router;
