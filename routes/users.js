@@ -1124,7 +1124,7 @@ router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/stats/general', requireAuth, async (req, res) => {
+router.get('/stats/general', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
