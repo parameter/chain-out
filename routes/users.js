@@ -1324,6 +1324,23 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       }
     });
 
+    console.log({
+      roundsCount,
+      uniqueCoursesCount,
+      totalBadgesCount,
+      verifiedPercentage,
+      weeklyStreak,
+      achievementsCount,
+      bronzeBadgesCount: tierCounts.bronze,
+      silverBadgesCount: tierCounts.silver,
+      goldBadgesCount: tierCounts.gold,
+      platinumBadgesCount: tierCounts.platinum,
+      diamondBadgesCount: tierCounts.diamond,
+      emeraldBadgesCount: tierCounts.emerald,
+      rubyBadgesCount: tierCounts.ruby,
+      cosmicBadgesCount: tierCounts.cosmic
+    })
+
     res.json({
       roundsCount,
       uniqueCoursesCount,
