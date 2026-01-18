@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const passport = require('passport');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -50,6 +51,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from public directory
 app.use(express.static('public'));
+
+// Serve chainout-homepage
+app.use('/chainout-homepage', express.static('chainout-homepage'));
+app.get('/chainout-homepage', (req, res) => {
+  res.sendFile(path.join(__dirname, 'chainout-homepage', 'index.html'));
+});
 
 app.use(passport.initialize());
 initializePassport();
