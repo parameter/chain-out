@@ -175,9 +175,8 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     );
 
     console.log('got this far 4');
+    console.log(result);
 
-    // If a document already existed, don't allow sending again
-    // Check if upsert actually inserted a new document
     if (!result?.lastErrorObject?.upserted) {
       console.log('got this far 5');
       // If result.value exists, it means a document was matched (already exists)
