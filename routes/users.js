@@ -138,6 +138,8 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Cannot send friend request to yourself' });
     }
 
+    console.log('got this far');
+
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
 
@@ -177,7 +179,7 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     res.json({ message: 'Friend request sent', status: 'pending' });
 
   } catch (e) {
-    console.error('Error sending friend request:', e);
+    console.log('Error sending friend request:', e);
     res.status(500).json({ message: 'Failed to send friend request' });
   }
 });
