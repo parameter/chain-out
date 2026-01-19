@@ -186,7 +186,7 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     const { userId, answer } = req.body;
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-    const result = await friendsCollection.updateOne({ from: userId, to: req.user._id, status: 'pending' }, { $set: { status: answer ? 'accept' : 'reject' } });
+    const result = await friendsCollection.updateOne({ from: new ObjectId(userId), to: req.user._id.toString(), status: 'pending' }, { $set: { status: answer ? 'accept' : 'reject' } });
     res.json({ message: 'Friend request answered', status: answer ? 'accept' : 'reject' });
   } catch (e) {
     console.error('Error answering friend request:', e);  
