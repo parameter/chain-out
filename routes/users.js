@@ -128,6 +128,9 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
 });
 
 router.post('/send-friend-request', requireAuth, async (req, res) => {
+
+  console.log('got this far 1');
+
   try {
     const { userId } = req.body;
     if (!userId) {
@@ -138,10 +141,12 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Cannot send friend request to yourself' });
     }
 
-    console.log('got this far');
+    console.log('got this far 2');
 
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
+
+    console.log('got this far 3');
 
     const now = new Date();
 
