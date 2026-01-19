@@ -684,6 +684,14 @@ router.get('/badges', (req, res) => {
                             When enabled, this badge will only count progress once per unique course played.
                         </small>
                     </div>
+
+                    <!-- Requires Historical Data -->
+                    <div style="flex-direction: row;" class="form-group">
+                        <label style="display: flex; flex-direction: row; align-items: center;">
+                            <input style="width: auto;" type="checkbox" id="requiresHistoricalData" name="requiresHistoricalData" style="margin-right: 8px;">
+                            <p style="margin:0;">Requires Historical Data</p>
+                        </label>
+                    </div>
                     
                     <!-- Track tier threshold zync -->
                     <div style="flex-direction: row;" class="form-group">
