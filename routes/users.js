@@ -130,10 +130,13 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
 router.post('/send-friend-request', requireAuth, async (req, res) => {
 
   console.log('got this far 1');
-  console.log('uuserId', userId);
+  
 
   try {
     const { userId } = req.body;
+
+    console.log('uuserId', userId);
+    
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
     }
