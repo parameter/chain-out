@@ -195,6 +195,9 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
 });
 
 router.get('/pending-friend-requests', requireAuth, async (req, res) => {
+
+  console.log('got this far 1');
+
   try {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
@@ -226,7 +229,7 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
     
     res.json({ pendingFriendRequests: pendingFriendRequestsWithUsers });
   } catch (e) {
-    console.error('Error fetching pending friend requests:', e);
+    console.log('Error fetching pending friend requests:', e);
     res.status(500).json({ message: 'Failed to fetch pending friend requests' });
   }
 });
