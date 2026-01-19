@@ -206,7 +206,7 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
     
     const users = userIds.length > 0
       ? await usersCollection.find({ _id: { $in: userIds.map(id => new ObjectId(id)) } })
-          .project({ password: 0, created_at: 0, updated_at: 0 })
+          .project({ password: 0, createdAt: 0, updatedAt: 0 })
           .toArray()
       : [];
     
@@ -217,10 +217,8 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
     
     const pendingFriendRequestsWithUsers = pendingFriendRequests.map(request => ({
       ...request,
-      user: userMap[request.from.toString()] || null
+      ...userMap[request.from.toString()]
     }));
-
-    console.log('pendingFriendRequestsWithUsers', pendingFriendRequestsWithUsers);
     
     res.json({ pendingFriendRequests: pendingFriendRequestsWithUsers });
   } catch (e) {
@@ -241,7 +239,7 @@ router.get('/friends', requireAuth, async (req, res) => {
     
     const users = userIds.length > 0
       ? await usersCollection.find({ _id: { $in: userIds.map(id => new ObjectId(id)) } })
-          .project({ password: 0, created_at: 0, updated_at: 0 })
+          .project({ password: 0, createdAt: 0, updatedAt: 0 })
           .toArray()
       : [];
     
@@ -252,7 +250,7 @@ router.get('/friends', requireAuth, async (req, res) => {
     
     const friendsWithUsers = friends.map(friend => ({
       ...friend,
-      user: userMap[friend.to.toString()] || null
+      ...userMap[friend.to.toString()]
     }));
     
     res.json({ friends: friendsWithUsers });
