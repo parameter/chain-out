@@ -219,6 +219,8 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
       ...request,
       user: userMap[request.from.toString()] || null
     }));
+
+    console.log('pendingFriendRequestsWithUsers', pendingFriendRequestsWithUsers);
     
     res.json({ pendingFriendRequests: pendingFriendRequestsWithUsers });
   } catch (e) {
