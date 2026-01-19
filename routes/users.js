@@ -203,7 +203,7 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
     const friendsCollection = db.collection('friends');
     const usersCollection = db.collection('users');
     
-    const pendingFriendRequests = await friendsCollection.find({ to: req.user._id, status: 'pending' }).toArray();
+    const pendingFriendRequests = await friendsCollection.find({ to: new ObjectId(req.user._id), status: 'pending' }).toArray();
     
     const userIds = [...new Set(pendingFriendRequests.map(req => req.to))];
 
