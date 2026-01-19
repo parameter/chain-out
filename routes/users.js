@@ -164,8 +164,14 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     );
 
     // If a document already existed, don't allow sending again
-    if (!result.lastErrorObject.upserted) {
-      return res.status(400).json({ message: 'Friend request already exists or you are already friends' });
+    // Check if upsert actually inserted a new document
+    if (!result?.lastErrorObject?.upserted) {
+      // If result.value exists, it means a document was matched (already exists)
+      if (result?.value) {
+        return res.status(400).json({ message: 'Friend request already exists or you are already friends' });
+      }
+      // If no value, something went wrong
+      return res.status(500).json({ message: 'Failed to send friend request' });
     }
 
     res.json({ message: 'Friend request sent', status: 'pending' });
@@ -214,8 +220,14 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     );
 
     // If a document already existed, don't allow sending again
-    if (!result.lastErrorObject.upserted) {
-      return res.status(400).json({ message: 'You have already sent a fore to this user within the last week' });
+    // Check if upsert actually inserted a new document
+    if (!result?.lastErrorObject?.upserted) {
+      // If result.value exists, it means a document was matched (already exists)
+      if (result?.value) {
+        return res.status(400).json({ message: 'You have already sent a fore to this user within the last week' });
+      }
+      // If no value, something went wrong
+      return res.status(500).json({ message: 'Failed to send fore' });
     }
 
     res.status(201).json({ message: 'Fore sent', fore: foreDoc });
@@ -810,8 +822,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const coursesCollection = db.collection('courses');
     const usersCollection = db.collection('users');
 
-    console.log('check 000', scorecardId);
-
     const updatedResult = await scorecardsCollection.findOneAndUpdate(
       { _id: new ObjectId(scorecardId) },
       { $set: { status: 'completed' } },
@@ -822,9 +832,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'Scorecard not found' });
     }
 
-    // Get the latest result for each unique holeNumber (by timestamp)
     let rawResults = updatedResult.results || [];
-    // Group by holeNumber, keeping only the latest by timestamp
+    
     const latestByHole = {};
     for (const result of rawResults) {
       if (
@@ -1323,23 +1332,6 @@ router.get('/stats/general', requireAuth, async (req, res) => {
         tierCounts[tier] = item.count;
       }
     });
-
-    console.log({
-      roundsCount,
-      uniqueCoursesCount,
-      totalBadgesCount,
-      verifiedPercentage,
-      weeklyStreak,
-      achievementsCount,
-      bronzeBadgesCount: tierCounts.bronze,
-      silverBadgesCount: tierCounts.silver,
-      goldBadgesCount: tierCounts.gold,
-      platinumBadgesCount: tierCounts.platinum,
-      diamondBadgesCount: tierCounts.diamond,
-      emeraldBadgesCount: tierCounts.emerald,
-      rubyBadgesCount: tierCounts.ruby,
-      cosmicBadgesCount: tierCounts.cosmic
-    })
 
     res.json({
       roundsCount,
