@@ -476,6 +476,7 @@ async function displayBadges() {
             <div><strong>Type:</strong> ${badge.type || 'N/A'}</div>
             <div><strong>Unique:</strong> ${badge.isUnique ? 'Yes' : 'No'}</div>
             <div><strong>Track Unique Courses:</strong> ${badge.trackUniqueCourses ? 'Yes' : 'No'}</div>
+            <div><strong>Requires Historical Data:</strong> ${badge.requiresHistoricalData ? 'Yes' : 'No'}</div>
             <div><strong>Track tier threshold zync over time and rounds:</strong> ${badge.trackTierThresholdZync ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
             <div><strong>Test Data Count:</strong> <span id="testDataCount-${index}">Loading...</span></div>
@@ -1041,6 +1042,12 @@ function populateBadgeForm(badge) {
         trackTierThresholdZyncCheckbox.checked = badge.trackTierThresholdZync || false;
     }
     
+    // Handle requiresHistoricalData checkbox
+    const requiresHistoricalDataCheckbox = document.getElementById('requiresHistoricalData');
+    if (requiresHistoricalDataCheckbox) {
+        requiresHistoricalDataCheckbox.checked = badge.requiresHistoricalData || false;
+    }
+    
     // Tier information
     document.getElementById('tierDescriptionPrefix').value = badge.tierDescriptionPrefix || '';
     document.getElementById('tierDescriptionSuffix').value = badge.tierDescriptionSuffix || '';
@@ -1192,6 +1199,7 @@ function collectBadgeFormData() {
         isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false,
         trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false,
         trackTierThresholdZync: document.getElementById('trackTierThresholdZync') ? document.getElementById('trackTierThresholdZync').checked : false,
+        requiresHistoricalData: document.getElementById('requiresHistoricalData') ? document.getElementById('requiresHistoricalData').checked : false,
         done: document.getElementById('badgeDone') ? document.getElementById('badgeDone').checked : false
     };
 
