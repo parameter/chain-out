@@ -128,14 +128,8 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
 });
 
 router.post('/send-friend-request', requireAuth, async (req, res) => {
-
-  console.log('got this far 1');
-  
-
   try {
     const { userId } = req.body;
-
-    console.log('uuserId', userId);
 
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
@@ -145,12 +139,8 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Cannot send friend request to yourself' });
     }
 
-    console.log('got this far 2');
-
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-
-    console.log('got this far 3');
 
     const now = new Date();
 
@@ -174,11 +164,7 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       { upsert: true, returnDocument: 'after' }
     );
 
-    console.log('got this far 4');
-    console.log(result);
-
-    if (!result?.lastErrorObject?.upserted) {
-      console.log('got this far 5');
+    if (!result) {
       // If result.value exists, it means a document was matched (already exists)
       if (result?.value) {
         return res.status(400).json({ message: 'Friend request already exists or you are already friends' });
@@ -186,8 +172,6 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       // If no value, something went wrong
       return res.status(500).json({ message: 'Failed to send friend request' });
     }
-
-    console.log('got this far 6');
 
     res.json({ message: 'Friend request sent', status: 'pending' });
 
