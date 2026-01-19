@@ -136,7 +136,7 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     const { userId } = req.body;
 
     console.log('uuserId', userId);
-    
+
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
     }
@@ -174,9 +174,12 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       { upsert: true, returnDocument: 'after' }
     );
 
+    console.log('got this far 4');
+
     // If a document already existed, don't allow sending again
     // Check if upsert actually inserted a new document
     if (!result?.lastErrorObject?.upserted) {
+      console.log('got this far 5');
       // If result.value exists, it means a document was matched (already exists)
       if (result?.value) {
         return res.status(400).json({ message: 'Friend request already exists or you are already friends' });
@@ -184,6 +187,8 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       // If no value, something went wrong
       return res.status(500).json({ message: 'Failed to send friend request' });
     }
+
+    console.log('got this far 6');
 
     res.json({ message: 'Friend request sent', status: 'pending' });
 
