@@ -233,7 +233,7 @@ router.get('/friends', requireAuth, async (req, res) => {
     const friendsCollection = db.collection('friends');
     const usersCollection = db.collection('users');
     
-    const friends = await friendsCollection.find({ to: req.user._id.toString(), status: 'accepted' }).toArray();
+    const friends = await friendsCollection.find({ $or: [{ to: req.user._id.toString() }, { from: req.user._id.toString() }], status: 'accepted' }).toArray();
     
     const userIds = [...new Set(friends.map(friend => friend.to.toString()))];
     
