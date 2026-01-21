@@ -915,17 +915,22 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     let rawResults = updatedResult.results || [];
     
-    const latestByHole = {};
+    // Group by both holeNumber AND playerId to keep all players' results
+    const latestByHoleAndPlayer = {};
     for (const result of rawResults) {
+      const holeNum = result.holeNumber;
+      const playerId = result.playerId instanceof ObjectId ? result.playerId.toString() : String(result.playerId);
+      const key = `${holeNum}-${playerId}`;
+      
       if (
-        !latestByHole[result.holeNumber] ||
-        (result.timestamp && latestByHole[result.holeNumber].timestamp < result.timestamp)
+        !latestByHoleAndPlayer[key] ||
+        (result.timestamp && latestByHoleAndPlayer[key].timestamp < result.timestamp)
       ) {
-        latestByHole[result.holeNumber] = result;
+        latestByHoleAndPlayer[key] = result;
       }
     }
-    // Create a sorted array of results by timestamp
-    const results = Object.values(latestByHole).sort((a, b) => new Date(a.holeNumber) - new Date(b.holeNumber));
+    // Create a sorted array of results by hole number
+    const results = Object.values(latestByHoleAndPlayer).sort((a, b) => a.holeNumber - b.holeNumber);
     
     const earnedBadges = await searchForEarnedBadges({ 
       scorecardId: updatedResult._id, 
