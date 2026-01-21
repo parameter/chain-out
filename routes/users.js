@@ -82,10 +82,10 @@ router.post('/profile-image', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Invalid base64 image data' });
     }
 
-    // Optional: Validate image size (e.g., max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate image size (max 500KB for MongoDB document storage)
+    const maxSize = 500 * 1024; // 500KB
     if (imageBuffer.length > maxSize) {
-      return res.status(400).json({ message: 'Image size exceeds maximum allowed size (5MB)' });
+      return res.status(400).json({ message: 'Image size exceeds maximum allowed size (500KB)' });
     }
 
     const db = getDatabase();
@@ -97,34 +97,19 @@ router.post('/profile-image', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Upload to S3
-    const { uploadBuffer } = require('../utils/s3');
-    const fileExtension = contentType.split('/')[1] || 'png';
-    const s3Key = `profile-images/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExtension}`;
-    
-    const uploadResult = await uploadBuffer(s3Key, imageBuffer, contentType);
+    // Prepare image data for MongoDB storage
+    // Store as base64 string with data URI prefix for easy retrieval
+    const imageDataUri = image.includes('data:image') 
+      ? image 
+      : `data:${contentType};base64,${image.replace(/^data:image\/\w+;base64,/, '')}`;
 
-    // Delete old profile image from S3 if it exists
-    if (user.profileImage && user.profileImage.startsWith('http')) {
-      try {
-        // Extract S3 key from URL if it's an S3 URL
-        const oldKey = user.profileImage.split('/').slice(-2).join('/'); // Get last two parts
-        if (oldKey && oldKey.includes('profile-images')) {
-          const { deleteObject } = require('../utils/s3');
-          await deleteObject(oldKey);
-        }
-      } catch (deleteError) {
-        console.warn('Failed to delete old profile image:', deleteError);
-        // Continue even if deletion fails
-      }
-    }
-
-    // Update user document with new profile image URL
+    // Update user document with profile image stored directly in MongoDB
     await usersCollection.updateOne(
       { _id: targetUserId },
       { 
         $set: { 
-          profileImage: uploadResult.url,
+          profileImage: imageDataUri,
+          profileImageContentType: contentType,
           updated_at: new Date()
         }
       }
@@ -132,8 +117,8 @@ router.post('/profile-image', requireAuth, async (req, res) => {
 
     res.status(200).json({ 
       message: 'Profile image updated successfully',
-      profileImage: uploadResult.url,
-      imageUrl: uploadResult.url
+      profileImage: imageDataUri,
+      contentType: contentType
     });
 
   } catch (error) {
