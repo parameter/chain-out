@@ -74,6 +74,8 @@ router.post('/login', (req, res, next) => {
     }
     if (!user) {
       // Check if the error is due to unverified email
+
+      /*
       if (info?.emailNotVerified) {
         return res.status(403).json({ 
           message: info.message || 'Please verify your email address before logging in.',
@@ -82,6 +84,7 @@ router.post('/login', (req, res, next) => {
       }
       return res.status(401).json({ message: info?.message || 'Invalid credentials' });
     }
+    */
 
     const token = jwt.sign(
       { sub: user._id, userType: user.userType },
