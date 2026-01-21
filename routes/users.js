@@ -48,7 +48,105 @@ router.get('/profile', requireAuth, (req, res) => {
   });
 });
 
+// /users/profile-image
+router.post('/profile-image', requireAuth, async (req, res) => {
+  try {
+    const { playerId } = req.query;
+    const { image } = req.body; // base64 image string
+    
+    if (!image) {
+      return res.status(400).json({ message: 'image (base64) is required in request body' });
+    }
 
+    // Determine which user to update
+    const userId = playerId || req.user._id.toString();
+    const targetUserId = new ObjectId(userId);
+
+    // Validate base64 image format
+    const base64Regex = /^data:image\/(png|jpg|jpeg|gif|webp);base64,/;
+    let imageBuffer;
+    let contentType = 'image/png'; // default
+    
+    if (base64Regex.test(image)) {
+      // Extract content type and base64 data
+      const matches = image.match(/^data:image\/(\w+);base64,/);
+      contentType = `image/${matches[1]}`;
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+      imageBuffer = Buffer.from(base64Data, 'base64');
+    } else {
+      // Assume it's raw base64 without data URI prefix
+      imageBuffer = Buffer.from(image, 'base64');
+    }
+
+    if (!imageBuffer || imageBuffer.length === 0) {
+      return res.status(400).json({ message: 'Invalid base64 image data' });
+    }
+
+    // Optional: Validate image size (e.g., max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (imageBuffer.length > maxSize) {
+      return res.status(400).json({ message: 'Image size exceeds maximum allowed size (5MB)' });
+    }
+
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+
+    // Check if user exists
+    const user = await usersCollection.findOne({ _id: targetUserId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Upload to S3
+    const { uploadBuffer } = require('../utils/s3');
+    const fileExtension = contentType.split('/')[1] || 'png';
+    const s3Key = `profile-images/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExtension}`;
+    
+    const uploadResult = await uploadBuffer(s3Key, imageBuffer, contentType);
+
+    // Delete old profile image from S3 if it exists
+    if (user.profileImage && user.profileImage.startsWith('http')) {
+      try {
+        // Extract S3 key from URL if it's an S3 URL
+        const oldKey = user.profileImage.split('/').slice(-2).join('/'); // Get last two parts
+        if (oldKey && oldKey.includes('profile-images')) {
+          const { deleteObject } = require('../utils/s3');
+          await deleteObject(oldKey);
+        }
+      } catch (deleteError) {
+        console.warn('Failed to delete old profile image:', deleteError);
+        // Continue even if deletion fails
+      }
+    }
+
+    // Update user document with new profile image URL
+    await usersCollection.updateOne(
+      { _id: targetUserId },
+      { 
+        $set: { 
+          profileImage: uploadResult.url,
+          updated_at: new Date()
+        }
+      }
+    );
+
+    res.status(200).json({ 
+      message: 'Profile image updated successfully',
+      profileImage: uploadResult.url,
+      imageUrl: uploadResult.url
+    });
+
+  } catch (error) {
+    console.error('Error uploading profile image:', error);
+    
+    // Handle ObjectId validation errors
+    if (error.message && error.message.includes('ObjectId')) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+    
+    res.status(500).json({ message: 'Failed to upload profile image', error: error.message });
+  }
+});
 
 
 router.get('/courses', requireAuth, async (req, res) => {
