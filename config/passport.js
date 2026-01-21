@@ -42,6 +42,14 @@ const initializePassport = () => {
         return done(null, false, { message: 'Invalid email or password 2' });
       }
       
+      // Check email verification for regular users (not operators or service-users)
+      if (userType === 'user' && user.emailVerified !== true) {
+        return done(null, false, { 
+          message: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+          emailNotVerified: true 
+        });
+      }
+      
       const { password: _, ...userWithoutPassword } = user;
       // Add userType to distinguish between users and operators
       userWithoutPassword.userType = userType;
