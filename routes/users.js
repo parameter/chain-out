@@ -398,6 +398,18 @@ router.post('/say-fore', requireAuth, async (req, res) => {
   }
 });
 
+router.get('/friends/received-fores', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const foresCollection = db.collection('fores');
+    const result = await foresCollection.find({ to: req.user._id, status: 'accepted' }).toArray();
+    res.json({ receivedFores: result });
+  } catch (e) {
+    console.error('Error fetching received fores:', e);
+    res.status(500).json({ message: 'Failed to fetch received fores' });
+  }
+});
+
 // should only create new scorecard if no active scorecard exists for the current user and course
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
