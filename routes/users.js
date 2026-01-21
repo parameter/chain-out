@@ -394,7 +394,13 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     res.status(201).json({ message: 'Fore sent', fore: foreDoc });
   } catch (e) {
     console.error('Error sending fore:', e);
-    res.status(500).json({ message: 'Failed to send fore' });
+    // Check if response has already been sent
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Failed to send fore' });
+    } else {
+      // Log additional warning if response was already sent
+      console.error('Error occurred after response was sent:', e);
+    }
   }
 });
 
