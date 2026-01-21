@@ -43,7 +43,7 @@ const initializePassport = () => {
       }
       
       // Check email verification for regular users (not operators or service-users)
-      if (userType === 'user' && user.emailVerified !== true) {
+      if (userType === 'user' && user.emailVerified != true) {
         return done(null, false, { 
           message: 'Please verify your email address before logging in. Check your inbox for the verification link.',
           emailNotVerified: true 
