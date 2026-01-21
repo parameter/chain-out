@@ -76,27 +76,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// Errors - Enhanced logging for Vercel
+// Errors
 app.use((err, req, res, next) => {
-  // Enhanced error logging for Vercel visibility
-  const errorInfo = {
-    message: err?.message || String(err),
-    stack: err?.stack || 'No stack trace',
-    name: err?.name || 'Error',
-    url: req.originalUrl,
-    method: req.method,
-    timestamp: new Date().toISOString(),
-    error: err
-  };
-  
-  console.error('[GLOBAL ERROR HANDLER]', JSON.stringify(errorInfo, null, 2));
-  
-  // Also log to stderr for Vercel
-  console.error('[ERROR STACK]', err.stack || err);
-  
-  if (!res.headersSent) {
-    res.status(500).json({ message: 'Something went wrong!' });
-  }
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
 });
 
 // Initialize DB once per cold start

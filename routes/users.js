@@ -6,26 +6,6 @@ const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
 const { searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges } = require('../lib/badges');
 
-// Helper function for Vercel-compatible error logging
-const logError = (error, context = {}) => {
-  const errorInfo = {
-    message: error?.message || String(error),
-    stack: error?.stack || 'No stack trace',
-    name: error?.name || 'Error',
-    ...context,
-    timestamp: new Date().toISOString()
-  };
-  
-  // Multiple logging methods to ensure Vercel captures it
-  console.error('[ERROR]', JSON.stringify(errorInfo, null, 2));
-  console.error('[ERROR STACK]', error?.stack || error);
-  
-  // Also write to stderr directly (Vercel definitely captures this)
-  if (process.stderr && process.stderr.write) {
-    process.stderr.write(`[ERROR] ${JSON.stringify(errorInfo)}\n`);
-  }
-};
-
 
 const router = express.Router();
 
@@ -367,6 +347,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
   try {
     const { userId } = req.body;
 
+    console.log('userId', userId);
+
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
     }
@@ -375,8 +357,12 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Cannot send a fore to yourself' });
     }
 
+    console.log('here 1');
+
     const db = getDatabase();
     const foresCollection = db.collection('fores');
+
+    console.log('here 2');
 
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -400,6 +386,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       { upsert: true, returnDocument: 'after' }
     );
 
+    console.log('result 1', result);
+
     // If a document already existed, don't allow sending again
     // Check if upsert actually inserted a new document
     if (!result?.lastErrorObject?.upserted) {
@@ -413,21 +401,13 @@ router.post('/say-fore', requireAuth, async (req, res) => {
 
     res.status(201).json({ message: 'Fore sent', fore: foreDoc });
   } catch (e) {
-    // Use helper for Vercel-compatible logging
-    logError(e, {
-      route: '/say-fore',
-      userId: req.user?._id,
-      requestBody: req.body
-    });
-    
+    console.error('Error sending fore:', e);
     // Check if response has already been sent
     if (!res.headersSent) {
       res.status(500).json({ message: 'Failed to send fore' });
     } else {
-      logError(e, { 
-        route: '/say-fore',
-        note: 'Error occurred after response was sent'
-      });
+      // Log additional warning if response was already sent
+      console.error('Error occurred after response was sent:', e);
     }
   }
 });
