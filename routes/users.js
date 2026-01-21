@@ -817,8 +817,11 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
+    // Convert playerId string to ObjectId for storage (no conversions needed later)
+    const playerIdObj = ObjectId.isValid(playerId) ? new ObjectId(playerId) : playerId;
+
     const resultObj = {
-      playerId,
+      playerId: playerIdObj, // Store as ObjectId to match friends.to/from (ObjectIds)
       holeNumber,
       score,
       putt,
