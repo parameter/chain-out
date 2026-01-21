@@ -148,14 +148,14 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     const result = await friendsCollection.findOneAndUpdate(
       {
         $or: [
-          { from: req.user._id, to: userId },
-          { from: userId, to: req.user._id }
+          { from: req.user._id, to: new ObjectId(userId) },
+          { from: new ObjectId(userId), to: req.user._id }
         ],
         status: { $in: ['pending', 'accepted', 'rejected'] }
       },
       { $setOnInsert: {
           from: req.user._id,
-          to: userId,
+          to: new ObjectId(userId),
           status: 'pending',
           createdAt: now,
           updatedAt: now
@@ -186,7 +186,7 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     const { userId, answer } = req.body;
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-    const result = await friendsCollection.updateOne({ from: new ObjectId(userId), to: req.user._id.toString(), status: 'pending' }, { $set: { status: answer } });
+    const result = await friendsCollection.updateOne({ from: new ObjectId(userId), to: req.user._id, status: 'pending' }, { $set: { status: answer } });
     res.json({ result: result.modifiedCount });
   } catch (e) {
     console.error('Error answering friend request:', e);  
@@ -200,7 +200,7 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
     const friendsCollection = db.collection('friends');
     const usersCollection = db.collection('users');
     
-    const pendingFriendRequests = await friendsCollection.find({ to: req.user._id.toString(), status: 'pending' }).toArray();
+    const pendingFriendRequests = await friendsCollection.find({ to: req.user._id, status: 'pending' }).toArray();
     
     const userIds = [...new Set(pendingFriendRequests.map(req => req.to))];
     
@@ -233,9 +233,9 @@ router.get('/friends', requireAuth, async (req, res) => {
     const friendsCollection = db.collection('friends');
     const usersCollection = db.collection('users');
     
-    const friends = await friendsCollection.find({ $or: [{ to: req.user._id.toString() }, { from: new ObjectId(req.user._id.toString()) }], status: 'accepted' }).toArray();
+    const friends = await friendsCollection.find({ $or: [{ to: req.user._id }, { from: new ObjectId(req.user._id) }], status: 'accepted' }).toArray();
     
-    const userIds = [...new Set(friends.map(friend => friend.to.toString()))];
+    const userIds = [...new Set(friends.map(friend => friend.to))];
     
     const users = userIds.length > 0
       ? await usersCollection.find({ _id: { $in: userIds.map(id => new ObjectId(id)) } })
@@ -245,12 +245,12 @@ router.get('/friends', requireAuth, async (req, res) => {
     
     const userMap = {};
     users.forEach(user => {
-      userMap[user._id.toString()] = user;
+      userMap[user._id] = user;
     });
     
     const friendsWithUsers = friends.map(friend => ({
       ...friend,
-      ...userMap[friend.to.toString()]
+      ...userMap[friend.to]
     }));
     
     res.json({ friends: friendsWithUsers });
