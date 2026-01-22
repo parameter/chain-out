@@ -369,7 +369,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
 
     const foreDoc = {
       from: req.user._id,
-      to: userId,
+      to: new ObjectId(userId),
       message: 'Fore!',
       createdAt: now
     };
@@ -377,17 +377,14 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     const result = await foresCollection.findOneAndUpdate(
       {
         from: req.user._id,
-        to: userId,
-        createdAt: { $gte: oneHourAgo }
+        to: new ObjectId(userId),
+        // createdAt: { $gte: oneHourAgo }
       },
       { $setOnInsert: foreDoc },
       { upsert: true, returnDocument: 'after' }
     );
 
     if (!result) {
-      if (result?.value) {
-        return res.status(400).json({ message: 'You have already sent a fore to this user within the last hour' });
-      }
       return res.status(500).json({ message: 'Failed to send fore' });
     }
 
@@ -406,13 +403,29 @@ router.post('/say-fore', requireAuth, async (req, res) => {
 
 router.get('/friends/received-fores', requireAuth, async (req, res) => {
   try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'userId query parameter is required' });
+    }
+    
+    const targetUserId = new ObjectId(userId);
+    const currentUserId = req.user._id;
+    
     const db = getDatabase();
     const foresCollection = db.collection('fores');
-    const result = await foresCollection.find({ to: req.user._id, status: 'accepted' }).toArray();
-    res.json({ receivedFores: result });
+    
+    const result = await foresCollection.find({
+      $or: [
+        { from: currentUserId, to: targetUserId },
+        { from: targetUserId, to: currentUserId }
+      ]
+    }).sort({ createdAt: -1 }).toArray();
+    
+    res.json({ fores: result });
   } catch (e) {
-    console.error('Error fetching received fores:', e);
-    res.status(500).json({ message: 'Failed to fetch received fores' });
+    console.error('Error fetching fores:', e);
+    res.status(500).json({ message: 'Failed to fetch fores' });
   }
 });
 
