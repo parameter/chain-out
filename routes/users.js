@@ -365,10 +365,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     console.log('here 2');
 
     const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
-    // Check if a fore was sent from this user to the target user within the last week
-    // Try to insert only if no recent fore exists in one atomic operation
     const foreDoc = {
       from: req.user._id,
       to: userId,
@@ -380,22 +378,16 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       {
         from: req.user._id,
         to: userId,
-        createdAt: { $gte: oneWeekAgo }
+        createdAt: { $gte: oneHourAgo }
       },
       { $setOnInsert: foreDoc },
       { upsert: true, returnDocument: 'after' }
     );
 
-    console.log('result 1', result);
-
-    // If a document already existed, don't allow sending again
-    // Check if upsert actually inserted a new document
-    if (!result?.lastErrorObject?.upserted) {
-      // If result.value exists, it means a document was matched (already exists)
+    if (!result) {
       if (result?.value) {
-        return res.status(400).json({ message: 'You have already sent a fore to this user within the last week' });
+        return res.status(400).json({ message: 'You have already sent a fore to this user within the last hour' });
       }
-      // If no value, something went wrong
       return res.status(500).json({ message: 'Failed to send fore' });
     }
 
