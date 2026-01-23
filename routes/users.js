@@ -374,21 +374,13 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       createdAt: now
     };
 
-    const result = await foresCollection.findOneAndUpdate(
-      {
-        from: req.user._id,
-        to: new ObjectId(userId),
-        // createdAt: { $gte: oneHourAgo }
-      },
-      { $setOnInsert: foreDoc },
-      { upsert: true, returnDocument: 'after' }
-    );
+    const result = await foresCollection.insertOne(foreDoc);
 
-    if (!result) {
+    if (!result || !result.insertedId) {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
 
-    res.status(201).json({ message: 'Fore sent', fore: foreDoc });
+    res.status(201).json({ message: 'Fore sent', fore: { ...foreDoc, _id: result.insertedId } });
   } catch (e) {
     console.error('Error sending fore:', e);
     // Check if response has already been sent
