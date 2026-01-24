@@ -1419,10 +1419,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
             totalBadges: [
               {
                 $match: {
-                  $or: [
-                    { currentTier: { $gte: 0 } },
-                    { courseId: { $exists: true } }
-                  ]
+                  currentTier: { $gte: 0 }
                 }
               },
               { $count: 'count' }
@@ -1430,6 +1427,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
             achievements: [
               {
                 $match: {
+                  currentTier: { $gte: 0 },
                   courseId: { $exists: true, $ne: null }
                 }
               },
