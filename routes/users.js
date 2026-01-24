@@ -347,8 +347,6 @@ router.post('/say-fore', requireAuth, async (req, res) => {
   try {
     const { userId } = req.body;
 
-    console.log('userId', userId);
-
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
     }
@@ -357,12 +355,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Cannot send a fore to yourself' });
     }
 
-    console.log('here 1');
-
     const db = getDatabase();
     const foresCollection = db.collection('fores');
-
-    console.log('here 2');
 
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
@@ -379,6 +373,12 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     if (!result || !result.insertedId) {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
+
+    pusher.trigger(userId, "new-fore", {
+      message: 'Fore!',
+      from: req.user._id,
+      to: userId
+    });
 
     res.status(201).json({ message: 'Fore sent', fore: { ...foreDoc, _id: result.insertedId } });
   } catch (e) {
