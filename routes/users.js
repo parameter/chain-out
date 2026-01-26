@@ -277,6 +277,10 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
 
+    console.log('docId', docId);
+    console.log('from', from);
+    console.log('to', to);
+
     const result = await friendsCollection.updateOne({ _id: new ObjectId(docId), from: new ObjectId(from), to: new ObjectId(to), status: 'pending' }, { $set: { status: answer } });
     
     pusher.trigger(userId, "friend-request-answered", {
