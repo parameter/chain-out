@@ -256,6 +256,13 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       return res.status(500).json({ message: 'Failed to send friend request' });
     }
 
+    pusher.trigger(userId, "friend-request-sent", {
+      message: `${req.user.username} sent you a friend request`,
+      senderUsername: req.user.username,
+      senderId: req.user._id,
+      receiverId: userId
+    });
+
     res.json({ message: 'Friend request sent', status: 'pending' });
 
   } catch (e) {
