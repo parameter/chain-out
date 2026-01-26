@@ -224,7 +224,9 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
 
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
+    const usersCollection = db.collection('users');
 
+    const senderUser = await usersCollection.findOne({ _id: new ObjectId(req.user._id) });
     const now = new Date();
 
     // Try to insert, but only if no existing pending/accepted request in either direction
@@ -239,6 +241,7 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       { $setOnInsert: {
           from: req.user._id,
           to: new ObjectId(userId),
+          senderUsername: senderUser.username,
           status: 'pending',
           createdAt: now,
           updatedAt: now
@@ -303,31 +306,10 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-    const usersCollection = db.collection('users');
     
     const pendingFriendRequests = await friendsCollection.find({ to: req.user._id, status: 'pending' }).toArray();
     
-    const userIds = [...new Set(pendingFriendRequests.map(req => req.from))];
-    
-    const users = userIds.length > 0
-      ? await usersCollection.find({ _id: { $in: userIds.map(id => new ObjectId(id)) } })
-          .project({ password: 0, createdAt: 0, updatedAt: 0 })
-          .toArray()
-      : [];
-    
-    const userMap = {};
-    users.forEach(user => {
-      userMap[user._id.toString()] = user;
-    });
-    
-    const pendingFriendRequestsWithUsers = pendingFriendRequests.map(request => ({
-      ...request,
-      sender: {
-        username: userMap[request.from.toString()].username,
-      }
-    }));
-    
-    res.json({ pendingFriendRequests: pendingFriendRequestsWithUsers });
+    res.json({ pendingFriendRequests: pendingFriendRequests });
   } catch (e) {
     console.log('Error fetching pending friend requests:', e);
     res.status(500).json({ message: 'Failed to fetch pending friend requests' });
@@ -338,29 +320,10 @@ router.get('/friends', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-    const usersCollection = db.collection('users');
     
     const friends = await friendsCollection.find({ $or: [{ to: req.user._id }, { from: new ObjectId(req.user._id) }], status: 'accepted' }).toArray();
     
-    const userIds = [...new Set(friends.map(friend => friend.to))];
-    
-    const users = userIds.length > 0
-      ? await usersCollection.find({ _id: { $in: userIds.map(id => new ObjectId(id)) } })
-          .project({ password: 0, createdAt: 0, updatedAt: 0 })
-          .toArray()
-      : [];
-    
-    const userMap = {};
-    users.forEach(user => {
-      userMap[user._id] = user;
-    });
-    
-    const friendsWithUsers = friends.map(friend => ({
-      ...friend,
-      ...userMap[friend.to]
-    }));
-    
-    res.json({ friends: friendsWithUsers });
+    res.json({ friends: friends });
   } catch (e) {
     console.error('Error fetching friends:', e);  
     res.status(500).json({ message: 'Failed to fetch friends' });
