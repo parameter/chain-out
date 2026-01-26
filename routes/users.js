@@ -278,6 +278,9 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     const friendsCollection = db.collection('friends');
     const result = await friendsCollection.updateOne({ from: new ObjectId(userId), to: req.user._id, status: 'pending' }, { $set: { status: answer } });
 
+    console.log('{ userId, answer, senderUsername }', { userId, answer, senderUsername });
+    console.log('result 1', result);
+
     pusher.trigger(userId, "friend-request-answered", {
       message: `${senderUsername} ${answer ? 'accepted' : 'rejected'} your friend request`,
       from: req.user._id,
