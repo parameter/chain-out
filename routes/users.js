@@ -281,7 +281,10 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     console.log('from', from);
     console.log('to', to);
 
-    const result = await friendsCollection.updateOne({ _id: new ObjectId(docId), from: new ObjectId(from), to: new ObjectId(to), status: 'pending' }, { $set: { status: answer } });
+    const result = await friendsCollection.updateOne(
+      { _id: new ObjectId(docId), from: new ObjectId(from), to: new ObjectId(to), status: 'pending' }, 
+      { $set: { status: answer } 
+    });
     
     pusher.trigger(userId, "friend-request-answered", {
       message: `${senderUsername} ${answer ? 'accepted' : 'rejected'} your friend request`,
@@ -319,7 +322,9 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
     
     const pendingFriendRequestsWithUsers = pendingFriendRequests.map(request => ({
       ...request,
-      ...userMap[request.from.toString()]
+      sender: {
+        username: userMap[request.from.toString()].username,
+      }
     }));
     
     res.json({ pendingFriendRequests: pendingFriendRequestsWithUsers });
