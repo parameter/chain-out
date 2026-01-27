@@ -336,10 +336,49 @@ router.get('/friends', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
+    const usersCollection = db.collection('users');
     
     const friends = await friendsCollection.find({ $or: [{ to: req.user._id }, { from: new ObjectId(req.user._id) }], status: 'accepted' }).toArray();
     
-    res.json({ friends: friends });
+    // Get user IDs that are not the current user
+    const friendUserIds = friends.map(friend => {
+      const friendId = friend.from.toString() === req.user._id.toString() ? friend.to : friend.from;
+      return new ObjectId(friendId);
+    });
+    
+    // Fetch user objects
+    const users = friendUserIds.length > 0
+      ? await usersCollection.find({ _id: { $in: friendUserIds } })
+          .project({ password: 0, createdAt: 0, updatedAt: 0 })
+          .toArray()
+      : [];
+    
+    // Create a map of user IDs to user objects
+    const userMap = {};
+    users.forEach(user => {
+      userMap[user._id.toString()] = user;
+    });
+    
+    const friendsWithUsers = friends.map(friend => {
+      const friendId = friend.from.toString() === req.user._id.toString() ? friend.to : friend.from;
+      const friendUser = userMap[friendId.toString()];
+      const { _id, ...userWithoutId } = friendUser || {};
+      
+      return {
+        ...friend,
+        sender: {
+          username: friend.senderUsername,
+          _id: friend.from
+        },
+        receiver: {
+          username: friend.receiverUsername,
+          _id: friend.to
+        },
+        user: userWithoutId
+      };
+    });
+    
+    res.json({ friends: friendsWithUsers });
   } catch (e) {
     console.error('Error fetching friends:', e);  
     res.status(500).json({ message: 'Failed to fetch friends' });
