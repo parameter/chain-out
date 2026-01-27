@@ -376,14 +376,6 @@ router.get('/friends', requireAuth, async (req, res) => {
       
       return {
         ...friend,
-        sender: {
-          username: friend.senderUsername,
-          _id: friend.from
-        },
-        receiver: {
-          username: friend.receiverUsername,
-          _id: friend.to
-        },
         ...(userObject && { user: userObject })
       };
     });
