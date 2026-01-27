@@ -266,6 +266,13 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       receiverId: userId
     });
 
+    pusher.trigger(req.user._id.toString(), "friend-request-sent", {
+      message: `You send a friend request to ${senderUser.username}`,
+      senderUsername: req.user.username,
+      senderId: req.user._id,
+      receiverId: userId
+    });
+
     res.json({ message: 'Friend request sent', status: 'pending' });
 
   } catch (e) {
