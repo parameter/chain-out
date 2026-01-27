@@ -253,8 +253,10 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     );
 
     if (result.value && result.lastErrorObject?.upserted) {
+
+      console.log('Friend request sent to', userId.toString());
       
-      pusher.trigger(String(userId), "friend-request-sent", {
+      pusher.trigger(userId.toString(), "friend-request-sent", {
         message: `${senderUsername} sent you a friend request`,
         senderUsername: senderUsername,
         senderId: req.user._id,
@@ -291,7 +293,9 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
       { $set: { status: answer } 
     });
     
-    pusher.trigger(String(userId), "friend-request-answered", {
+    console.log('Friend request answered to', userId.toString());
+    
+    pusher.trigger(userId.toString(), "friend-request-answered", {
       message: `${senderUsername} ${answer} your friend request`,
       from: req.user._id,
       to: userId
@@ -418,13 +422,16 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
 
-    pusher.trigger(String(userId), "new-fore", {
+    console.log('Fore sent to', userId.toString());
+
+    pusher.trigger(userId.toString(), "new-fore", {
       message: 'Fore!',
       from: req.user._id,
       to: userId
     });
 
     res.status(201).json({ message: 'Fore sent', fore: { ...foreDoc, _id: result.insertedId } });
+
   } catch (e) {
     console.error('Error sending fore:', e);
     // Check if response has already been sent
@@ -589,7 +596,9 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
         try {
 
-          pusher.trigger(String(note.forUser), "scorecard-invite", {
+          console.log('Sending pusher notification to', note.forUser.toString());
+
+          pusher.trigger(note.forUser.toString(), "scorecard-invite", {
             message: note.message,
             scorecardId: scorecardId,
             courseName: course.name
