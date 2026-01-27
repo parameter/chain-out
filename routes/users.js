@@ -212,7 +212,7 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
 
 router.post('/send-friend-request', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, senderUsername, receiverUsername } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
@@ -227,6 +227,7 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     const usersCollection = db.collection('users');
 
     const senderUser = await usersCollection.findOne({ _id: new ObjectId(req.user._id) });
+    const receiverUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
     const now = new Date();
 
     // Try to insert, but only if no existing pending/accepted request in either direction
@@ -241,7 +242,8 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       { $setOnInsert: {
           from: req.user._id,
           to: new ObjectId(userId),
-          senderUsername: senderUser.username,
+          senderUsername: senderUsername,
+          receiverUsername: receiverUsername,
           status: 'pending',
           createdAt: now,
           updatedAt: now
