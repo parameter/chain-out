@@ -222,16 +222,9 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Cannot send friend request to yourself' });
     }
 
-    console.log('userId', userId);
-    console.log('senderUsername', senderUsername);
-    console.log('receiverUsername', receiverUsername);
-
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-    const usersCollection = db.collection('users');
 
-    const senderUser = await usersCollection.findOne({ _id: new ObjectId(req.user._id) });
-    const receiverUser = await usersCollection.findOne({ _id: new ObjectId(userId) });
     const now = new Date();
 
     // Try to insert, but only if no existing pending/accepted request in either direction
@@ -256,11 +249,7 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       { upsert: true, returnDocument: 'after' }
     );
 
-    console.log('result', result);
-
-    if (result.value && result.lastErrorObject?.upserted) {
-
-      console.log('Friend request sent to', userId.toString());
+    if (result) {
       
       pusher.trigger(userId.toString(), "friend-request-sent", {
         message: `${senderUsername} sent you a friend request`,
@@ -299,7 +288,12 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
       { $set: { status: answer } 
     });
     
-    console.log('Friend request answered to', userId.toString());
+    console.log('Friend request answered to', userId.toString(), {
+      type: "friend-request-answered",
+      message: `${senderUsername} ${answer} your friend request`,
+      from: req.user._id,
+      to: userId
+    });
     
     pusher.trigger(userId.toString(), "friend-request-answered", {
       message: `${senderUsername} ${answer} your friend request`,
@@ -428,7 +422,12 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
 
-    console.log('Fore sent to', userId.toString());
+    console.log('New fore sent to', userId.toString(), {
+      type: "new-fore",
+      message: 'Fore!',
+      from: req.user._id,
+      to: userId
+    });
 
     pusher.trigger(userId.toString(), "new-fore", {
       message: 'Fore!',
@@ -602,7 +601,12 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
         try {
 
-          console.log('Sending pusher notification to', note.forUser.toString());
+          console.log('Scorecard invite sent to', note.forUser.toString(), {
+            type: "scorecard-invite",
+            message: note.message,
+            scorecardId: scorecardId,
+            courseName: course.name
+          });
 
           pusher.trigger(note.forUser.toString(), "scorecard-invite", {
             message: note.message,
