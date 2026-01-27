@@ -222,6 +222,10 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Cannot send friend request to yourself' });
     }
 
+    console.log('userId', userId);
+    console.log('senderUsername', senderUsername);
+    console.log('receiverUsername', receiverUsername);
+
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
     const usersCollection = db.collection('users');
@@ -251,6 +255,8 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       },
       { upsert: true, returnDocument: 'after' }
     );
+
+    console.log('result', result);
 
     if (result.value && result.lastErrorObject?.upserted) {
 
