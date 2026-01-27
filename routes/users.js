@@ -360,9 +360,19 @@ router.get('/friends', requireAuth, async (req, res) => {
     });
     
     const friendsWithUsers = friends.map(friend => {
-      const friendId = friend.from.toString() === req.user._id.toString() ? friend.to : friend.from;
-      const friendUser = userMap[friendId.toString()];
-      const { _id, ...userWithoutId } = friendUser || {};
+      // Determine which user is the friend (not the current user)
+      const currentUserId = req.user._id.toString();
+      const friendId = friend.from.toString() === currentUserId ? friend.to : friend.from;
+      
+      // Only add user object if it's not the current user
+      let userObject = null;
+      if (friendId.toString() !== currentUserId) {
+        const friendUser = userMap[friendId.toString()];
+        if (friendUser) {
+          const { _id, ...userWithoutId } = friendUser;
+          userObject = userWithoutId;
+        }
+      }
       
       return {
         ...friend,
@@ -374,7 +384,7 @@ router.get('/friends', requireAuth, async (req, res) => {
           username: friend.receiverUsername,
           _id: friend.to
         },
-        user: userWithoutId
+        ...(userObject && { user: userObject })
       };
     });
     
