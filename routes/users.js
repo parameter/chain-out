@@ -252,23 +252,23 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       { upsert: true, returnDocument: 'after' }
     );
 
-    if (!result) {
-      // If result.value exists, it means a document was matched (already exists)
-      if (result?.value) {
-        return res.status(400).json({ message: 'Friend request already exists or you are already friends' });
-      }
-      // If no value, something went wrong
+    if (result.value && result.lastErrorObject?.upserted) {
+      
+      pusher.trigger(String(userId), "friend-request-sent", {
+        message: `${senderUsername} sent you a friend request`,
+        senderUsername: senderUsername,
+        senderId: req.user._id,
+        receiverId: userId
+      });
+
+      res.json({ message: 'Friend request sent', status: 'pending' });
+
+    } else if (result.value) {
+      
+      return res.status(400).json({ message: 'Friend request already exists or you are already friends' });
+    } else {
       return res.status(500).json({ message: 'Failed to send friend request' });
     }
-
-    pusher.trigger(userId, "friend-request-sent", {
-      message: `${req.user.username} sent you a friend request`,
-      senderUsername: req.user.username,
-      senderId: req.user._id,
-      receiverId: userId
-    });
-
-    res.json({ message: 'Friend request sent', status: 'pending' });
 
   } catch (e) {
     console.log('Error sending friend request:', e);
@@ -291,8 +291,8 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
       { $set: { status: answer } 
     });
     
-    pusher.trigger(userId, "friend-request-answered", {
-      message: `${senderUsername} ${answer ? 'accepted' : 'rejected'} your friend request`,
+    pusher.trigger(String(userId), "friend-request-answered", {
+      message: `${senderUsername} ${answer} your friend request`,
       from: req.user._id,
       to: userId
     });
@@ -418,7 +418,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
 
-    pusher.trigger(userId, "new-fore", {
+    pusher.trigger(String(userId), "new-fore", {
       message: 'Fore!',
       from: req.user._id,
       to: userId
@@ -589,7 +589,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
         try {
 
-          pusher.trigger(note.forUser, "scorecard-invite", {
+          pusher.trigger(String(note.forUser), "scorecard-invite", {
             message: note.message,
             scorecardId: scorecardId,
             courseName: course.name
