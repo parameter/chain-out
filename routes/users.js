@@ -1115,7 +1115,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
         { _id: new ObjectId(scorecardId) },
         { $set: { earnedBadges: earnedBadges } }
       );
-      updatedResult.badges = earnedBadges;
+      // Keep response consistent with stored field name
+      updatedResult.earnedBadges = earnedBadges;
     }
 
     /*
