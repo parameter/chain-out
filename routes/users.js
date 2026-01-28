@@ -1110,21 +1110,25 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     console.log('earnedBadges', earnedBadges);
 
+    if (earnedBadges && earnedBadges.length > 0) {
+      await scorecardsCollection.updateOne(
+        { _id: new ObjectId(scorecardId) },
+        { $set: { earnedBadges: earnedBadges } }
+      );
+      updatedResult.badges = earnedBadges;
+    }
+
     /*
     updatedResult.invites.forEach(invite => {
       pusher.trigger(invite.invitedUserId, "scorecard-completed", {
         scorecardId: scorecardId
       });
     }); */
-
-    console.log('check 0', updatedResult.courseId);
-
-    // Fetch course information
+    
     const course = updatedResult.courseId 
       ? await coursesCollection.findOne({ _id: new ObjectId(updatedResult.courseId) })
       : null;
 
-    // Get participants (similar to /scorecard/get-by-id)
     const invitedIds = Array.isArray(updatedResult.invites) && updatedResult.invites.length > 0
       ? updatedResult.invites.map(i => i.invitedUserId)
       : [];
