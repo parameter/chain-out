@@ -1108,6 +1108,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       layout: updatedResult.layout 
     });
 
+    console.log('earnedBadges', earnedBadges);
+
     /*
     updatedResult.invites.forEach(invite => {
       pusher.trigger(invite.invitedUserId, "scorecard-completed", {
