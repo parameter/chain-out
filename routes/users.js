@@ -1110,7 +1110,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       scorecardId: updatedResult._id, 
       results: results, 
       courseId: updatedResult.courseId, 
-      layout: updatedResult.layout 
+      layout: updatedResult.layout,
+      scorecard: updatedResult
     });
 
     console.log('earnedBadges', earnedBadges);
