@@ -15,9 +15,9 @@ const initializePassport = () => {
 
       console.log('trying to login', email, password);
       
-      // Check users collection first
+      // Check users collection first (only verified users can log in)
       const usersCollection = db.collection('users');
-      let user = await usersCollection.findOne({ email: email });
+      let user = await usersCollection.findOne({ email: email, emailVerified: true });
       let userType = 'user';
       
       // If not found in users, check operators collection
@@ -40,14 +40,6 @@ const initializePassport = () => {
       const isValidPassword = bcrypt.compareSync(password, user.password);
       if (!isValidPassword) {
         return done(null, false, { message: 'Invalid email or password 2' });
-      }
-      
-      // Check email verification for regular users (not operators or service-users)
-      if (userType === 'user' && user.emailVerified !== true) {
-        return done(null, false, { 
-          message: 'Please verify your email address before logging in. Check your inbox for the verification link.',
-          emailNotVerified: true 
-        });
       }
       
       const { password: _, ...userWithoutPassword } = user;
