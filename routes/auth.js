@@ -200,16 +200,15 @@ const getPasswordResetLink = (req, token) => {
   // Prefer a client URL for the reset form if provided
   // - PASSWORD_RESET_URL: explicit URL base for reset page (recommended)
   // - CLIENT_URL: first URL entry as fallback (already used for CORS)
-  // - finally: backend origin
+  // - finally: backend origin (same pattern as verification email)
   const passwordResetBase =
     (process.env.PASSWORD_RESET_URL && process.env.PASSWORD_RESET_URL.trim()) ||
     (process.env.CLIENT_URL && process.env.CLIENT_URL.split(',')[0]?.trim()) ||
     `${req.protocol}://${req.get('host')}`;
 
-  // Build `${base}/reset-password?token=...` safely
-  const url = new URL(passwordResetBase.replace(/\/$/, '') + '/reset-password');
-  url.searchParams.set('token', token);
-  return url.toString();
+  // Build `${base}/reset-password?token=...` using same pattern as verification email
+  const base = passwordResetBase.replace(/\/$/, '');
+  return `${base}/reset-password?token=${encodeURIComponent(token)}`;
 };
 
 const hashOneTimeToken = (token) => {
@@ -256,8 +255,20 @@ router.post('/request-password-reset', [
       }
     );
 
-    const resetLink = getPasswordResetLink(req, rawToken);
+    let resetLink;
+    try {
+      resetLink = getPasswordResetLink(req, rawToken);
+      console.log('Generated reset link:', resetLink);
+    } catch (linkError) {
+      console.error('Error generating reset link:', linkError);
+      return res.status(500).json({ message: 'Server error generating reset link' });
+    }
+
     const emailSent = await sendPasswordResetEmail(email, resetLink);
+    
+    if (!emailSent) {
+      console.error('Failed to send password reset email to:', email);
+    }
 
     return res.status(200).json({
       message: 'If an account exists for that email, a password reset link has been sent.',
