@@ -155,12 +155,10 @@ router.get('/verify-email', [
       });
     }
 
-    // Check if already verified
+    // Check if already verified — still show thanks page
     if (user.emailVerified) {
-      return res.status(200).json({ 
-        message: 'Email already verified',
-        verified: true
-      });
+      const baseUrlAlready = req.protocol + '://' + req.get('host');
+      return res.redirect(baseUrlAlready + '/chainout-homepage/thanks.html');
     }
 
     // Update user to verified
@@ -185,11 +183,9 @@ router.get('/verify-email', [
       return res.redirect(redirectUrl + '?verified=true');
     }
 
-    // Default: return success response
-    res.status(200).json({ 
-      message: 'Email verified successfully',
-      verified: true
-    });
+    // Default: redirect to thanks page
+    const baseUrl = req.protocol + '://' + req.get('host');
+    return res.redirect(baseUrl + '/chainout-homepage/thanks.html');
   } catch (error) {
     console.error('Email verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });
@@ -290,8 +286,6 @@ router.post('/reset-password', [
   body('token').notEmpty().withMessage('Reset token is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ], async (req, res) => {
-
-  console.log('req.body', req.body);
 
   try {
     const errors = validationResult(req);
