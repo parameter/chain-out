@@ -526,8 +526,12 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     }
     */
 
-    let scorecard = await scorecardsCollection.findOne({ courseId: new ObjectId(courseId), creatorId: new ObjectId(req.user._id) });
-    const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+    let scorecard = await scorecardsCollection.findOne(
+      { courseId: new ObjectId(courseId), creatorId: new ObjectId(req.user._id), status: 'active' }
+    );
+    const course = await coursesCollection.findOne(
+      { _id: new ObjectId(courseId) }
+    );
 
     // Prepare invite objects
     const now = new Date();
