@@ -999,7 +999,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp: timestamp ? new Date(timestamp) : new Date()
     };
 
-    // Only update if no result exists for this playerId + holeNumber (unique per hole per player)
+    // Combine the find and update in a single query using $elemMatch to check invite
     const updatedResult = await scorecardsCollection.findOneAndUpdate(
       {
         _id: new ObjectId(scorecardId),
@@ -1043,23 +1043,13 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     console.log('allResultsEntered', allResultsEntered);
  
     if (!updatedResult) {
-      // Scorecard not found, no access, or duplicate (playerId + holeNumber) already exists
+      // Either scorecard not found or user not invited
+      // Check which case it is for more specific error
       const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
       if (!scorecard) {
         return res.status(404).json({ message: 'Scorecard not found' });
       }
-      const hasAccess =
-        scorecard.creatorId?.toString() === req.user._id.toString() ||
-        (Array.isArray(scorecard.invites) &&
-          scorecard.invites.some(inv => inv.invitedUserId === req.user._id.toString()));
-      if (!hasAccess) {
-        return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
-      }
-      // Has access but update didn't match => duplicate hole result for this player
-      return res.status(409).json({
-        message: 'A result for this hole and player already exists',
-        roundComplete: allResultsEntered
-      });
+      return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
     res.status(201).json({ message: 'Result added to scorecard', result: resultObj, roundComplete: allResultsEntered });
