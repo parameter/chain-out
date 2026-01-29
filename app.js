@@ -60,9 +60,6 @@ app.get('/chainout-homepage', (req, res) => {
 app.get(['/chainout-homepage/reset-password', '/chainout-homepage/reset-password.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'chainout-homepage', 'reset-password.html'));
 });
-app.get(['/chainout-homepage/reset-password', '/chainout-homepage/reset-password.html'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'chainout-homepage', 'reset-password.html'));
-});
 
 app.use(passport.initialize());
 initializePassport();
