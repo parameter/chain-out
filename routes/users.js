@@ -48,14 +48,38 @@ router.get('/profile', requireAuth, (req, res) => {
   });
 });
 
+// XP required to reach each level (level 1 = 0 XP, level 2 = 100, level 3 = 361, ...)
+const XP_LEVEL_THRESHOLDS = [
+  100, 361, 763, 1300, 1964, 2752, 3660, 4685, 5826, 7079, 8443, 9916,
+  11495, 13178, 14963, 16848, 18830, 20909, 23082, 25347, 27703, 30148, 32681, 35299,
+  38002, 40787, 43654, 46600, 49625, 52726, 55903, 59154, 62477, 65871, 69335, 72867,
+  76466, 80131, 83861, 87654, 91510, 95427, 99405, 103443, 107540, 111696, 115909, 120179,
+  124505, 128887, 133323, 137814, 142358, 146956, 151606, 156309, 161063, 165869, 170725, 175632,
+  180589, 185595, 190651, 195755, 200908, 206108, 211356, 216650, 221992, 227380, 232813, 238292,
+  243815, 249383, 254995, 260650, 266349, 272091, 277875, 283702, 289571, 295481, 301433, 307426,
+  313460, 319535, 325650, 331805, 338000, 344235, 350509, 356822, 363174, 369565, 375994,
+  464731, 473727, 482801, 491955, 501187
+];
+
+function getLevelFromXP(totalXP) {
+  if (totalXP < 0) return 1;
+  let level = 1;
+  for (const threshold of XP_LEVEL_THRESHOLDS) {
+    if (totalXP >= threshold) level += 1;
+    else break;
+  }
+  return level;
+}
+
 router.get('/xp', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const userXPTotalsCollection = db.collection('userXPTotals');
     const userId = req.user._id instanceof ObjectId ? req.user._id : new ObjectId(req.user._id);
     const doc = await userXPTotalsCollection.findOne({ _id: userId });
-    const totalXP = doc && typeof doc.totalXP === 'number' ? doc.totalXP : 0;
-    res.json({ totalXP });
+    const XP = doc && typeof doc.totalXP === 'number' ? doc.totalXP : 0;
+    const level = getLevelFromXP(XP);
+    res.json({ XP, level });
   } catch (err) {
     console.error('[GET /users/xp]', err);
     res.status(500).json({ message: 'Failed to get user XP' });
