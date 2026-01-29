@@ -14,7 +14,20 @@ const { initializeDatabase } = require('./config/database');
 
 const app = express();
 
-app.use(helmet());
+// Configure Helmet with CSP that allows inline scripts for chainout-homepage pages
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'", // Allow inline scripts for chainout-homepage pages
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
 app.set('trust proxy', 1);
 app.use(morgan('combined'));
 
