@@ -48,7 +48,20 @@ router.get('/profile', requireAuth, (req, res) => {
   });
 });
 
-// /users/profile-image
+router.get('/xp', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const userXPTotalsCollection = db.collection('userXPTotals');
+    const userId = req.user._id instanceof ObjectId ? req.user._id : new ObjectId(req.user._id);
+    const doc = await userXPTotalsCollection.findOne({ _id: userId });
+    const totalXP = doc && typeof doc.totalXP === 'number' ? doc.totalXP : 0;
+    res.json({ totalXP });
+  } catch (err) {
+    console.error('[GET /users/xp]', err);
+    res.status(500).json({ message: 'Failed to get user XP' });
+  }
+});
+
 router.post('/profile-image', requireAuth, async (req, res) => {
   try {
     const { playerId } = req.query;
@@ -58,17 +71,14 @@ router.post('/profile-image', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'image (base64) is required in request body' });
     }
 
-    // Determine which user to update
     const userId = playerId || req.user._id.toString();
     const targetUserId = new ObjectId(userId);
 
-    // Validate base64 image format
     const base64Regex = /^data:image\/(png|jpg|jpeg|gif|webp);base64,/;
     let imageBuffer;
     let contentType = 'image/png'; // default
     
     if (base64Regex.test(image)) {
-      // Extract content type and base64 data
       const matches = image.match(/^data:image\/(\w+);base64,/);
       contentType = `image/${matches[1]}`;
       const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
@@ -82,7 +92,6 @@ router.post('/profile-image', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Invalid base64 image data' });
     }
 
-    // Validate image size (max 500KB for MongoDB document storage)
     const maxSize = 500 * 1024; // 500KB
     if (imageBuffer.length > maxSize) {
       return res.status(400).json({ message: 'Image size exceeds maximum allowed size (500KB)' });
@@ -91,19 +100,15 @@ router.post('/profile-image', requireAuth, async (req, res) => {
     const db = getDatabase();
     const usersCollection = db.collection('users');
 
-    // Check if user exists
     const user = await usersCollection.findOne({ _id: targetUserId });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Prepare image data for MongoDB storage
-    // Store as base64 string with data URI prefix for easy retrieval
     const imageDataUri = image.includes('data:image') 
       ? image 
       : `data:${contentType};base64,${image.replace(/^data:image\/\w+;base64,/, '')}`;
 
-    // Update user document with profile image stored directly in MongoDB
     await usersCollection.updateOne(
       { _id: targetUserId },
       { 
