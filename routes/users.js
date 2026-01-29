@@ -999,14 +999,15 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp: timestamp ? new Date(timestamp) : new Date()
     };
 
-    // Combine the find and update in a single query using $elemMatch to check invite
+    // Only update if no result exists for this playerId + holeNumber (unique per hole per player)
     const updatedResult = await scorecardsCollection.findOneAndUpdate(
       {
         _id: new ObjectId(scorecardId),
         $or: [
           { invites: { $elemMatch: { invitedUserId: req.user._id.toString() } } },
           { creatorId: req.user._id }
-        ]
+        ],
+        results: { $not: { $elemMatch: { playerId: playerIdObj, holeNumber } } }
       },
       { $push: { results: resultObj } },
       { returnDocument: 'after' }
@@ -1042,13 +1043,23 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     console.log('allResultsEntered', allResultsEntered);
  
     if (!updatedResult) {
-      // Either scorecard not found or user not invited
-      // Check which case it is for more specific error
+      // Scorecard not found, no access, or duplicate (playerId + holeNumber) already exists
       const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
       if (!scorecard) {
         return res.status(404).json({ message: 'Scorecard not found' });
       }
-      return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
+      const hasAccess =
+        scorecard.creatorId?.toString() === req.user._id.toString() ||
+        (Array.isArray(scorecard.invites) &&
+          scorecard.invites.some(inv => inv.invitedUserId === req.user._id.toString()));
+      if (!hasAccess) {
+        return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
+      }
+      // Has access but update didn't match => duplicate hole result for this player
+      return res.status(409).json({
+        message: 'A result for this hole and player already exists',
+        roundComplete: allResultsEntered
+      });
     }
 
     res.status(201).json({ message: 'Result added to scorecard', result: resultObj, roundComplete: allResultsEntered });
