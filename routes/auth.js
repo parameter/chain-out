@@ -197,18 +197,23 @@ router.get('/verify-email', [
 });
 
 const getPasswordResetLink = (req, token) => {
-  // Prefer a client URL for the reset form if provided
-  // - PASSWORD_RESET_URL: explicit URL base for reset page (recommended)
+  // If PASSWORD_RESET_URL is set, treat it as the full page URL (without query)
+  if (process.env.PASSWORD_RESET_URL && process.env.PASSWORD_RESET_URL.trim()) {
+    const base = process.env.PASSWORD_RESET_URL.trim().replace(/\/$/, '');
+    return `${base}?token=${encodeURIComponent(token)}`;
+  }
+
+  // Otherwise, build from origin + path
   // - CLIENT_URL: first URL entry as fallback (already used for CORS)
-  // - finally: backend origin (same pattern as verification email)
-  const passwordResetBase =
-    (process.env.PASSWORD_RESET_URL && process.env.PASSWORD_RESET_URL.trim()) ||
+  // - finally: backend origin
+  const origin =
     (process.env.CLIENT_URL && process.env.CLIENT_URL.split(',')[0]?.trim()) ||
     `${req.protocol}://${req.get('host')}`;
 
-  // Build `${base}/reset-password?token=...` using same pattern as verification email
-  const base = passwordResetBase.replace(/\/$/, '');
-  return `${base}/reset-password?token=${encodeURIComponent(token)}`;
+  const base = origin.replace(/\/$/, '');
+  const path = process.env.PASSWORD_RESET_PATH || '/chainout-homepage/reset-password.html';
+
+  return `${base}${path}?token=${encodeURIComponent(token)}`;
 };
 
 const hashOneTimeToken = (token) => {
