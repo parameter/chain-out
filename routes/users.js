@@ -75,11 +75,16 @@ router.get('/xp', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const userXPTotalsCollection = db.collection('userXPTotals');
-    const userId = req.user._id instanceof ObjectId ? req.user._id : new ObjectId(req.user._id);
+    const rawId = req.user._id;
+    const userId = rawId instanceof ObjectId ? rawId : new ObjectId(String(rawId));
     const doc = await userXPTotalsCollection.findOne({ _id: userId });
-    const XP = doc && typeof doc.totalXP === 'number' ? doc.totalXP : 0;
-    const level = getLevelFromXP(XP);
-    res.json({ XP, level });
+    const totalXP = doc && typeof doc.totalXP === 'number' ? doc.totalXP : 0;
+    const level = getLevelFromXP(totalXP);
+    res.json({
+      XP: Number(totalXP),
+      level: Number(level),
+      procentToNextLevel: Number((totalXP % XP_LEVEL_THRESHOLDS[level - 1]) / XP_LEVEL_THRESHOLDS[level - 1] * 100),
+    });
   } catch (err) {
     console.error('[GET /users/xp]', err);
     res.status(500).json({ message: 'Failed to get user XP' });
