@@ -999,7 +999,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
 
-    // Validate required fields
     if (
       !scorecardId ||
       typeof playerId !== 'string' ||
@@ -1013,7 +1012,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Missing or invalid required fields' });
     }
 
-    // Validate specifics fields
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
       if (typeof specifics[field] !== 'boolean') {
@@ -1024,11 +1022,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
-    // Convert playerId string to ObjectId for storage (no conversions needed later)
     const playerIdObj = ObjectId.isValid(playerId) ? new ObjectId(playerId) : playerId;
 
     const resultObj = {
-      playerId: playerIdObj, // Store as ObjectId to match friends.to/from (ObjectIds)
+      playerId: playerIdObj, 
       holeNumber,
       score,
       putt,
@@ -1037,17 +1034,77 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp: timestamp ? new Date(timestamp) : new Date()
     };
 
-    // Combine the find and update in a single query using $elemMatch to check invite
-    const updatedResult = await scorecardsCollection.findOneAndUpdate(
+    const notCompleted = {
+      $or: [
+        { status: { $exists: false } },
+        { status: { $ne: 'completed' } }
+      ]
+    };
+    const accessFilter = {
+      _id: new ObjectId(scorecardId),
+      $and: [
+        notCompleted,
+        {
+          $or: [
+            { invites: { $elemMatch: { invitedUserId: req.user._id.toString() } } },
+            { creatorId: req.user._id }
+          ]
+        }
+      ]
+    };
+
+    const updatePipeline = [
       {
-        _id: new ObjectId(scorecardId),
-        $or: [
-          { invites: { $elemMatch: { invitedUserId: req.user._id.toString() } } },
-          { creatorId: req.user._id }
-        ],
-        results: { $not: { $elemMatch: { playerId: playerIdObj, holeNumber } } }
-      },
-      { $push: { results: resultObj } },
+        $set: {
+          results: {
+            $cond: {
+              if: {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $ifNull: ['$results', []] },
+                        as: 'r',
+                        cond: {
+                          $and: [
+                            { $eq: ['$$r.playerId', playerIdObj] },
+                            { $eq: ['$$r.holeNumber', holeNumber] }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  0
+                ]
+              },
+              then: {
+                $map: {
+                  input: { $ifNull: ['$results', []] },
+                  as: 'r',
+                  in: {
+                    $cond: {
+                      if: {
+                        $and: [
+                          { $eq: ['$$r.playerId', playerIdObj] },
+                          { $eq: ['$$r.holeNumber', holeNumber] }
+                        ]
+                      },
+                      then: resultObj,
+                      else: '$$r'
+                    }
+                  }
+                }
+              },
+              else: { $concatArrays: [{ $ifNull: ['$results', []] }, [resultObj]] }
+            }
+          }
+        }
+      }
+    ];
+
+    const updatedResult = await scorecardsCollection.findOneAndUpdate(
+      accessFilter,
+      updatePipeline,
       { returnDocument: 'after' }
     );
 
@@ -1081,16 +1138,18 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     console.log('allResultsEntered', allResultsEntered);
  
     if (!updatedResult) {
-      // Either scorecard not found or user not invited
-      // Check which case it is for more specific error
+      // Scorecard not found, user not invited, or round already completed
       const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
       if (!scorecard) {
         return res.status(404).json({ message: 'Scorecard not found' });
       }
+      if (scorecard.status === 'completed') {
+        return res.status(403).json({ message: 'Cannot update result: round is already completed', roundComplete: true });
+      }
       return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
-    res.status(201).json({ message: 'Result added to scorecard', result: resultObj, roundComplete: allResultsEntered });
+    res.status(201).json({ message: 'Result saved to scorecard', result: resultObj, roundComplete: allResultsEntered });
 
   } catch (e) {
     console.error('Error adding result to scorecard:', e);
