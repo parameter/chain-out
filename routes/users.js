@@ -992,10 +992,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   try {
     const {
       scorecardId,
-      playerId,
       entityId,
       holeNumber,
-      teamId,
       roundType,
       score,
       putt,
