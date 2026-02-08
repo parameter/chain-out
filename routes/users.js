@@ -993,7 +993,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const {
       scorecardId,
       playerId,
+      entityId,
       holeNumber,
+      teamId,
+      roundType,
       score,
       putt,
       obCount,
@@ -1001,10 +1004,14 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
 
+    const playerId = roundType === 'singles' ? entityId : null;
+    const teamName = roundType === 'team' ? entityId : null;
+
     console.log('req.body', req.body);
 
     if (
       !scorecardId ||
+      !playerId ||
       typeof playerId !== 'string' ||
       typeof holeNumber !== 'number' ||
       typeof score !== 'number' ||
