@@ -1008,27 +1008,9 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const playerId = mode === 'singles' ? entityId : null;
     const teamName = mode === 'teams' ? entityId : null;
 
-    console.log('req.body', req.body, teams);
-
-    if (
-      !scorecardId ||
-      !playerId ||
-      typeof playerId !== 'string' ||
-      typeof holeNumber !== 'number' ||
-      typeof score !== 'number' ||
-      !['outside', 'inside', '-'].includes(putt) ||
-      typeof obCount !== 'number' ||
-      typeof specifics !== 'object' ||
-      specifics === null
-    ) {
-      console.log('fail 1');
-      return res.status(400).json({ message: 'Missing or invalid required fields' });
-    }
-
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
       if (typeof specifics[field] !== 'boolean') {
-        console.log('fail 2');
         return res.status(400).json({ message: `specifics.${field} must be a boolean` });
       }
     }
