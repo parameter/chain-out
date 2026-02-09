@@ -591,6 +591,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         results: [],
         invites,
         mode: mode,
+        teams: mode === 'doubles' && Array.isArray(teams) ? teams : undefined,
         createdAt: now,
         updatedAt: now,
         status: 'active'
