@@ -1037,7 +1037,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const playerIdObj = ObjectId.isValid(playerId) ? new ObjectId(playerId) : playerId;
 
     const resultObj = {
-      playerId: playerIdObj, 
+      playerId: playerIdObj ? playerIdObj : undefined,
+      entityId: entityId ? entityId : undefined,
       holeNumber,
       score,
       putt,
