@@ -1000,6 +1000,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       putt,
       obCount,
       specifics,
+      teams,
       timestamp
     } = req.body;
 
@@ -1007,6 +1008,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const teamName = mode === 'teams' ? entityId : null;
 
     console.log('req.body', req.body);
+
+    if (req.body.teams) {
+      console.log('teams', req.body.teams);
+    }
 
     if (
       !scorecardId ||
