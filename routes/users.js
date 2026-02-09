@@ -514,7 +514,7 @@ router.get('/friends/received-fores', requireAuth, async (req, res) => {
 // should only create new scorecard if no active scorecard exists for the current user and course
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
-    const { courseId, layoutId, invitedUserIds, mode } = req.body;
+    const { courseId, layoutId, invitedUserIds, mode, teams } = req.body;
 
     console.log('req.body', req.body, teams);
 
