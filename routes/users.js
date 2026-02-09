@@ -1014,11 +1014,9 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
-
-    const playerIdObj = ObjectId.isValid(playerId) ? new ObjectId(playerId) : playerId;
-
+    
     const resultObj = {
-      playerId: playerIdObj ? playerIdObj : undefined,
+      playerId: playerId ? new ObjectId(playerId) : undefined,
       entityId: entityId ? entityId : undefined,
       holeNumber,
       score,
