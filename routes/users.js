@@ -1013,8 +1013,21 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
+    // Get the scorecard to check its mode
+    const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
+    if (!scorecard) {
+      return res.status(404).json({ message: 'Scorecard not found' });
+    }
+
+    // Determine if entityId is a playerId (ObjectId) or teamName (string)
+    // For singles mode, entityId is playerId. For doubles/team mode, entityId is teamName.
+    // Store entityId consistently: convert to ObjectId if valid, otherwise keep as string
+    const entityIdToStore = ObjectId.isValid(entityId) 
+      ? new ObjectId(entityId) 
+      : entityId;
+
     const resultObj = {
-      entityId: entityId,
+      entityId: entityIdToStore,
       holeNumber,
       score,
       putt,
@@ -1042,6 +1055,12 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       ]
     };
 
+    // For comparison in MongoDB aggregation, compare entityId values
+    // Use string comparison to handle both ObjectId and string cases consistently
+    const entityIdMatchCondition = ObjectId.isValid(entityId)
+      ? { $eq: [{ $toString: '$$r.entityId' }, String(entityId)] }
+      : { $eq: ['$$r.entityId', entityId] };
+
     const updatePipeline = [
       {
         $set: {
@@ -1056,7 +1075,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
                         as: 'r',
                         cond: {
                           $and: [
-                            { $eq: ['$$r.playerId', playerIdObj] },
+                            entityIdMatchCondition,
                             { $eq: ['$$r.holeNumber', holeNumber] }
                           ]
                         }
@@ -1074,7 +1093,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
                     $cond: {
                       if: {
                         $and: [
-                          { $eq: ['$$r.playerId', playerIdObj] },
+                          entityIdMatchCondition,
                           { $eq: ['$$r.holeNumber', holeNumber] }
                         ]
                       },
