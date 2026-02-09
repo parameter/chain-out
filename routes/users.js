@@ -1007,11 +1007,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const playerId = mode === 'singles' ? entityId : null;
     const teamName = mode === 'teams' ? entityId : null;
 
-    console.log('req.body', req.body);
-
-    if (req.body.teams) {
-      console.log('teams', req.body.teams);
-    }
+    console.log('req.body', req.body, teams);
 
     if (
       !scorecardId ||
