@@ -590,7 +590,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         layout,
         results: [],
         invites,
-        roundType: mode,
+        mode: mode,
         createdAt: now,
         updatedAt: now,
         status: 'active'
@@ -995,7 +995,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       scorecardId,
       entityId,
       holeNumber,
-      roundType,
+      mode,
       score,
       putt,
       obCount,
@@ -1003,8 +1003,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
 
-    const playerId = roundType === 'singles' ? entityId : null;
-    const teamName = roundType === 'team' ? entityId : null;
+    const playerId = mode === 'singles' ? entityId : null;
+    const teamName = mode === 'teams' ? entityId : null;
 
     console.log('req.body', req.body);
 
