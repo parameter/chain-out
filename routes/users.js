@@ -996,12 +996,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       scorecardId,
       entityId,
       holeNumber,
-      mode,
       score,
       putt,
       obCount,
       specifics,
-      teams,
       timestamp
     } = req.body;
 
@@ -1014,10 +1012,9 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
-    
+
     const resultObj = {
-      playerId: playerId ? new ObjectId(playerId) : undefined,
-      entityId: entityId ? entityId : undefined,
+      entityId: entityId,
       holeNumber,
       score,
       putt,
