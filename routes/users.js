@@ -1005,9 +1005,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
 
-    const playerId = mode === 'singles' ? entityId : null;
-    const teamName = mode === 'teams' ? entityId : null;
-
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
       if (typeof specifics[field] !== 'boolean') {
