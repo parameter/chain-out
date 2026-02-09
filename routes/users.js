@@ -1021,12 +1021,14 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       typeof specifics !== 'object' ||
       specifics === null
     ) {
+      console.log('fail 1');
       return res.status(400).json({ message: 'Missing or invalid required fields' });
     }
 
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
       if (typeof specifics[field] !== 'boolean') {
+        console.log('fail 2');
         return res.status(400).json({ message: `specifics.${field} must be a boolean` });
       }
     }
