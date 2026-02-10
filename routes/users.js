@@ -72,6 +72,72 @@ function getLevelFromXP(totalXP) {
   return level;
 }
 
+router.get('/xp-leaderboard', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const userXPTotalsCollection = db.collection('userXPTotals');
+    
+    // Parse pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+    
+    // Get total count for pagination metadata
+    const totalCount = await userXPTotalsCollection.countDocuments({});
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    // Aggregation pipeline: sort, paginate, and join with users collection
+    const leaderboard = await userXPTotalsCollection.aggregate([
+      {
+        $sort: { totalXP: -1 }
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'userData'
+        }
+      },
+      {
+        $unwind: {
+          path: '$userData',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          totalXP: 1,
+          name: '$userData.name',
+          profileImage: '$userData.profileImage'
+        }
+      }
+    ]).toArray();
+    
+    res.json({
+      leaderboard,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (err) {
+    console.error('[GET /users/xp-leaderboard]', err);
+    res.status(500).json({ message: 'Failed to get xp leaderboard', error: err.message });
+  }
+});
+
 router.get('/xp', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
