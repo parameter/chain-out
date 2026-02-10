@@ -50,15 +50,16 @@ router.get('/profile', requireAuth, (req, res) => {
 
 // XP required to reach each level (level 1 = 0 XP, level 2 = 100, level 3 = 361, ...)
 const XP_LEVEL_THRESHOLDS = [
-  100, 361, 763, 1300, 1964, 2752, 3660, 4685, 5826, 7079, 8443, 9916,
-  11495, 13178, 14963, 16848, 18830, 20909, 23082, 25347, 27703, 30148, 32681, 35299,
-  38002, 40787, 43654, 46600, 49625, 52726, 55903, 59154, 62477, 65871, 69335, 72867,
-  76466, 80131, 83861, 87654, 91510, 95427, 99405, 103443, 107540, 111696, 115909, 120179,
-  124505, 128887, 133323, 137814, 142358, 146956, 151606, 156309, 161063, 165869, 170725, 175632,
-  180589, 185595, 190651, 195755, 200908, 206108, 211356, 216650, 221992, 227380, 232813, 238292,
-  243815, 249383, 254995, 260650, 266349, 272091, 277875, 283702, 289571, 295481, 301433, 307426,
-  313460, 319535, 325650, 331805, 338000, 344235, 350509, 356822, 363174, 369565, 375994,
-  464731, 473727, 482801, 491955, 501187
+  1000, 3297, 7034, 12312, 19210, 27795, 38125, 50250, 64216, 80064,
+  97833, 117558, 139271, 163004, 188785, 216642, 246601, 278687, 312924, 349335,
+  387941, 428764, 471823, 517139, 564730, 614614, 666809, 721333, 778202, 837432,
+  899039, 963038, 1029445, 1098274, 1169539, 1243255, 1319435, 1398092, 1479239, 1562890,
+  1649056, 1737751, 1828986, 1922773, 2019123, 2118048, 2219560, 2323669, 2430386, 2539722,
+  2651687, 2766292, 2883546, 3003460, 3126044, 3251307, 3379259, 3509910, 3643269, 3779344,
+  3918146, 4059683, 4203963, 4350996, 4500790, 4653354, 4808696, 4966824, 5127747, 5291472,
+  5458008, 5627363, 5799544, 5974560, 6152418, 6333125, 6516689, 6703118, 6892418, 7084597,
+  7279663, 7477622, 7678482, 7882249, 8088931, 8298534, 8511065, 8726531, 8944938, 9166293,
+  9390603, 9617874, 9848113, 10081326, 10317519, 10556699, 10798872, 11044044, 11292221, 11543409
 ];
 
 function getLevelFromXP(totalXP) {
@@ -1215,14 +1216,29 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       scorecard: updatedResult
     });
 
-    console.log('earnedBadges', earnedBadges);
+      // Verify that searchForEarnedBadges completed successfully
+      if (!Array.isArray(earnedBadges)) {
+        console.error('❌ [add-result] searchForEarnedBadges returned invalid result:', typeof earnedBadges);
+        earnedBadges = []; // Default to empty array on invalid result
+      } else {
+        console.log('✅ [add-result] Badge search completed successfully. Found badges for', earnedBadges.length, 'player(s)');
+        console.log('earnedBadges', earnedBadges);
+      }
+    } catch (badgeError) {
+      // Log error but don't fail the entire request - badge search is non-critical
+      console.error('❌ [add-result] Error in searchForEarnedBadges:', badgeError);
+      console.error('   Error stack:', badgeError.stack);
+      console.error('   Scorecard ID:', scorecardId);
+      console.error('   Results count:', results.length);
+      // Continue with empty earnedBadges array so the request can complete
+      earnedBadges = [];
+    }
 
     if (earnedBadges && earnedBadges.length > 0) {
       await scorecardsCollection.updateOne(
         { _id: new ObjectId(scorecardId) },
         { $set: { earnedBadges: earnedBadges } }
       );
-      // Keep response consistent with stored field name
       updatedResult.earnedBadges = earnedBadges;
     }
 
