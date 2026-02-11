@@ -494,7 +494,7 @@ router.get('/friends', requireAuth, async (req, res) => {
 
 router.post('/say-fore', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, message } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
@@ -513,7 +513,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     const foreDoc = {
       from: req.user._id,
       to: new ObjectId(userId),
-      message: 'Fore!',
+      message: message,
       createdAt: now
     };
 
