@@ -1524,6 +1524,24 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
   res.json({ notifications });
 });
 
+router.post('/local-notifications/mark-as-seen', requireAuth, async (req, res) => {
+  const { notificationId } = req.body;
+
+  const db = getDatabase();
+  const localNotificationsCollection = db.collection('local-notifications');
+
+  const notifications = await localNotificationsCollection.updateOne(
+    { _id: new ObjectId(notificationId), forUser: req.user._id.toString() },
+    { $set: { status: 'seen' } }
+  );
+
+  if (!notifications) {
+    return res.status(404).json({ message: 'notifications not found' });
+  }
+
+  res.json({ notifications });
+});
+
 // GET /api/user/:userId/badge/:badgeId/tier/:tierIndex - Check if specific tier was achieved
 router.get('/api/user/:userId/badge/:badgeId/tier/:tierIndex', async (req, res) => {
   try {
