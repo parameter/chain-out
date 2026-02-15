@@ -74,6 +74,11 @@ function getLevelFromXP(totalXP) {
 
 router.get('/xp-leaderboard', requireAuth, async (req, res) => {
   try {
+
+    const { type } = req.query;
+
+    console.log('type', type);
+
     const db = getDatabase();
     const userXPTotalsCollection = db.collection('userXPTotals');
     
