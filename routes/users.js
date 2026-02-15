@@ -72,33 +72,87 @@ function getLevelFromXP(totalXP) {
   return level;
 }
 
+const LEADERBOARD_TYPES = ['friends', 'global', 'country', '100km'];
+
 router.get('/xp-leaderboard', requireAuth, async (req, res) => {
   try {
-
     const { type } = req.query;
-
-    console.log('type', type);
+    const effectiveType = LEADERBOARD_TYPES.includes(type) ? type : 'global';
 
     const db = getDatabase();
     const userXPTotalsCollection = db.collection('userXPTotals');
-    
+    const usersCollection = db.collection('users');
+    const friendsCollection = db.collection('friends');
+
     const page = parseInt(req.query.page) || 1;
     const limit = 20;
     const skip = (page - 1) * limit;
-    
-    const totalCount = await userXPTotalsCollection.countDocuments({});
+    const currentUserId = req.user._id instanceof ObjectId ? req.user._id : new ObjectId(String(req.user._id));
+
+    let matchFilter = {};
+    let totalCount = 0;
+
+    if (effectiveType === 'friends') {
+      const friends = await friendsCollection.find({
+        $or: [{ to: currentUserId }, { from: currentUserId }],
+        status: 'accepted'
+      }).toArray();
+      const friendIds = friends.map(f => (String(f.from) === String(currentUserId) ? f.to : f.from));
+      const allowedIds = [currentUserId, ...friendIds];
+      matchFilter = { _id: { $in: allowedIds } };
+      totalCount = await userXPTotalsCollection.countDocuments(matchFilter);
+    } else if (effectiveType === 'country') {
+      const currentUser = await usersCollection.findOne(
+        { _id: currentUserId },
+        { projection: { country: 1 } }
+      );
+      const country = (currentUser && currentUser.country) ? String(currentUser.country).trim() : null;
+      if (!country) {
+        return res.json({
+          leaderboard: [],
+          pagination: { page: 1, limit, totalCount: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false }
+        });
+      }
+      const userIdsInCountry = await usersCollection.find(
+        { country }
+      ).project({ _id: 1 }).toArray();
+      const ids = userIdsInCountry.map(u => u._id);
+      matchFilter = ids.length ? { _id: { $in: ids } } : { _id: null };
+      totalCount = await userXPTotalsCollection.countDocuments(matchFilter);
+    } else if (effectiveType === '100km') {
+      const locationParam = req.query.location;
+      if (!locationParam || typeof locationParam !== 'string') {
+        return res.status(400).json({ message: 'Query parameter "location" is required for 100km leaderboard (format: lat,lng)' });
+      }
+      const [latStr, lngStr] = locationParam.split(',');
+      const lat = parseFloat(latStr);
+      const lng = parseFloat(lngStr);
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ message: 'Invalid location format. Use lat,lng' });
+      }
+      const maxDistanceMeters = 100 * 1000;
+      const nearbyUsers = await usersCollection.find({
+        location: {
+          $nearSphere: {
+            $geometry: { type: 'Point', coordinates: [lng, lat] },
+            $maxDistance: maxDistanceMeters
+          }
+        }
+      }).project({ _id: 1 }).toArray();
+      const ids = nearbyUsers.map(u => u._id);
+      matchFilter = ids.length ? { _id: { $in: ids } } : { _id: null };
+      totalCount = await userXPTotalsCollection.countDocuments(matchFilter);
+    } else {
+      totalCount = await userXPTotalsCollection.countDocuments({});
+    }
+
     const totalPages = Math.ceil(totalCount / limit);
-    
-    const leaderboard = await userXPTotalsCollection.aggregate([
-      {
-        $sort: { totalXP: -1 }
-      },
-      {
-        $skip: skip
-      },
-      {
-        $limit: limit
-      },
+
+    const pipeline = [
+      ...(Object.keys(matchFilter).length ? [{ $match: matchFilter }] : []),
+      { $sort: { totalXP: -1 } },
+      { $skip: skip },
+      { $limit: limit },
       {
         $lookup: {
           from: 'users',
@@ -121,12 +175,13 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
           profileImage: '$userData.profileImage'
         }
       }
-    ]).toArray();
+    ];
 
-    console.log('leaderboard', leaderboard);
-    
+    const leaderboard = await userXPTotalsCollection.aggregate(pipeline).toArray();
+
     res.json({
       leaderboard,
+      type: effectiveType,
       pagination: {
         page,
         limit,
@@ -136,7 +191,6 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
         hasPrevPage: page > 1
       }
     });
-
   } catch (err) {
     console.error('[GET /users/xp-leaderboard]', err);
     res.status(500).json({ message: 'Failed to get xp leaderboard', error: err.message });

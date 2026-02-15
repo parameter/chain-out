@@ -137,7 +137,6 @@ router.get('/verify-email', [
     const db = getDatabase();
     const usersCollection = db.collection('users');
 
-    // Find user with matching token
     const user = await usersCollection.findOne({ 
       verificationToken: token 
     });
@@ -148,20 +147,20 @@ router.get('/verify-email', [
       });
     }
 
-    // Check if token has expired
     if (user.verificationTokenExpiry && new Date() > user.verificationTokenExpiry) {
+
+      await usersCollection.deleteOne({ _id: user._id });
+      
       return res.status(400).json({ 
         message: 'Verification token has expired. Please request a new one.' 
       });
     }
 
-    // Check if already verified — still show thanks page
     if (user.emailVerified) {
       const baseUrlAlready = req.protocol + '://' + req.get('host');
       return res.redirect(baseUrlAlready + '/chainout-homepage/thanks.html');
     }
 
-    // Update user to verified
     await usersCollection.updateOne(
       { _id: user._id },
       { 
