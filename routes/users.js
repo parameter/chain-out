@@ -120,6 +120,8 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
         }
       }
     ]).toArray();
+
+    console.log('leaderboard', leaderboard);
     
     res.json({
       leaderboard,
@@ -132,6 +134,7 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
         hasPrevPage: page > 1
       }
     });
+    
   } catch (err) {
     console.error('[GET /users/xp-leaderboard]', err);
     res.status(500).json({ message: 'Failed to get xp leaderboard', error: err.message });
