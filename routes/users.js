@@ -172,6 +172,8 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
           _id: 1,
           totalXP: 1,
           username: '$userData.username',
+          fname: '$userData.fname',
+          sname: '$userData.sname',	
           profileImage: '$userData.profileImage'
         }
       }
@@ -510,10 +512,10 @@ router.get('/friends', requireAuth, async (req, res) => {
       return new ObjectId(friendId);
     });
     
-    // Fetch user objects
+    // Fetch user objects (include fname, sname and other display fields)
     const users = friendUserIds.length > 0
       ? await usersCollection.find({ _id: { $in: friendUserIds } })
-          .project({ password: 0, createdAt: 0, updatedAt: 0 })
+          .project({ username: 1, email: 1, profileImage: 1, fname: 1, sname: 1 })
           .toArray()
       : [];
     
@@ -524,11 +526,9 @@ router.get('/friends', requireAuth, async (req, res) => {
     });
     
     const friendsWithUsers = friends.map(friend => {
-      // Determine which user is the friend (not the current user)
       const currentUserId = req.user._id.toString();
       const friendId = friend.from.toString() === currentUserId ? friend.to : friend.from;
       
-      // Only add user object if it's not the current user
       let userObject = null;
       if (friendId.toString() !== currentUserId) {
         const friendUser = userMap[friendId.toString()];
