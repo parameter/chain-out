@@ -12,7 +12,9 @@ const router = express.Router();
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
-  body('username').trim().isLength({ min: 2 })
+  body('username').trim().isLength({ min: 2 }),
+  body('fname').trim().isLength({ min: 1 }).withMessage('First name is required'),
+  body('sname').trim().isLength({ min: 1 }).withMessage('Surname is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -20,7 +22,7 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, username } = req.body;
+    const { email, password, username, fname, sname } = req.body;
     const db = getDatabase();
     const usersCollection = db.collection('users');
 
@@ -30,17 +32,17 @@ router.post('/register', [
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash password and generate verification token
     const hashedPassword = bcrypt.hashSync(password, 10);
     const verificationToken = generateVerificationToken();
     const tokenExpiry = new Date();
-    tokenExpiry.setHours(tokenExpiry.getHours() + 24); // Token expires in 24 hours
+    tokenExpiry.setHours(tokenExpiry.getHours() + 24); 
 
-    // Create user with email verification fields
     const result = await usersCollection.insertOne({
       email,
       password: hashedPassword,
       username,
+      fname,
+      sname,
       emailVerified: false,
       verificationToken: verificationToken,
       verificationTokenExpiry: tokenExpiry,
@@ -48,7 +50,6 @@ router.post('/register', [
       updated_at: new Date()
     });
 
-    // Send verification email
     const baseUrl = req.protocol + '://' + req.get('host');
     const emailSent = await sendVerificationEmail(email, verificationToken, username, baseUrl);
 
