@@ -77,16 +77,13 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
     const db = getDatabase();
     const userXPTotalsCollection = db.collection('userXPTotals');
     
-    // Parse pagination parameters
     const page = parseInt(req.query.page) || 1;
     const limit = 20;
     const skip = (page - 1) * limit;
     
-    // Get total count for pagination metadata
     const totalCount = await userXPTotalsCollection.countDocuments({});
     const totalPages = Math.ceil(totalCount / limit);
     
-    // Aggregation pipeline: sort, paginate, and join with users collection
     const leaderboard = await userXPTotalsCollection.aggregate([
       {
         $sort: { totalXP: -1 }
@@ -115,7 +112,7 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
         $project: {
           _id: 1,
           totalXP: 1,
-          name: '$userData.name',
+          username: '$userData.username',
           profileImage: '$userData.profileImage'
         }
       }
@@ -134,7 +131,7 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
         hasPrevPage: page > 1
       }
     });
-    
+
   } catch (err) {
     console.error('[GET /users/xp-leaderboard]', err);
     res.status(500).json({ message: 'Failed to get xp leaderboard', error: err.message });
