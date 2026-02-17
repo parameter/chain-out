@@ -181,6 +181,8 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
 
     const leaderboard = await userXPTotalsCollection.aggregate(pipeline).toArray();
 
+    console.log('leaderboard', leaderboard);
+
     res.json({
       leaderboard,
       type: effectiveType,
