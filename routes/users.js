@@ -1246,6 +1246,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
     console.log('updatedResult', updatedResult);
 
+    console.log('updatedResult.results', updatedResult.results);
+
     // Check if all holes for all players have a result saved in updatedResult
     let allResultsEntered = false;
     if (
@@ -1344,6 +1346,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
         layout: updatedResult.layout,
         scorecard: updatedResult
       });
+
+      console.log('earnedBadges', earnedBadges);
 
       // Verify that searchForEarnedBadges completed successfully
       if (!Array.isArray(earnedBadges)) {
