@@ -1337,9 +1337,9 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     // Create a sorted array of results by hole number
     const results = Object.values(latestByHoleAndPlayer).sort((a, b) => a.holeNumber - b.holeNumber);
 
+    let earnedBadges = [];
     try {
-    
-      const earnedBadges = await searchForEarnedBadges({ 
+      earnedBadges = await searchForEarnedBadges({ 
         scorecardId: updatedResult._id, 
         results: results, 
         courseId: updatedResult.courseId, 
