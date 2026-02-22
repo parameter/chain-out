@@ -660,8 +660,7 @@ const createGuestPlayers = async (guestPlayers) => {
   }));
 
   const result = await usersCollection.insertMany(guestPlayersForInsert);
-
-  return result.insertedIds;
+  return Object.values(result.insertedIds).map((id) => id.toString());
 }
 
 // should only create new scorecard if no active scorecard exists for the current user and course
