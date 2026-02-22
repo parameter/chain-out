@@ -639,14 +639,39 @@ router.get('/friends/received-fores', requireAuth, async (req, res) => {
   }
 });
 
+const createGuestPlayers = async (guestPlayers) => {
+
+  if (!Array.isArray(guestPlayers) || guestPlayers.length === 0) {
+    return [];
+  }
+
+  const db = getDatabase();
+  const usersCollection = db.collection('users');
+
+  const guestPlayers = guestPlayers.map(player => ({
+    email: '',
+    password: player.password,
+    username: player.username,
+    fname: '',
+    sname: '',
+    emailVerified: false,
+    created_at: new Date(),
+    updated_at: new Date()
+  }));
+
+  const result = await usersCollection.insertMany(guestPlayers);
+
+  return result.insertedIds;
+}
+
 // should only create new scorecard if no active scorecard exists for the current user and course
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
   console.log('scorecard/invite-users', req.body);
   try {
-    const { courseId, layoutId, invitedUserIds, mode, teams } = req.body;
+    const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams } = req.body;
 
-    console.log('req.body', req.body, teams);
+    await createGuestPlayers(guestPlayers);
 
     let userIds = [];
     if (Array.isArray(invitedUserIds)) {
