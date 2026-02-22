@@ -1538,6 +1538,7 @@ router.post('/find-users', requireAuth, async (req, res) => {
 
   const regex = new RegExp(string, 'i');
   const users = await usersCollection.find({
+    emailVerified: true,
     $or: [
       { username: { $regex: regex } },
       { email: { $regex: regex } }
