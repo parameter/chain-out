@@ -1643,7 +1643,7 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
 router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
     try {
 
-      const { title, address, description, location } = req.body;
+      const { name, address, description, location } = req.body;
 
       if (!name || !address || !description || !location) {
         return res.status(400).json({ message: 'All fields are required' });
@@ -1653,7 +1653,7 @@ router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
       const coursesCollection = db.collection('course-applications');
       const newCourse = {
         userId: req.user._id,
-        title,
+        name,
         address,
         description,
         location
