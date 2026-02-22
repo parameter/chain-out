@@ -8,10 +8,11 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const courseRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
 const { initializePassport } = require('./config/passport');
 const { initializeDatabase } = require('./config/database');
-const courseRoutes = require('./routes/courses');
+
 
 const app = express();
 

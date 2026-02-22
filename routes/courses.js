@@ -7,7 +7,7 @@ const path = require('path');
 const requireAuth = passport.authenticate('jwt', { session: false });
 const router = express.Router();
 
-router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
+router.post('/suggest-new-course', requireAuth, async (req, res) => {
     try {
 
       const { name, address, description, location } = req.body;
