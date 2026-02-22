@@ -11,6 +11,7 @@ const userRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
 const { initializePassport } = require('./config/passport');
 const { initializeDatabase } = require('./config/database');
+const courseRoutes = require('./routes/courses');
 
 const app = express();
 
@@ -88,6 +89,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/courses', courseRoutes);
 app.use('/admin', adminRoutes);
 
 // Health
