@@ -5,6 +5,7 @@ const { ObjectId } = require('mongodb');
 const path = require('path');
 
 const requireAuth = passport.authenticate('jwt', { session: false });
+const router = express.Router();
 
 router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
     try {
