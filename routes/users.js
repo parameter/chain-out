@@ -1640,7 +1640,7 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
   }
 });
 
-router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
+router.post('/suggest-new-course', requireAuth, async (req, res) => {
     try {
 
       const { name, address, description, location } = req.body;
