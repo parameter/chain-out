@@ -35,3 +35,5 @@ router.post('/courses/suggest-new-course', requireAuth, async (req, res) => {
       res.status(500).json({ message: 'Failed to save new course suggestion' });
     }
 });
+
+module.exports = router;
