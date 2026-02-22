@@ -1,5 +1,6 @@
 const express = require('express');
 const passport = require('passport');
+const crypto = require('crypto');
 const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
@@ -648,8 +649,9 @@ const createGuestPlayers = async (guestPlayers) => {
   const db = getDatabase();
   const usersCollection = db.collection('users');
 
-  const guestPlayersForInsert = guestPlayers.map(player => ({
-    email: '',
+  const base = `guest-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const guestPlayersForInsert = guestPlayers.map((player, i) => ({
+    email: `${base}-${i}@guest.local`,
     password: player.password,
     username: player.username,
     fname: '',
