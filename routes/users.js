@@ -648,7 +648,7 @@ const createGuestPlayers = async (guestPlayers) => {
   const db = getDatabase();
   const usersCollection = db.collection('users');
 
-  const guestPlayers = guestPlayers.map(player => ({
+  const guestPlayersForInsert = guestPlayers.map(player => ({
     email: '',
     password: player.password,
     username: player.username,
@@ -659,7 +659,7 @@ const createGuestPlayers = async (guestPlayers) => {
     updated_at: new Date()
   }));
 
-  const result = await usersCollection.insertMany(guestPlayers);
+  const result = await usersCollection.insertMany(guestPlayersForInsert);
 
   return result.insertedIds;
 }
@@ -671,16 +671,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams } = req.body;
 
-    await createGuestPlayers(guestPlayers);
-
-    let userIds = [];
-    if (Array.isArray(invitedUserIds)) {
-      userIds = invitedUserIds.filter(Boolean);
-    } else if (typeof invitedUserIds === 'string') {
-      userIds = invitedUserIds;
-    } else if (req.body.invitedUserId) {
-      userIds = [req.body.invitedUserId];
-    }
+    const guestPlayerIds = await createGuestPlayers(guestPlayers);
+    const userIds = [...invitedUserIds, ...guestPlayerIds];
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
