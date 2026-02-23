@@ -1666,9 +1666,20 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
     const badgeProgressCollection = db.collection('userBadgeProgress');
-    
+    const coursesCollection = db.collection('courses');
+
     const userId = req.user._id;
     const userIdString = userId.toString();
+
+    // Match completed scorecards where user is creator or participant (playerId or entityId for singles)
+    const scorecardMatch = {
+      status: 'completed',
+      $or: [
+        { creatorId: userId },
+        { 'results.playerId': userId },
+        { 'results.entityId': userId }
+      ]
+    };
 
     // Helper function to get ISO week number
     function getISOWeek(date) {
@@ -1694,18 +1705,18 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       }
     }
 
-    // Single aggregation for all scorecard stats
-    const [scorecardStats, badgeStats] = await Promise.all([
+    // Result belongs to current user (playerId or entityId)
+    const userResultMatch = {
+      $or: [
+        { $expr: { $eq: ['$results.playerId', userId] } },
+        { $expr: { $eq: ['$results.entityId', userId] } }
+      ]
+    };
+
+    // Single aggregation for all scorecard stats + hole-level and round-level stats
+    const [scorecardStats, badgeStats, holeStatsResult, puttingArraysResult, acesResult, roundSummariesResult] = await Promise.all([
       scorecardsCollection.aggregate([
-        {
-          $match: {
-            status: 'completed',
-            $or: [
-              { creatorId: userId },
-              { 'results.playerId': userIdString }
-            ]
-          }
-        },
+        { $match: scorecardMatch },
         {
           $facet: {
             roundsCount: [
@@ -1721,7 +1732,9 @@ router.get('/stats/general', requireAuth, async (req, res) => {
                 $project: {
                   createdAt: 1,
                   updatedAt: 1,
-                  verified: 1
+                  verified: 1,
+                  courseId: 1,
+                  layout: 1
                 }
               }
             ]
@@ -1783,6 +1796,205 @@ router.get('/stats/general', requireAuth, async (req, res) => {
                 }
               }
             ]
+          }
+        }
+      ]).toArray(),
+
+      // Hole-level stats for the user (bullseye, C1, C2, OB, fairway, scramble, throw-in, aces, putting)
+      scorecardsCollection.aggregate([
+        { $match: scorecardMatch },
+        { $unwind: '$results' },
+        { $match: userResultMatch },
+        {
+          $addFields: {
+            hole: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: { $ifNull: ['$layout.latestVersion.holes', { $ifNull: ['$layout.holes', []] }] },
+                    as: 'h',
+                    cond: { $eq: ['$$h.number', '$results.holeNumber'] }
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalHoles: { $sum: 1 },
+            bullseyeCount: { $sum: { $cond: [{ $eq: ['$results.specifics.bullseye', true] }, 1, 0] } },
+            c1Count: { $sum: { $cond: [{ $eq: ['$results.specifics.c1', true] }, 1, 0] } },
+            c2Count: { $sum: { $cond: [{ $eq: ['$results.specifics.c2', true] }, 1, 0] } },
+            obHolesCount: { $sum: { $cond: [{ $gt: [{ $ifNull: ['$results.obCount', 0] }, 0] }, 1, 0] } },
+            fairwayCount: { $sum: { $cond: [{ $eq: ['$results.specifics.fairway', true] }, 1, 0] } },
+            scrambleCount: { $sum: { $cond: [{ $eq: ['$results.specifics.scramble', true] }, 1, 0] } },
+            scrambleSuccessCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ['$results.specifics.scramble', true] },
+                      { $lte: ['$results.score', { $ifNull: ['$hole.par', 99] }] }
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            throwInCount: { $sum: { $cond: [{ $eq: ['$results.specifics.throwIn', true] }, 1, 0] } },
+            acesCount: { $sum: { $cond: [{ $eq: ['$results.score', 1] }, 1, 0] } },
+            puttMissedCount: { $sum: { $cond: [{ $in: ['$results.putt', ['-', '']] }, 1, 0] } },
+            puttInsideCount: { $sum: { $cond: [{ $eq: ['$results.putt', 'inside'] }, 1, 0] } },
+            puttOutsideCount: { $sum: { $cond: [{ $eq: ['$results.putt', 'outside'] }, 1, 0] } },
+            c1HoleCount: { $sum: { $cond: [{ $eq: ['$results.specifics.c1', true] }, 1, 0] } },
+            c1InsideCount: {
+              $sum: {
+                $cond: [
+                  { $and: [{ $eq: ['$results.specifics.c1', true] }, { $eq: ['$results.putt', 'inside'] }] },
+                  1,
+                  0
+                ]
+              }
+            },
+            c1MissedCount: {
+              $sum: {
+                $cond: [
+                  { $and: [{ $eq: ['$results.specifics.c1', true] }, { $in: ['$results.putt', ['-', '']] }] },
+                  1,
+                  0
+                ]
+              }
+            },
+            c2HoleCount: { $sum: { $cond: [{ $eq: ['$results.specifics.c2', true] }, 1, 0] } },
+            c2OutsideCount: {
+              $sum: {
+                $cond: [
+                  { $and: [{ $eq: ['$results.specifics.c2', true] }, { $eq: ['$results.putt', 'outside'] }] },
+                  1,
+                  0
+                ]
+              }
+            },
+            birdiePuttAttempts: {
+              $sum: {
+                $cond: [
+                  {
+                    $or: [
+                      { $eq: ['$results.specifics.bullseye', true] },
+                      { $eq: ['$results.specifics.c1', true] },
+                      { $eq: ['$results.specifics.c2', true] }
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            },
+            birdiePuttMakes: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $or: [
+                          { $eq: ['$results.specifics.bullseye', true] },
+                          { $eq: ['$results.specifics.c1', true] },
+                          { $eq: ['$results.specifics.c2', true] }
+                        ]
+                      },
+                      { $in: ['$results.putt', ['inside', 'outside']] }
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        }
+      ]).toArray(),
+
+      // Per-round putt arrays for putting streak (max consecutive holes without missed putt)
+      scorecardsCollection.aggregate([
+        { $match: scorecardMatch },
+        { $unwind: '$results' },
+        { $match: userResultMatch },
+        { $sort: { 'results.holeNumber': 1 } },
+        {
+          $group: {
+            _id: '$_id',
+            putts: { $push: '$results.putt' }
+          }
+        },
+        { $project: { putts: 1, _id: 0 } }
+      ]).toArray(),
+
+      // Last 3 aces with course and hole info
+      scorecardsCollection.aggregate([
+        { $match: scorecardMatch },
+        { $unwind: '$results' },
+        { $match: userResultMatch },
+        { $match: { 'results.score': 1 } },
+        {
+          $addFields: {
+            hole: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: { $ifNull: ['$layout.latestVersion.holes', { $ifNull: ['$layout.holes', []] }] },
+                    as: 'h',
+                    cond: { $eq: ['$$h.number', '$results.holeNumber'] }
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        {
+          $project: {
+            courseId: 1,
+            createdAt: 1,
+            holeNumber: '$results.holeNumber',
+            holeLength: '$hole.length',
+            measureInMeters: '$hole.measureInMeters'
+          }
+        },
+        { $sort: { createdAt: -1 } },
+        { $limit: 3 },
+        {
+          $lookup: {
+            from: 'courses',
+            localField: 'courseId',
+            foreignField: '_id',
+            as: 'course'
+          }
+        },
+        { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            courseName: '$course.name',
+            date: '$createdAt',
+            hole: '$holeNumber',
+            length: '$holeLength',
+            measureInMeters: 1,
+            _id: 0
+          }
+        }
+      ]).toArray(),
+
+      // Round summaries for solo/casual/doubles and wins (mode + results for score aggregation)
+      scorecardsCollection.aggregate([
+        { $match: scorecardMatch },
+        {
+          $project: {
+            _id: 1,
+            mode: 1,
+            results: 1
           }
         }
       ]).toArray()
@@ -1859,6 +2071,170 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       }
     });
 
+    // Hole-level and putting stats
+    const holeStats = holeStatsResult[0] || {};
+    const totalHoles = holeStats.totalHoles || 0;
+    const bullseyeCount = holeStats.bullseyeCount || 0;
+    const c1Count = holeStats.c1Count || 0;
+    const c2Count = holeStats.c2Count || 0;
+    const obHolesCount = holeStats.obHolesCount || 0;
+    const fairwayCount = holeStats.fairwayCount || 0;
+    const scrambleSuccessCount = holeStats.scrambleSuccessCount || 0;
+    const scrambleCount = holeStats.scrambleCount || 0;
+    const throwInCount = holeStats.throwInCount || 0;
+    const acesCount = holeStats.acesCount || 0;
+    const puttMissedCount = holeStats.puttMissedCount || 0;
+    const puttInsideCount = holeStats.puttInsideCount || 0;
+    const puttOutsideCount = holeStats.puttOutsideCount || 0;
+    const c1InsideCount = holeStats.c1InsideCount || 0;
+    const c1MissedCount = holeStats.c1MissedCount || 0;
+    const c1HoleCount = holeStats.c1HoleCount || 0;
+    const c2OutsideCount = holeStats.c2OutsideCount || 0;
+    const c2HoleCount = holeStats.c2HoleCount || 0;
+    const birdiePuttAttempts = holeStats.birdiePuttAttempts || 0;
+    const birdiePuttMakes = holeStats.birdiePuttMakes || 0;
+
+    const pct = (num, den) => (den > 0 ? Math.round((num / den) * 100) : 0);
+    const bullseyePercentage = pct(bullseyeCount, totalHoles);
+    const circle1Percentage = pct(c1Count, totalHoles);
+    const circle2Percentage = pct(c2Count, totalHoles);
+    const fairwayRatePercentage = pct(fairwayCount, totalHoles);
+    const obRatePercentage = pct(obHolesCount, totalHoles);
+    const scrambleRatePercentage = scrambleCount > 0 ? pct(scrambleSuccessCount, scrambleCount) : 0;
+    const accuracyPercentage = pct(bullseyeCount + c1Count + c2Count, totalHoles);
+    const conversionsPercentage = pct(birdiePuttMakes, birdiePuttAttempts);
+    const missedPuttsPercentage = pct(puttMissedCount, totalHoles);
+    const c1xDen = c1InsideCount + c1MissedCount;
+    const c1xPercentage = c1xDen > 0 ? pct(c1InsideCount, c1xDen) : 0;
+    const c2xPercentageFinal = c2HoleCount > 0 ? pct(c2OutsideCount, c2HoleCount) : 0;
+
+    // Putting streak: longest run of holes without missed putt ('-' or '')
+    let puttingStreak = 0;
+    for (const round of puttingArraysResult) {
+      const putts = round.putts || [];
+      let run = 0;
+      for (const putt of putts) {
+        if (putt && putt !== '-') {
+          run++;
+        } else {
+          if (run > puttingStreak) puttingStreak = run;
+          run = 0;
+        }
+      }
+      if (run > puttingStreak) puttingStreak = run;
+    }
+
+    // Last 3 aces: format for response
+    const last3Aces = (acesResult || []).map(a => ({
+      courseName: a.courseName || null,
+      date: a.date ? new Date(a.date).toISOString() : null,
+      hole: a.hole,
+      length: a.length != null ? a.length : null,
+      measureInMeters: a.measureInMeters
+    }));
+
+    // Countries and distance from allRounds (courseId + layout)
+    let countriesCount = 0;
+    let distancePlayedKm = 0;
+    const courseIdsForCountry = [...new Set(allRounds.map(r => r.courseId?.toString()).filter(Boolean))];
+    if (courseIdsForCountry.length > 0) {
+      const courses = await coursesCollection
+        .find({ _id: { $in: courseIdsForCountry.map(id => new ObjectId(id)) } })
+        .project({ country: 1 })
+        .toArray();
+      const countries = new Set(courses.map(c => (c.country && String(c.country).trim()) || '').filter(Boolean));
+      countriesCount = countries.size;
+    }
+    for (const round of allRounds) {
+      const holes = round.layout?.latestVersion?.holes || round.layout?.holes || [];
+      const totalLength = holes.reduce((sum, h) => sum + (Number(h.length) || 0), 0);
+      const inMeters = holes[0] && holes[0].measureInMeters !== false;
+      distancePlayedKm += inMeters ? totalLength / 1000 : totalLength * 1.60934 / 1000;
+    }
+    distancePlayedKm = Math.round(distancePlayedKm * 10) / 10;
+
+    // Solo / casual / doubles and wins from round summaries
+    let totalSoloRounds = 0;
+    let totalCasualRounds = 0;
+    let casualWinsCount = 0;
+    let totalDoublesRounds = 0;
+    let totalDoublesWins = 0;
+    const userIdStr = userId.toString();
+    for (const doc of roundSummariesResult) {
+      const results = doc.results || [];
+      const playerIds = new Set(
+        results.map(r => {
+          const id = r.entityId != null ? r.entityId : r.playerId;
+          return id && (id.toString ? id.toString() : String(id));
+        })
+      );
+      const numPlayers = playerIds.size;
+      if (doc.mode === 'doubles') {
+        totalDoublesRounds++;
+        // Doubles win: would need team totals; leave wins at 0 unless we have team info
+      } else if (numPlayers === 1 && playerIds.has(userIdStr)) {
+        totalSoloRounds++;
+      } else if (numPlayers > 1) {
+        totalCasualRounds++;
+        const scoreByPlayer = new Map();
+        for (const r of results) {
+          const id = r.entityId != null ? r.entityId : r.playerId;
+          const key = id && (id.toString ? id.toString() : String(id));
+          if (!key) continue;
+          scoreByPlayer.set(key, (scoreByPlayer.get(key) || 0) + (r.score || 0));
+        }
+        const scores = [...scoreByPlayer.entries()];
+        if (scores.length > 0) {
+          const minScore = Math.min(...scores.map(([, s]) => s));
+          const userScore = scoreByPlayer.get(userIdStr);
+          if (userScore !== undefined && userScore === minScore) {
+            casualWinsCount++;
+          }
+        }
+      }
+    }
+    const casualWinPercentage = totalCasualRounds > 0 ? pct(casualWinsCount, totalCasualRounds) : 0;
+
+    console.log({
+      roundsCount,
+      uniqueCoursesCount,
+      totalBadgesCount,
+      verifiedPercentage,
+      weeklyStreak,
+      achievementsCount,
+      bronzeBadgesCount: tierCounts.bronze,
+      silverBadgesCount: tierCounts.silver,
+      goldBadgesCount: tierCounts.gold,
+      platinumBadgesCount: tierCounts.platinum,
+      diamondBadgesCount: tierCounts.diamond,
+      emeraldBadgesCount: tierCounts.emerald,
+      rubyBadgesCount: tierCounts.ruby,
+      cosmicBadgesCount: tierCounts.cosmic,
+      bullseyePercentage,
+      circle1Percentage,
+      circle2Percentage,
+      fairwayRatePercentage,
+      obRatePercentage,
+      scrambleRatePercentage,
+      accuracyPercentage,
+      acesCount,
+      throwInCount,
+      last3Aces,
+      puttingStreak,
+      conversionsPercentage,
+      missedPuttsPercentage,
+      c1xPercentage,
+      c2xPercentage: c2xPercentageFinal,
+      countriesCount,
+      distancePlayedKm,
+      totalSoloRounds,
+      totalCasualRounds,
+      casualWinsCount,
+      casualWinPercentage,
+      totalDoublesRounds,
+      totalDoublesWins
+    });
+
     res.json({
       roundsCount,
       uniqueCoursesCount,
@@ -1873,7 +2249,30 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       diamondBadgesCount: tierCounts.diamond,
       emeraldBadgesCount: tierCounts.emerald,
       rubyBadgesCount: tierCounts.ruby,
-      cosmicBadgesCount: tierCounts.cosmic
+      cosmicBadgesCount: tierCounts.cosmic,
+      bullseyePercentage,
+      circle1Percentage,
+      circle2Percentage,
+      fairwayRatePercentage,
+      obRatePercentage,
+      scrambleRatePercentage,
+      accuracyPercentage,
+      acesCount,
+      throwInCount,
+      last3Aces,
+      puttingStreak,
+      conversionsPercentage,
+      missedPuttsPercentage,
+      c1xPercentage,
+      c2xPercentage: c2xPercentageFinal,
+      countriesCount,
+      distancePlayedKm,
+      totalSoloRounds,
+      totalCasualRounds,
+      casualWinsCount,
+      casualWinPercentage,
+      totalDoublesRounds,
+      totalDoublesWins
     });
 
   } catch (e) {
