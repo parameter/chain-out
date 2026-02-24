@@ -703,6 +703,14 @@ router.get('/badges', (req, res) => {
                             When the point needs to be earned during one round and point can not be accumulated over time.
                         </small>
                     </div>
+
+                    <!-- Doubles -->
+                    <div style="flex-direction: row;" class="form-group">
+                        <label style="display: flex; flex-direction: row; align-items: center;">
+                            <input style="width: auto;" type="checkbox" id="badgeDoubles" name="doubles" style="margin-right: 8px;">
+                            <p style="margin:0;">Doubles</p>
+                        </label>
+                    </div>
                     
                     <!-- Unique Badge Setting -->
                     <div style="flex-direction: row;" class="form-group">

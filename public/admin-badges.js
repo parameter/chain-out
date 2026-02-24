@@ -1041,6 +1041,12 @@ function populateBadgeForm(badge) {
     if (trackTierThresholdZyncCheckbox) {
         trackTierThresholdZyncCheckbox.checked = badge.trackTierThresholdZync || false;
     }
+
+    // Handle doubles checkbox
+    const doublesCheckbox = document.getElementById('badgeDoubles');
+    if (doublesCheckbox) {
+        doublesCheckbox.checked = badge.doubles || false;
+    }
     
     // Handle requiresHistoricalData checkbox
     const requiresHistoricalDataCheckbox = document.getElementById('requiresHistoricalData');
@@ -1199,6 +1205,7 @@ function collectBadgeFormData() {
         isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false,
         trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false,
         trackTierThresholdZync: document.getElementById('trackTierThresholdZync') ? document.getElementById('trackTierThresholdZync').checked : false,
+        doubles: document.getElementById('badgeDoubles') ? document.getElementById('badgeDoubles').checked : false,
         requiresHistoricalData: document.getElementById('requiresHistoricalData') ? document.getElementById('requiresHistoricalData').checked : false,
         done: document.getElementById('badgeDone') ? document.getElementById('badgeDone').checked : false
     };
