@@ -1151,6 +1151,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
 
+    console.log('add-result', req.body);
+
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
       if (typeof specifics[field] !== 'boolean') {
