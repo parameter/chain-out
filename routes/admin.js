@@ -701,6 +701,14 @@ router.get('/badges', (req, res) => {
                         </label>
                     </div>
 
+                    <!-- Requires Date -->
+                    <div style="flex-direction: row;" class="form-group">
+                        <label style="display: flex; flex-direction: row; align-items: center;">
+                            <input style="width: auto;" type="checkbox" id="requiresDate" name="requiresDate" style="margin-right: 8px;">
+                            <p style="margin:0;">Requires Date</p>
+                        </label>
+                    </div>
+
                     <!-- Track tier threshold zync -->
                     <div style="flex-direction: row;" class="form-group">
                         <label style="display: flex; flex-direction: row; align-items: center;">
