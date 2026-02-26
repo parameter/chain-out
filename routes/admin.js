@@ -692,7 +692,15 @@ router.get('/badges', (req, res) => {
                             <p style="margin:0;">Requires Historical Data</p>
                         </label>
                     </div>
-                    
+
+                    <!-- Requires Weather API -->
+                    <div style="flex-direction: row;" class="form-group">
+                        <label style="display: flex; flex-direction: row; align-items: center;">
+                            <input style="width: auto;" type="checkbox" id="requiresWeatherAPI" name="requiresWeatherAPI" style="margin-right: 8px;">
+                            <p style="margin:0;">Requires Weather API</p>
+                        </label>
+                    </div>
+
                     <!-- Track tier threshold zync -->
                     <div style="flex-direction: row;" class="form-group">
                         <label style="display: flex; flex-direction: row; align-items: center;">
@@ -700,7 +708,7 @@ router.get('/badges', (req, res) => {
                             <p style="margin:0;">Track tier threshold zync</p>
                         </label>
                         <small style="display: block; color: #666; margin-top: 5px;">
-                            When the point needs to be earned during one round and point can not be accumulated over time.
+                            When the points can be accumulated over time and a tier can be achieved from points gathered from previous rounds.
                         </small>
                     </div>
 

@@ -477,6 +477,7 @@ async function displayBadges() {
             <div><strong>Unique:</strong> ${badge.isUnique ? 'Yes' : 'No'}</div>
             <div><strong>Track Unique Courses:</strong> ${badge.trackUniqueCourses ? 'Yes' : 'No'}</div>
             <div><strong>Requires Historical Data:</strong> ${badge.requiresHistoricalData ? 'Yes' : 'No'}</div>
+            <div><strong>Requires Weather API:</strong> ${badge.requiresWeatherAPI ? 'Yes' : 'No'}</div>
             <div><strong>Track tier threshold zync over time and rounds:</strong> ${badge.trackTierThresholdZync ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
             <div><strong>Test Data Count:</strong> <span id="testDataCount-${index}">Loading...</span></div>
@@ -1053,6 +1054,12 @@ function populateBadgeForm(badge) {
     if (requiresHistoricalDataCheckbox) {
         requiresHistoricalDataCheckbox.checked = badge.requiresHistoricalData || false;
     }
+
+    // Handle requiresWeatherAPI checkbox
+    const requiresWeatherAPICheckbox = document.getElementById('requiresWeatherAPI');
+    if (requiresWeatherAPICheckbox) {
+        requiresWeatherAPICheckbox.checked = badge.requiresWeatherAPI || false;
+    }
     
     // Tier information
     document.getElementById('tierDescriptionPrefix').value = badge.tierDescriptionPrefix || '';
@@ -1207,6 +1214,7 @@ function collectBadgeFormData() {
         trackTierThresholdZync: document.getElementById('trackTierThresholdZync') ? document.getElementById('trackTierThresholdZync').checked : false,
         doubles: document.getElementById('badgeDoubles') ? document.getElementById('badgeDoubles').checked : false,
         requiresHistoricalData: document.getElementById('requiresHistoricalData') ? document.getElementById('requiresHistoricalData').checked : false,
+        requiresWeatherAPI: document.getElementById('requiresWeatherAPI') ? document.getElementById('requiresWeatherAPI').checked : false,
         done: document.getElementById('badgeDone') ? document.getElementById('badgeDone').checked : false
     };
 
