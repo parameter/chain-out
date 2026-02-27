@@ -735,7 +735,8 @@ router.get('/badges', (req, res) => {
                             <p style="margin:0;">Unique</p>
                         </label>
                         <small style="display: block; color: #666; margin-top: 5px;">
-                            When enabled, this badge can only be earned once and has no tiers.
+                            When enabled, this badge can only be earned once. You can still use tier thresholds
+                            (for example for historical conditions) to define when it is earned.
                         </small>
                     </div>
                     
@@ -784,7 +785,7 @@ router.get('/badges', (req, res) => {
                         </div>
                     </div>
                     
-                    <!-- Tier Configuration (for tiered badges) -->
+                    <!-- Tier Configuration (for tiered and unique-with-thresholds badges) -->
                     <div class="tier-section" id="tieredBadgeSection" style="display: none;">
                         <h4>Tier Configuration</h4>
                         <div class="form-group">
@@ -819,8 +820,8 @@ router.get('/badges', (req, res) => {
                         <p>Write the JavaScript function that determines when this badge is earned:</p>
                         <textarea id="badgeCondition" name="condition" class="condition-editor" placeholder="(results, layout) => {
     // Your condition logic here
-    // Return true/false for unique badges
-    // Return number for tiered badges
+    // For unique badges without thresholds, return true/false
+    // For tiered or historical badges (including unique with tierThresholds), return a number
     return 0;
 }"></textarea>
                     </div>
