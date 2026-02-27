@@ -1113,9 +1113,12 @@ function toggleTierSection() {
     if (uniqueBadgeSection) uniqueBadgeSection.style.display = 'none';
     if (tieredBadgeSection) tieredBadgeSection.style.display = 'none';
     
-    // Show appropriate section based on type
+    // Show appropriate section(s) based on type
     if (badgeType === 'unique') {
+        // Unique badges: show both the unique section and tier configuration,
+        // so unique badges can also define tierThresholds.
         if (uniqueBadgeSection) uniqueBadgeSection.style.display = 'block';
+        if (tieredBadgeSection) tieredBadgeSection.style.display = 'block';
     } else if (badgeType === 'tiered') {
         if (tieredBadgeSection) tieredBadgeSection.style.display = 'block';
     }
