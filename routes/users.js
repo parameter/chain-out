@@ -1397,12 +1397,11 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       updatedResult.earnedBadges = earnedBadges;
     }
 
-    /*
     updatedResult.invites.forEach(invite => {
       pusher.trigger(invite.invitedUserId, "scorecard-completed", {
         scorecardId: scorecardId
       });
-    }); */
+    });
     
     const course = updatedResult.courseId 
       ? await coursesCollection.findOne({ _id: new ObjectId(updatedResult.courseId) })
