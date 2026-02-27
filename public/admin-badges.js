@@ -481,6 +481,8 @@ async function displayBadges() {
             <div><strong>Requires Date:</strong> ${badge.requiresDate ? 'Yes' : 'No'}</div>
             <div><strong>Track tier threshold zync over time and rounds:</strong> ${badge.trackTierThresholdZync ? 'Yes' : 'No'}</div>
             <div><strong>Quote:</strong> ${badge.quote || 'N/A'}</div>
+            <div><strong>Description:</strong> ${badge.description || 'N/A'}</div>
+            <div><strong>Functional description:</strong> ${badge.functionalDescription || 'N/A'}</div>
             <div><strong>Test Data Count:</strong> <span id="testDataCount-${index}">Loading...</span></div>
             
             <!-- Individual Test Section -->
