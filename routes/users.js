@@ -509,6 +509,9 @@ router.get('/friends', requireAuth, async (req, res) => {
     
     const friends = await friendsCollection.find({ $or: [{ to: req.user._id }, { from: new ObjectId(req.user._id) }], status: 'accepted' }).toArray();
     
+
+    console.log('friends', friends);
+
     // Get user IDs that are not the current user
     const friendUserIds = friends.map(friend => {
       const friendId = friend.from.toString() === req.user._id.toString() ? friend.to : friend.from;
@@ -521,6 +524,9 @@ router.get('/friends', requireAuth, async (req, res) => {
           .project({ username: 1, email: 1, profileImage: 1, fname: 1, sname: 1 })
           .toArray()
       : [];
+
+
+    console.log('users', users);
     
     // Create a map of user IDs to user objects
     const userMap = {};
