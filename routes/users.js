@@ -182,8 +182,6 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
 
     const leaderboard = await userXPTotalsCollection.aggregate(pipeline).toArray();
 
-    console.log('leaderboard', leaderboard);
-
     res.json({
       leaderboard,
       type: effectiveType,
@@ -201,6 +199,8 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to get xp leaderboard', error: err.message });
   }
 });
+
+
 
 router.get('/xp', requireAuth, async (req, res) => {
   try {
@@ -299,10 +299,8 @@ router.post('/profile-image', requireAuth, async (req, res) => {
 });
 
 
+
 router.get('/courses', requireAuth, async (req, res) => {
-
-  
-
   try {
     const { location } = req.query;
 
@@ -362,6 +360,8 @@ router.post('/uploads/presign', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.get('/uploads/file-url', requireAuth, async (req, res) => {
   try {
     const { key, expires } = req.query;
@@ -374,6 +374,8 @@ router.get('/uploads/file-url', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to presign file url' });
   }
 });
+
+
 
 router.post('/send-friend-request', requireAuth, async (req, res) => {
   try {
@@ -438,26 +440,17 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.post('/answer-friend-request', requireAuth, async (req, res) => {
   try {
     const { from, to, docId, userId, answer, senderUsername } = req.body;
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
 
-    console.log('docId', docId);
-    console.log('from', from);
-    console.log('to', to);
-
     const result = await friendsCollection.updateOne(
       { _id: new ObjectId(docId), from: new ObjectId(from), to: new ObjectId(to), status: 'pending' }, 
       { $set: { status: answer } 
-    });
-    
-    console.log('Friend request answered to', userId.toString(), {
-      type: "friend-request-answered",
-      message: `${senderUsername} ${answer} your friend request`,
-      from: req.user._id,
-      to: userId
     });
     
     pusher.trigger(userId.toString(), "friend-request-answered", {
@@ -472,6 +465,8 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to answer friend request' });
   }
 });
+
+
 
 router.get('/pending-friend-requests', requireAuth, async (req, res) => {
   try {
@@ -529,6 +524,8 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.get('/sent-friend-requests', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
@@ -585,6 +582,8 @@ router.get('/sent-friend-requests', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch sent friend requests' });
   }
 });
+
+
 
 router.get('/friends', requireAuth, async (req, res) => {
   try {
@@ -653,6 +652,8 @@ router.get('/friends', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.post('/say-fore', requireAuth, async (req, res) => {
   try {
     const { userId, message } = req.body;
@@ -684,13 +685,6 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
 
-    console.log('New fore sent to', userId.toString(), {
-      type: "new-fore",
-      message: 'Fore!',
-      from: req.user._id,
-      to: userId
-    });
-
     pusher.trigger(userId.toString(), "new-fore", {
       message: 'Fore!',
       from: req.user._id,
@@ -710,6 +704,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     }
   }
 });
+
+
 
 router.get('/friends/received-fores', requireAuth, async (req, res) => {
   try {
@@ -739,6 +735,8 @@ router.get('/friends/received-fores', requireAuth, async (req, res) => {
   }
 });
 
+
+
 const createGuestPlayers = async (guestPlayers) => {
 
   if (!Array.isArray(guestPlayers) || guestPlayers.length === 0) {
@@ -764,10 +762,10 @@ const createGuestPlayers = async (guestPlayers) => {
   return Object.values(result.insertedIds).map((id) => id.toString());
 }
 
+
+
 // should only create new scorecard if no active scorecard exists for the current user and course
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
-
-  console.log('scorecard/invite-users', req.body);
   try {
     const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams } = req.body;
 
@@ -882,20 +880,11 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       createdAt: now
     }));
 
-    console.log('new_notifications', new_notifications);
-
     if (new_notifications.length) {
 
       new_notifications.map((note) => {
 
         try {
-
-          console.log('Scorecard invite sent to', note.forUser.toString(), {
-            type: "scorecard-invite",
-            message: note.message,
-            scorecardId: scorecardId,
-            courseName: course.name
-          });
 
           pusher.trigger(note.forUser.toString(), "scorecard-invite", {
             message: note.message,
@@ -908,8 +897,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         }
 
       });
-
-      console.log('I am here');
 
       const localNotificationsCollection = db.collection('local-notifications');
       await localNotificationsCollection.insertMany(new_notifications);
@@ -930,6 +917,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
   try {
     const { scorecardId, notificationId, answer } = req.body;
@@ -948,8 +937,6 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
       { $set: { "invites.$.status": inviteStatus } }
     );
 
-    console.log('result', result);
-
     if (result.modifiedCount) {
       const updateResult = await localNotificationsCollection.updateOne(
         { _id: new ObjectId(notificationId) },
@@ -958,6 +945,12 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
       console.log('updateResult', updateResult);
     }
 
+    pusher.trigger(req.user._id.toString(), "scorecard-invite-answered", {
+      message: 'Fore!',
+      from: req.user._id,
+      to: userId
+    });
+
     res.status(200).json({ inviteStatus });
 
   } catch (e) {
@@ -965,6 +958,8 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to answer invite' });
   }
 });
+
+
 
 router.get('/scorecards', requireAuth, async (req, res) => {
   try {
@@ -1175,6 +1170,8 @@ router.get('/scorecards', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
   const { scorecardId } = req.query;
   if (!scorecardId) {
@@ -1235,6 +1232,8 @@ router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
   res.status(200).json({ scorecard: expandedScorecard });
 });
 
+
+
 router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   try {
     const {
@@ -1247,8 +1246,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       specifics,
       timestamp
     } = req.body;
-
-    console.log('add-result', req.body);
 
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
@@ -1363,10 +1360,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       { returnDocument: 'after' }
     );
 
-    console.log('updatedResult', updatedResult);
-
-    console.log('updatedResult.results', updatedResult.results);
-
     // Check if all holes for all players have a result saved in updatedResult
     let allResultsEntered = false;
     if (
@@ -1381,7 +1374,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       const playerIds = Array.from(
         new Set(updatedResult.results.map(r => r.playerId))
       );
-      console.log('playerIds', playerIds);
+      
       // For every player, check if they have a result for every hole number
       allResultsEntered = playerIds.every(playerId => {
         return holes.every(hole =>
@@ -1391,8 +1384,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         );
       });
     }
-
-    console.log('allResultsEntered', allResultsEntered);
  
     if (!updatedResult) {
       // Scorecard not found, user not invited, or round already completed
@@ -1406,6 +1397,20 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
+    const recipientIds = scorecard.invites.map(p => p.invitedUserId);
+
+    recipientIds.forEach(id => {
+      try {
+        pusher.trigger(id, "scorecard-result-added", {
+          message: 'Fore!',
+          from: req.user._id,
+          scorecardId
+        });
+      } catch (e) {
+        console.error('Error sending scorecard-result-added notification:', e);
+      }
+    });
+
     res.status(201).json({ message: 'Result saved to scorecard', result: resultObj, roundComplete: allResultsEntered });
 
   } catch (e) {
@@ -1413,6 +1418,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to add result to scorecard' });
   }
 });
+
+
 
 router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
   try {
@@ -1593,11 +1600,15 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.get('/badges', requireAuth, async (req, res) => {
   console.log('get badges', req.user._id);
   const badges = await getUserAllBadges(req.user._id);
   res.json({ badges });
 });
+
+
 
 router.get('/user', requireAuth, async (req, res) => {
   const userId = req.query.userId;
@@ -1623,6 +1634,8 @@ router.get('/user', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch user' });
   }
 });
+
+
 
 router.post('/find-users', requireAuth, async (req, res) => {
   const { string } = req.body;
@@ -1651,6 +1664,8 @@ router.post('/find-users', requireAuth, async (req, res) => {
   res.json({ users });
 });
 
+
+
 router.post('/find-course', requireAuth, async (req, res) => {
   const { string } = req.body;
 
@@ -1672,6 +1687,8 @@ router.post('/find-course', requireAuth, async (req, res) => {
 
   res.json({ courses });
 });
+
+
 
 router.get('/get-course-by-id', requireAuth, async (req, res) => {
   const { courseId } = req.query;
@@ -1696,6 +1713,8 @@ router.get('/get-course-by-id', requireAuth, async (req, res) => {
   res.json({ course });
 });
 
+
+
 router.get('/local-notifications', requireAuth, async (req, res) => {
   const db = getDatabase();
   const localNotificationsCollection = db.collection('local-notifications');
@@ -1708,6 +1727,8 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
 
   res.json({ notifications });
 });
+
+
 
 router.post('/local-notifications/mark-as-seen', requireAuth, async (req, res) => {
   const { notificationId } = req.body;
@@ -1726,6 +1747,8 @@ router.post('/local-notifications/mark-as-seen', requireAuth, async (req, res) =
 
   res.json({ notifications });
 });
+
+
 
 // GET /api/user/:userId/badge/:badgeId/tier/:tierIndex - Check if specific tier was achieved
 router.get('/api/user/:userId/badge/:badgeId/tier/:tierIndex', async (req, res) => {
@@ -1746,6 +1769,8 @@ router.get('/api/user/:userId/badge/:badgeId/tier/:tierIndex', async (req, res) 
   }
 });
 
+
+
 // GET /api/user/:userId/badge/:badgeId/tiers - Get all tier achievements for a badge
 router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
   try {
@@ -1759,6 +1784,8 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
     res.status(500).json({ error: 'Failed to get tier achievements' });
   }
 });
+
+
 
 router.get('/stats/general', requireAuth, async (req, res) => {
   try {
