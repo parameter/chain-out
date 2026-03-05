@@ -1074,7 +1074,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
       }
     ]).toArray();
 
-    console.log('scorecards', scorecards);
+    console.log('scorecards', scorecards[0].earnedBadges[0]);
 
     res.status(200).json({ scorecards });
 
