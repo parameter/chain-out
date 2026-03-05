@@ -492,7 +492,50 @@ router.get('/sent-friend-requests', requireAuth, async (req, res) => {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
     
-    const sentFriendRequests = await friendsCollection.find({ from: req.user._id, status: 'pending' }).toArray();
+    const currentUserId = new ObjectId(req.user._id);
+
+    const sentFriendRequests = await friendsCollection
+      .aggregate([
+        {
+          $match: {
+            from: currentUserId,
+            status: 'pending',
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'to',
+            foreignField: '_id',
+            as: 'user',
+          },
+        },
+        {
+          $unwind: {
+            path: '$user',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            from: 1,
+            to: 1,
+            status: 1,
+            createdAt: 1,
+            // Attach a slimmed-down user object for the recipient
+            user: {
+              _id: '$user._id',
+              username: '$user.username',
+              email: '$user.email',
+              profileImage: '$user.profileImage',
+              fname: '$user.fname',
+              sname: '$user.sname',
+            },
+          },
+        },
+      ])
+      .toArray();
     
     res.json({ sentFriendRequests: sentFriendRequests });
   } catch (e) {
@@ -505,55 +548,63 @@ router.get('/friends', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-    const usersCollection = db.collection('users');
-    
-    const friends = await friendsCollection.find({ $or: [{ to: req.user._id }, { from: new ObjectId(req.user._id) }], status: 'accepted' }).toArray();
-    
+    const currentUserId = new ObjectId(req.user._id);
 
-    console.log('friends', friends);
+    const friends = await friendsCollection
+      .aggregate([
+        {
+          $match: {
+            status: 'accepted',
+            $or: [{ to: currentUserId }, { from: currentUserId }],
+          },
+        },
+        {
+          // Determine the "other" user's id in this friendship
+          $addFields: {
+            friendId: {
+              $cond: [
+                { $eq: ['$from', currentUserId] },
+                '$to',
+                '$from',
+              ],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'friendId',
+            foreignField: '_id',
+            as: 'user',
+          },
+        },
+        {
+          $unwind: {
+            path: '$user',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            from: 1,
+            to: 1,
+            status: 1,
+            createdAt: 1,
+            user: {
+              _id: '$user._id',
+              username: '$user.username',
+              email: '$user.email',
+              profileImage: '$user.profileImage',
+              fname: '$user.fname',
+              sname: '$user.sname',
+            },
+          },
+        },
+      ])
+      .toArray();
 
-    // Get user IDs that are not the current user
-    const friendUserIds = friends.map(friend => {
-      const friendId = friend.from.toString() === req.user._id.toString() ? friend.to : friend.from;
-      return new ObjectId(friendId);
-    });
-    
-    // Fetch user objects (include fname, sname and other display fields)
-    const users = friendUserIds.length > 0
-      ? await usersCollection.find({ _id: { $in: friendUserIds } })
-          .project({ username: 1, email: 1, profileImage: 1, fname: 1, sname: 1 })
-          .toArray()
-      : [];
-
-
-    console.log('users', users);
-    
-    // Create a map of user IDs to user objects
-    const userMap = {};
-    users.forEach(user => {
-      userMap[user._id.toString()] = user;
-    });
-    
-    const friendsWithUsers = friends.map(friend => {
-      const currentUserId = req.user._id.toString();
-      const friendId = friend.from.toString() === currentUserId ? friend.to : friend.from;
-      
-      let userObject = null;
-      if (friendId.toString() !== currentUserId) {
-        const friendUser = userMap[friendId.toString()];
-        if (friendUser) {
-          const { _id, ...userWithoutId } = friendUser;
-          userObject = userWithoutId;
-        }
-      }
-      
-      return {
-        ...friend,
-        ...(userObject && { user: userObject })
-      };
-    });
-    
-    res.json({ friends: friendsWithUsers });
+    res.json({ friends });
   } catch (e) {
     console.error('Error fetching friends:', e);  
     res.status(500).json({ message: 'Failed to fetch friends' });
@@ -1073,8 +1124,6 @@ router.get('/scorecards', requireAuth, async (req, res) => {
         }
       }
     ]).toArray();
-
-    console.log('scorecards', scorecards[0].earnedBadges[0]);
 
     res.status(200).json({ scorecards });
 
