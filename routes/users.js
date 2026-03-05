@@ -477,10 +477,52 @@ router.get('/pending-friend-requests', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const friendsCollection = db.collection('friends');
-    
-    const pendingFriendRequests = await friendsCollection.find({ to: req.user._id, status: 'pending' }).toArray();
-    
-    res.json({ pendingFriendRequests: pendingFriendRequests });
+    const currentUserId = new ObjectId(req.user._id);
+
+    const pendingFriendRequests = await friendsCollection
+      .aggregate([
+        {
+          $match: {
+            to: currentUserId,
+            status: 'pending',
+          },
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'from',
+            foreignField: '_id',
+            as: 'user',
+          },
+        },
+        {
+          $unwind: {
+            path: '$user',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            from: 1,
+            to: 1,
+            status: 1,
+            createdAt: 1,
+            // Attach a slimmed-down user object for the sender
+            user: {
+              _id: '$user._id',
+              username: '$user.username',
+              email: '$user.email',
+              profileImage: '$user.profileImage',
+              fname: '$user.fname',
+              sname: '$user.sname',
+            },
+          },
+        },
+      ])
+      .toArray();
+
+    res.json({ pendingFriendRequests });
   } catch (e) {
     console.log('Error fetching pending friend requests:', e);
     res.status(500).json({ message: 'Failed to fetch pending friend requests' });
