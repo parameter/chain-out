@@ -1789,7 +1789,11 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
 
 router.get('/stats/general', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.query;
+    var { userId } = req.query;
+    userId = new ObjectId(userId);
+
+    console.log('userId', userId);
+
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
     const badgeProgressCollection = db.collection('userBadgeProgress');
@@ -2283,7 +2287,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     let casualWinsCount = 0;
     let totalDoublesRounds = 0;
     let totalDoublesWins = 0;
-    const userIdStr = userId;
+    const userIdStr = userId.toString();
     for (const doc of roundSummariesResult) {
       const results = doc.results || [];
       const playerIds = new Set(
