@@ -2283,7 +2283,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     let casualWinsCount = 0;
     let totalDoublesRounds = 0;
     let totalDoublesWins = 0;
-    const userIdStr = userId.toString();
+    const userIdStr = userId;
     for (const doc of roundSummariesResult) {
       const results = doc.results || [];
       const playerIds = new Set(
