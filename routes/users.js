@@ -1790,9 +1790,12 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
 router.get('/stats/general', requireAuth, async (req, res) => {
   try {
     var { userId } = req.query;
-    userId = new ObjectId(userId);
 
     console.log('userId', userId);
+    
+    userId = new ObjectId(userId);
+
+    
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
