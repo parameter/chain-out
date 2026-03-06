@@ -1789,13 +1789,11 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
 
 router.get('/stats/general', requireAuth, async (req, res) => {
   try {
+    const { userId } = req.query;
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
     const badgeProgressCollection = db.collection('userBadgeProgress');
     const coursesCollection = db.collection('courses');
-
-    const userId = req.user._id;
-    const userIdString = userId.toString();
 
     // Match completed scorecards where user is creator or participant (playerId or entityId for singles)
     const scorecardMatch = {
