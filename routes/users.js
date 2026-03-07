@@ -1790,17 +1790,12 @@ router.get('/api/user/:userId/badge/:badgeId/tiers', async (req, res) => {
 router.get('/stats/general', requireAuth, async (req, res) => {
   try {
     var { userId } = req.query;
-
-    console.log('userId', userId);
-    
     userId = new ObjectId(userId);
-
-    
-
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
     const badgeProgressCollection = db.collection('userBadgeProgress');
     const coursesCollection = db.collection('courses');
+    const userXPTotalsCollection = db.collection('userXPTotals');
 
     // Match completed scorecards where user is creator or participant (playerId or entityId for singles)
     const scorecardMatch = {
@@ -1845,13 +1840,37 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     };
 
     // Single aggregation for all scorecard stats + hole-level and round-level stats
-    const [scorecardStats, badgeStats, holeStatsResult, puttingArraysResult, acesResult, roundSummariesResult] = await Promise.all([
+    const [scorecardStats, badgeStats, holeStatsResult, puttingArraysResult, acesResult, roundSummariesResult, xpDoc] = await Promise.all([
       scorecardsCollection.aggregate([
         { $match: scorecardMatch },
         {
           $facet: {
             roundsCount: [
               { $group: { _id: '$_id' } },
+              { $count: 'count' }
+            ],
+            roundsPlayedCount: [
+              {
+                $match: {
+                  $or: [
+                    { 'results.playerId': userId },
+                    { 'results.entityId': userId }
+                  ]
+                }
+              },
+              { $group: { _id: '$_id' } },
+              { $count: 'count' }
+            ],
+            coursesPlayedCount: [
+              {
+                $match: {
+                  $or: [
+                    { 'results.playerId': userId },
+                    { 'results.entityId': userId }
+                  ]
+                }
+              },
+              { $group: { _id: '$courseId' } },
               { $count: 'count' }
             ],
             uniqueCourses: [
@@ -2128,12 +2147,20 @@ router.get('/stats/general', requireAuth, async (req, res) => {
             results: 1
           }
         }
-      ]).toArray()
+      ]).toArray(),
+
+      userXPTotalsCollection.findOne({ _id: userId })
     ]);
+
+    const totalXP = xpDoc && typeof xpDoc.totalXP === 'number' ? xpDoc.totalXP : 0;
+    const level = getLevelFromXP(totalXP);
+    const procentToNextLevel = Number((totalXP % XP_LEVEL_THRESHOLDS[level - 1]) / XP_LEVEL_THRESHOLDS[level - 1] * 100);
 
     // Extract scorecard stats
     const scorecardData = scorecardStats[0] || {};
     const roundsCount = scorecardData.roundsCount?.[0]?.count || 0;
+    const roundsPlayedCount = scorecardData.roundsPlayedCount?.[0]?.count || 0;
+    const coursesPlayedCount = scorecardData.coursesPlayedCount?.[0]?.count || 0;
     const uniqueCoursesCount = scorecardData.uniqueCourses?.[0]?.count || 0;
     const allRounds = scorecardData.allRounds || [];
 
@@ -2327,7 +2354,12 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     const casualWinPercentage = totalCasualRounds > 0 ? pct(casualWinsCount, totalCasualRounds) : 0;
 
     console.log({
+      XP: totalXP,
+      level,
+      procentToNextLevel,
       roundsCount,
+      roundsPlayedCount,
+      coursesPlayedCount,
       uniqueCoursesCount,
       totalBadgesCount,
       verifiedPercentage,
@@ -2367,7 +2399,12 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     });
 
     res.json({
+      XP: Number(totalXP),
+      level: Number(level),
+      procentToNextLevel,
       roundsCount,
+      roundsPlayedCount,
+      coursesPlayedCount,
       uniqueCoursesCount,
       totalBadgesCount,
       verifiedPercentage,
