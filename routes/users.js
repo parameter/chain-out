@@ -2154,7 +2154,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
 
       userXPTotalsCollection.findOne({ _id: userId }),
 
-      // Fairway hit percentage for last 6 months (results[].specifics.fairway === true)
+      // Fairway hit percentage per month for last 6 months (results[].specifics.fairway === true)
       scorecardsCollection.aggregate([
         { $match: scorecardMatch },
         { $match: { createdAt: { $gte: sixMonthsAgo } } },
@@ -2162,7 +2162,10 @@ router.get('/stats/general', requireAuth, async (req, res) => {
         { $match: userResultMatch },
         {
           $group: {
-            _id: null,
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' }
+            },
             totalHoles: { $sum: 1 },
             fairwayCount: { $sum: { $cond: [{ $eq: ['$results.specifics.fairway', true] }, 1, 0] } }
           }
@@ -2276,10 +2279,22 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     const circle2Percentage = pct(c2Count, totalHoles);
     const fairwayRatePercentage = pct(fairwayCount, totalHoles);
 
-    const fairwayLast6Months = fairwayLast6MonthsResult[0] || {};
-    const fairwayTotalHolesLast6Months = fairwayLast6Months.totalHoles || 0;
-    const fairwayCountLast6Months = fairwayLast6Months.fairwayCount || 0;
-    const fairwayRatePercentageLast6Months = pct(fairwayCountLast6Months, fairwayTotalHolesLast6Months);
+    // Build 6 datapoints: one fairway % per month (oldest to newest)
+    const fairwayByMonth = (fairwayLast6MonthsResult || []).reduce((acc, row) => {
+      const key = `${row._id.year}-${row._id.month}`;
+      acc[key] = { totalHoles: row.totalHoles || 0, fairwayCount: row.fairwayCount || 0 };
+      return acc;
+    }, {});
+    const now = new Date();
+    const fairwayRatePercentageLast6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const key = `${year}-${month}`;
+      const data = fairwayByMonth[key] || { totalHoles: 0, fairwayCount: 0 };
+      fairwayRatePercentageLast6Months.push(pct(data.fairwayCount, data.totalHoles));
+    }
     const obRatePercentage = pct(obHolesCount, totalHoles);
     const scrambleRatePercentage = scrambleCount > 0 ? pct(scrambleSuccessCount, scrambleCount) : 0;
     const accuracyPercentage = pct(bullseyeCount + c1Count + c2Count, totalHoles);
