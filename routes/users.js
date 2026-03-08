@@ -1841,9 +1841,15 @@ router.get('/stats/general', requireAuth, async (req, res) => {
 
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const lastYearAgo = new Date();
+    lastYearAgo.setFullYear(lastYearAgo.getFullYear() - 1);
+    const lastMonthAgo = new Date();
+    lastMonthAgo.setDate(lastMonthAgo.getDate() - 28);
+    const lastWeekAgo = new Date();
+    lastWeekAgo.setDate(lastWeekAgo.getDate() - 7);
 
     // Single aggregation for all scorecard stats + hole-level and round-level stats
-    const [scorecardStats, badgeStats, holeStatsResult, puttingArraysResult, acesResult, roundSummariesResult, xpDoc, fairwayLast6MonthsResult] = await Promise.all([
+    const [scorecardStats, badgeStats, holeStatsResult, puttingArraysResult, acesResult, roundSummariesResult, xpDoc, fairwayLast6MonthsResult, fairwayLastYearResult, fairwayLastMonthResult, fairwayLastWeekResult] = await Promise.all([
       scorecardsCollection.aggregate([
         { $match: scorecardMatch },
         {
@@ -2170,6 +2176,61 @@ router.get('/stats/general', requireAuth, async (req, res) => {
             fairwayCount: { $sum: { $cond: [{ $eq: ['$results.specifics.fairway', true] }, 1, 0] } }
           }
         }
+      ]).toArray(),
+
+      // Last year: fairway % per month (12 datapoints)
+      scorecardsCollection.aggregate([
+        { $match: scorecardMatch },
+        { $match: { createdAt: { $gte: lastYearAgo } } },
+        { $unwind: '$results' },
+        { $match: userResultMatch },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' }
+            },
+            totalHoles: { $sum: 1 },
+            fairwayCount: { $sum: { $cond: [{ $eq: ['$results.specifics.fairway', true] }, 1, 0] } }
+          }
+        }
+      ]).toArray(),
+
+      // Last month: fairway % per week (4 datapoints)
+      scorecardsCollection.aggregate([
+        { $match: scorecardMatch },
+        { $match: { createdAt: { $gte: lastMonthAgo } } },
+        { $unwind: '$results' },
+        { $match: userResultMatch },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              week: { $isoWeek: '$createdAt' }
+            },
+            totalHoles: { $sum: 1 },
+            fairwayCount: { $sum: { $cond: [{ $eq: ['$results.specifics.fairway', true] }, 1, 0] } }
+          }
+        }
+      ]).toArray(),
+
+      // Last week: fairway % per day (7 datapoints)
+      scorecardsCollection.aggregate([
+        { $match: scorecardMatch },
+        { $match: { createdAt: { $gte: lastWeekAgo } } },
+        { $unwind: '$results' },
+        { $match: userResultMatch },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' },
+              day: { $dayOfMonth: '$createdAt' }
+            },
+            totalHoles: { $sum: 1 },
+            fairwayCount: { $sum: { $cond: [{ $eq: ['$results.specifics.fairway', true] }, 1, 0] } }
+          }
+        }
       ]).toArray()
     ]);
 
@@ -2295,6 +2356,53 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       const data = fairwayByMonth[key] || { totalHoles: 0, fairwayCount: 0 };
       fairwayRatePercentageLast6Months.push(pct(data.fairwayCount, data.totalHoles));
     }
+
+    // Last year: 12 datapoints (one per month, oldest to newest)
+    const fairwayByMonthYear = (fairwayLastYearResult || []).reduce((acc, row) => {
+      const key = `${row._id.year}-${row._id.month}`;
+      acc[key] = { totalHoles: row.totalHoles || 0, fairwayCount: row.fairwayCount || 0 };
+      return acc;
+    }, {});
+    const fairwayRatePercentageLastYear = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+      const data = fairwayByMonthYear[key] || { totalHoles: 0, fairwayCount: 0 };
+      fairwayRatePercentageLastYear.push(pct(data.fairwayCount, data.totalHoles));
+    }
+
+    // Last month: 4 datapoints (one per week, oldest to newest)
+    const fairwayByWeek = (fairwayLastMonthResult || []).reduce((acc, row) => {
+      const key = `${row._id.year}-${row._id.week}`;
+      acc[key] = { totalHoles: row.totalHoles || 0, fairwayCount: row.fairwayCount || 0 };
+      return acc;
+    }, {});
+    const fairwayRatePercentageLastMonth = [];
+    for (let i = 3; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 7 * i);
+      const year = d.getFullYear();
+      const week = getISOWeek(d);
+      const key = `${year}-${week}`;
+      const data = fairwayByWeek[key] || { totalHoles: 0, fairwayCount: 0 };
+      fairwayRatePercentageLastMonth.push(pct(data.fairwayCount, data.totalHoles));
+    }
+
+    // Last week: 7 datapoints (one per day, oldest to newest)
+    const fairwayByDay = (fairwayLastWeekResult || []).reduce((acc, row) => {
+      const key = `${row._id.year}-${row._id.month}-${row._id.day}`;
+      acc[key] = { totalHoles: row.totalHoles || 0, fairwayCount: row.fairwayCount || 0 };
+      return acc;
+    }, {});
+    const fairwayRatePercentageLastWeek = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      const data = fairwayByDay[key] || { totalHoles: 0, fairwayCount: 0 };
+      fairwayRatePercentageLastWeek.push(pct(data.fairwayCount, data.totalHoles));
+    }
+
     const obRatePercentage = pct(obHolesCount, totalHoles);
     const scrambleRatePercentage = scrambleCount > 0 ? pct(scrambleSuccessCount, scrambleCount) : 0;
     const accuracyPercentage = pct(bullseyeCount + c1Count + c2Count, totalHoles);
@@ -2416,6 +2524,9 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       circle2Percentage,
       fairwayRatePercentage,
       fairwayRatePercentageLast6Months,
+      fairwayRatePercentageLastYear,
+      fairwayRatePercentageLastMonth,
+      fairwayRatePercentageLastWeek,
       obRatePercentage,
       scrambleRatePercentage,
       accuracyPercentage,
@@ -2462,6 +2573,9 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       circle2Percentage,
       fairwayRatePercentage,
       fairwayRatePercentageLast6Months,
+      fairwayRatePercentageLastYear,
+      fairwayRatePercentageLastMonth,
+      fairwayRatePercentageLastWeek,
       obRatePercentage,
       scrambleRatePercentage,
       accuracyPercentage,
