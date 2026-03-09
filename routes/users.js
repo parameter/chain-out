@@ -2443,6 +2443,8 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     const birdiePuttMakes = holeStats.birdiePuttMakes || 0;
 
     const pct = (num, den) => (den > 0 ? Math.round((num / den) * 100) : 0);
+    const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const bullseyePercentage = pct(bullseyeCount, totalHoles);
     const circle1Percentage = pct(c1Count, totalHoles);
     const circle2Percentage = pct(c2Count, totalHoles);
@@ -2462,6 +2464,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     }, {});
     const now = new Date();
     const fairwayRatePercentageLast6Months = [];
+    const last6MonthsLabels = [];
     const circle1PercentageLast6Months = [];
     const circle2PercentageLast6Months = [];
     const parOrBetterPercentageLast6Months = [];
@@ -2472,6 +2475,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       const key = `${year}-${month}`;
       const data = fairwayByMonth[key] || { totalHoles: 0, fairwayCount: 0, c1Count: 0, c2Count: 0, parOrBetterCount: 0 };
       fairwayRatePercentageLast6Months.push(pct(data.fairwayCount, data.totalHoles));
+      last6MonthsLabels.push(monthNamesShort[month - 1]);
       circle1PercentageLast6Months.push(pct(data.c1Count, data.totalHoles));
       circle2PercentageLast6Months.push(pct(data.c2Count, data.totalHoles));
       parOrBetterPercentageLast6Months.push(pct(data.parOrBetterCount, data.totalHoles));
@@ -2490,6 +2494,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       return acc;
     }, {});
     const fairwayRatePercentageLastYear = [];
+    const lastYearMonthLabels = [];
     const circle1PercentageLastYear = [];
     const circle2PercentageLastYear = [];
     const parOrBetterPercentageLastYear = [];
@@ -2498,6 +2503,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
       const data = fairwayByMonthYear[key] || { totalHoles: 0, fairwayCount: 0, c1Count: 0, c2Count: 0, parOrBetterCount: 0 };
       fairwayRatePercentageLastYear.push(pct(data.fairwayCount, data.totalHoles));
+      lastYearMonthLabels.push(`${monthNamesShort[d.getMonth()]} ${d.getFullYear()}`);
       circle1PercentageLastYear.push(pct(data.c1Count, data.totalHoles));
       circle2PercentageLastYear.push(pct(data.c2Count, data.totalHoles));
       parOrBetterPercentageLastYear.push(pct(data.parOrBetterCount, data.totalHoles));
@@ -2516,6 +2522,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       return acc;
     }, {});
     const fairwayRatePercentageLastMonth = [];
+    const lastMonthWeekLabels = [];
     const circle1PercentageLastMonth = [];
     const circle2PercentageLastMonth = [];
     const parOrBetterPercentageLastMonth = [];
@@ -2527,6 +2534,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       const key = `${year}-${week}`;
       const data = fairwayByWeek[key] || { totalHoles: 0, fairwayCount: 0, c1Count: 0, c2Count: 0, parOrBetterCount: 0 };
       fairwayRatePercentageLastMonth.push(pct(data.fairwayCount, data.totalHoles));
+      lastMonthWeekLabels.push(`W${week}`);
       circle1PercentageLastMonth.push(pct(data.c1Count, data.totalHoles));
       circle2PercentageLastMonth.push(pct(data.c2Count, data.totalHoles));
       parOrBetterPercentageLastMonth.push(pct(data.parOrBetterCount, data.totalHoles));
@@ -2545,6 +2553,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       return acc;
     }, {});
     const fairwayRatePercentageLastWeek = [];
+    const lastWeekDayLabels = [];
     const circle1PercentageLastWeek = [];
     const circle2PercentageLastWeek = [];
     const parOrBetterPercentageLastWeek = [];
@@ -2560,6 +2569,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       circle1PercentageLastWeek.push(circle1Pct);
       circle2PercentageLastWeek.push(circle2Pct);
       parOrBetterPercentageLastWeek.push(parOrBetterPct);
+      lastWeekDayLabels.push(dayNamesShort[d.getDay()]);
     }
 
     const obRatePercentage = pct(obHolesCount, totalHoles);
@@ -2698,6 +2708,10 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       circle1PercentageLastWeek,
       circle2PercentageLastWeek,
       parOrBetterPercentageLastWeek,
+      last6MonthsLabels,
+      lastYearMonthLabels,
+      lastMonthWeekLabels,
+      lastWeekDayLabels,
       obRatePercentage,
       scrambleRatePercentage,
       accuracyPercentage,
@@ -2759,6 +2773,10 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       circle1PercentageLastWeek,
       circle2PercentageLastWeek,
       parOrBetterPercentageLastWeek,
+      last6MonthsLabels,
+      lastYearMonthLabels,
+      lastMonthWeekLabels,
+      lastWeekDayLabels,
       obRatePercentage,
       scrambleRatePercentage,
       accuracyPercentage,
