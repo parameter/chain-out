@@ -21,6 +21,30 @@ const pusher = new Pusher({
 });
 
 
+async function sendUserNotification({ forUserId, eventName, payload, localNotification }) {
+  try {
+    await pusher.trigger(forUserId.toString(), eventName, payload);
+  } catch (e) {
+    console.error('Error sending pusher notification:', e);
+  }
+
+  if (localNotification) {
+    try {
+      const db = getDatabase();
+      const localNotificationsCollection = db.collection('local-notifications');
+      await localNotificationsCollection.insertOne({
+        forUser: forUserId.toString(),
+        status: 'unseen',
+        createdAt: new Date(),
+        ...localNotification
+      });
+    } catch (e) {
+      console.error('Error saving local notification:', e);
+    }
+  }
+}
+
+
 
 
 
@@ -417,12 +441,23 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
     );
 
     if (result) {
-      
-      pusher.trigger(userId.toString(), "friend-request-sent", {
-        message: `${senderUsername} sent you a friend request`,
-        senderUsername: senderUsername,
-        senderId: req.user._id,
-        receiverId: userId
+      const friendRequestId = result && result.value && result.value._id;
+
+      await sendUserNotification({
+        forUserId: userId,
+        eventName: "friend-request-sent",
+        payload: {
+          message: `${senderUsername} sent you a friend request`,
+          senderUsername: senderUsername,
+          senderId: req.user._id,
+          receiverId: userId
+        },
+        localNotification: {
+          fromUser: req.user._id,
+          type: 'friend-request-sent',
+          message: `${senderUsername} sent you a friend request`,
+          friendRequestId
+        }
       });
 
       res.json({ message: 'Friend request sent', status: 'pending' });
@@ -453,10 +488,20 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
       { $set: { status: answer } 
     });
     
-    pusher.trigger(userId.toString(), "friend-request-answered", {
-      message: `${senderUsername} ${answer} your friend request`,
-      from: req.user._id,
-      to: userId
+    await sendUserNotification({
+      forUserId: userId,
+      eventName: "friend-request-answered",
+      payload: {
+        message: `${senderUsername} ${answer} your friend request`,
+        from: req.user._id,
+        to: userId
+      },
+      localNotification: {
+        fromUser: req.user._id,
+        type: 'friend-request-answered',
+        message: `${senderUsername} ${answer} your friend request`,
+        friendRequestId: docId
+      }
     });
     
     res.json({ result: result.modifiedCount });
@@ -684,11 +729,21 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     if (!result || !result.insertedId) {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
-
-    pusher.trigger(userId.toString(), "new-fore", {
-      message: 'Fore!',
-      from: req.user._id,
-      to: userId
+    
+    await sendUserNotification({
+      forUserId: userId,
+      eventName: "new-fore",
+      payload: {
+        message: 'Fore!',
+        from: req.user._id,
+        to: userId
+      },
+      localNotification: {
+        fromUser: req.user._id,
+        type: 'new-fore',
+        message: message || 'Fore!',
+        foreId: result.insertedId
+      }
     });
 
     res.status(201).json({ message: 'Fore sent', fore: { ...foreDoc, _id: result.insertedId } });
@@ -876,31 +931,29 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       type: 'scorecard-invite',
       message: `${req.user.username} has invited you to a scorecard`,
       status: 'unseen',
-      scorecardId,
-      createdAt: now
+      scorecardId
     }));
 
     if (new_notifications.length) {
-
-      new_notifications.map((note) => {
-
-        try {
-
-          pusher.trigger(note.forUser.toString(), "scorecard-invite", {
-            message: note.message,
-            scorecardId: scorecardId,
-            courseName: course.name
-          });
-
-        } catch (e) {
-          console.error('Error sending pusher notification 1:', e);
-        }
-
-      });
-
-      const localNotificationsCollection = db.collection('local-notifications');
-      await localNotificationsCollection.insertMany(new_notifications);
-
+      await Promise.all(
+        new_notifications.map(note =>
+          sendUserNotification({
+            forUserId: note.forUser,
+            eventName: "scorecard-invite",
+            payload: {
+              message: note.message,
+              scorecardId: scorecardId,
+              courseName: course.name
+            },
+            localNotification: {
+              fromUser: note.fromUser,
+              type: note.type,
+              message: note.message,
+              scorecardId
+            }
+          })
+        )
+      );
     }
 
     res.status(201).json({
@@ -945,10 +998,20 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
       console.log('updateResult', updateResult);
     }
 
-    pusher.trigger(req.user._id.toString(), "scorecard-invite-answered", {
-      message: 'Fore!',
-      from: req.user._id,
-      to: userId
+    await sendUserNotification({
+      forUserId: req.user._id,
+      eventName: "scorecard-invite-answered",
+      payload: {
+        message: 'Fore!',
+        senderUsername: req.user.username,
+        senderId: req.user._id,
+        receiverId: userId
+      },
+      localNotification: {
+        fromUser: req.user._id,
+        type: 'scorecard-invite-answered',
+        message: `${req.user.username} ${answer} your scorecard invite`
+      }
     });
 
     res.status(200).json({ inviteStatus });
@@ -1399,17 +1462,44 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
     const recipientIds = scorecard.invites.map(p => p.invitedUserId);
 
-    recipientIds.forEach(id => {
-      try {
-        pusher.trigger(id, "scorecard-result-added", {
-          message: 'Fore!',
-          from: req.user._id,
-          scorecardId
-        });
-      } catch (e) {
-        console.error('Error sending scorecard-result-added notification:', e);
+    try {
+      const now = new Date();
+      const db = getDatabase();
+      const localNotificationsCollection = db.collection('local-notifications');
+
+      const notifications = recipientIds.map(id => ({
+        forUser: id.toString(),
+        fromUser: req.user._id,
+        type: 'scorecard-result-added',
+        message: 'Fore!',
+        scorecardId,
+        status: 'unseen',
+        createdAt: now
+      }));
+
+      await Promise.all(
+        recipientIds.map(id =>
+
+          sendUserNotification({
+            forUserId: id,
+            eventName: "scorecard-result-added",
+            localNotification: {
+              fromUser: req.user._id,
+              type: 'scorecard-result-added',
+              message: `result added to scorecard`,
+              scorecardId
+            }
+          })
+
+        )
+      );
+
+      if (notifications.length) {
+        await localNotificationsCollection.insertMany(notifications);
       }
-    });
+    } catch (e) {
+      console.error('Error sending scorecard-result-added notifications:', e);
+    }
 
     res.status(201).json({ message: 'Result saved to scorecard', result: resultObj, roundComplete: allResultsEntered });
 
@@ -1501,11 +1591,51 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       updatedResult.earnedBadges = earnedBadges;
     }
 
-    updatedResult.invites.forEach(invite => {
-      pusher.trigger(invite.invitedUserId, "scorecard-completed", {
-        scorecardId: scorecardId
-      });
-    });
+    try {
+      const now = new Date();
+      const db = getDatabase();
+      const localNotificationsCollection = db.collection('local-notifications');
+
+      const notifications = updatedResult.invites.map(invite => ({
+        forUser: invite.invitedUserId.toString(),
+        fromUser: updatedResult.creatorId,
+        type: 'scorecard-completed',
+        message: 'Scorecard completed',
+        scorecardId,
+        status: 'unseen',
+        createdAt: now
+      }));
+
+      await Promise.all(
+        updatedResult.invites.map(invite =>
+
+          sendUserNotification({
+            forUserId: invite.invitedUserId,
+            eventName: "scorecard-completed",
+            payload: {
+              message: 'Scorecard completed',
+              senderUsername: senderUsername,
+              senderId: req.user._id,
+              receiverId: userId,
+              scorecardId: scorecardId
+            },
+            localNotification: {
+              fromUser: req.user._id,
+              type: 'scorecard-completed',
+              message: 'Scorecard completed',
+              scorecardId: scorecardId
+            }
+          })
+
+        )
+      );
+
+      if (notifications.length) {
+        await localNotificationsCollection.insertMany(notifications);
+      }
+    } catch (e) {
+      console.error('Error sending scorecard-completed notifications:', e);
+    }
     
     const course = updatedResult.courseId 
       ? await coursesCollection.findOne({ _id: new ObjectId(updatedResult.courseId) })
@@ -2503,7 +2633,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
       const data = fairwayByMonthYear[key] || { totalHoles: 0, fairwayCount: 0, c1Count: 0, c2Count: 0, parOrBetterCount: 0 };
       fairwayRatePercentageLastYear.push(pct(data.fairwayCount, data.totalHoles));
-      lastYearMonthLabels.push(`${monthNamesShort[d.getMonth()]} ${d.getFullYear()}`);
+      lastYearMonthLabels.push(`${monthNamesShort[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`);
       circle1PercentageLastYear.push(pct(data.c1Count, data.totalHoles));
       circle2PercentageLastYear.push(pct(data.c2Count, data.totalHoles));
       parOrBetterPercentageLastYear.push(pct(data.parOrBetterCount, data.totalHoles));
