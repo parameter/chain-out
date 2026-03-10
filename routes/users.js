@@ -1592,19 +1592,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     }
 
     try {
-      const now = new Date();
-      const db = getDatabase();
-      const localNotificationsCollection = db.collection('local-notifications');
-
-      const notifications = updatedResult.invites.map(invite => ({
-        forUser: invite.invitedUserId.toString(),
-        fromUser: updatedResult.creatorId,
-        type: 'scorecard-completed',
-        message: 'Scorecard completed',
-        scorecardId,
-        status: 'unseen',
-        createdAt: now
-      }));
 
       await Promise.all(
         updatedResult.invites.map(invite =>
@@ -1614,9 +1601,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
             eventName: "scorecard-completed",
             payload: {
               message: 'Scorecard completed',
-              senderUsername: senderUsername,
-              senderId: req.user._id,
-              receiverId: userId,
               scorecardId: scorecardId
             },
             localNotification: {
@@ -1630,9 +1614,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
         )
       );
 
-      if (notifications.length) {
-        await localNotificationsCollection.insertMany(notifications);
-      }
     } catch (e) {
       console.error('Error sending scorecard-completed notifications:', e);
     }
