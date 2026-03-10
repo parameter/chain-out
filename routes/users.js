@@ -2633,7 +2633,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
       const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
       const data = fairwayByMonthYear[key] || { totalHoles: 0, fairwayCount: 0, c1Count: 0, c2Count: 0, parOrBetterCount: 0 };
       fairwayRatePercentageLastYear.push(pct(data.fairwayCount, data.totalHoles));
-      lastYearMonthLabels.push(`${monthNamesShort[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`);
+      lastYearMonthLabels.push(`${monthNamesShort[d.getMonth()]}`);
       circle1PercentageLastYear.push(pct(data.c1Count, data.totalHoles));
       circle2PercentageLastYear.push(pct(data.c2Count, data.totalHoles));
       parOrBetterPercentageLastYear.push(pct(data.parOrBetterCount, data.totalHoles));
