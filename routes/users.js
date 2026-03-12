@@ -982,21 +982,12 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
-    const localNotificationsCollection = db.collection('local-notifications');
 
     const inviteStatus = answer === true ? 'accepted' : 'rejected';
     const result = await scorecardsCollection.updateOne(
       { _id: new ObjectId(scorecardId), "invites.invitedUserId": req.user._id.toString() },
       { $set: { "invites.$.status": inviteStatus } }
     );
-
-    if (result.modifiedCount) {
-      const updateResult = await localNotificationsCollection.updateOne(
-        { _id: new ObjectId(notificationId) },
-        { $set: { status: 'seen' } }
-      );
-      console.log('updateResult', updateResult);
-    }
 
     await sendUserNotification({
       forUserId: req.user._id,
@@ -1463,19 +1454,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const recipientIds = scorecard.invites.map(p => p.invitedUserId);
 
     try {
-      const now = new Date();
-      const db = getDatabase();
-      const localNotificationsCollection = db.collection('local-notifications');
-
-      const notifications = recipientIds.map(id => ({
-        forUser: id.toString(),
-        fromUser: req.user._id,
-        type: 'scorecard-result-added',
-        message: 'Fore!',
-        scorecardId,
-        status: 'unseen',
-        createdAt: now
-      }));
 
       await Promise.all(
         recipientIds.map(id =>
@@ -1494,9 +1472,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         )
       );
 
-      if (notifications.length) {
-        await localNotificationsCollection.insertMany(notifications);
-      }
     } catch (e) {
       console.error('Error sending scorecard-result-added notifications:', e);
     }
@@ -1590,33 +1565,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       );
       updatedResult.earnedBadges = earnedBadges;
     }
-
-    try {
-
-      await Promise.all(
-        updatedResult.invites.map(invite =>
-
-          sendUserNotification({
-            forUserId: invite.invitedUserId,
-            eventName: "scorecard-completed",
-            payload: {
-              message: 'Scorecard completed',
-              scorecardId: scorecardId
-            },
-            localNotification: {
-              fromUser: req.user._id,
-              type: 'scorecard-completed',
-              message: 'Scorecard completed',
-              scorecardId: scorecardId
-            }
-          })
-
-        )
-      );
-
-    } catch (e) {
-      console.error('Error sending scorecard-completed notifications:', e);
-    }
     
     const course = updatedResult.courseId 
       ? await coursesCollection.findOne({ _id: new ObjectId(updatedResult.courseId) })
@@ -1640,6 +1588,30 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     );
 
     console.log('check 1', allUserIds);
+
+    // Notify everyone involved with the scorecard (invited users, added players, and creator)
+    try {
+      await Promise.all(
+        allUserIds.map(userId =>
+          sendUserNotification({
+            forUserId: userId,
+            eventName: "scorecard-completed",
+            payload: {
+              message: 'Scorecard completed',
+              scorecardId: scorecardId
+            },
+            localNotification: {
+              fromUser: req.user._id,
+              type: 'scorecard-completed',
+              message: 'Scorecard completed',
+              scorecardId: scorecardId
+            }
+          })
+        )
+      );
+    } catch (e) {
+      console.error('Error sending scorecard-completed notifications:', e);
+    }
 
     const users =
       allUserIds.length > 0
