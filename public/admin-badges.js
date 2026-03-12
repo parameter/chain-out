@@ -1025,7 +1025,7 @@ function populateBadgeForm(badge) {
     // Badge properties
     document.getElementById('badgeTier').value = badge.tier || 'bronze';
     document.getElementById('badgeDifficulty').value = badge.difficulty || 'easy';
-    document.getElementById('badgeAnimation').value = badge.animation || 'pulse';
+    document.getElementById('badgeAnimation').value = badge.animation || 'none';
     document.getElementById('badgePoints').value = badge.points || '';
     
     // Handle isUnique checkbox if it exists
@@ -1359,7 +1359,7 @@ function addNewBadge() {
         type: "unique", // New type field
         tier: "bronze",
         difficulty: "easy",
-        animation: "pulse",
+        animation: "none",
         condition: (results, layout) => {
             // Your condition logic here
             return 0;

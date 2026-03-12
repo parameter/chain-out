@@ -645,6 +645,17 @@ router.get('/badges', (req, res) => {
                             <option value="secret">Secret</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label for="badgeAnimation">Animation:</label>
+                        <select id="badgeAnimation" name="animation">
+                            <option value="none">None</option>
+                            <option value="pulse">Pulse</option>
+                            <option value="bounce">Bounce</option>
+                            <option value="rotate">Rotate</option>
+                            <option value="glow">Glow</option>
+                        </select>
+                    </div>
                     
                     <!-- Basic Information -->
                     <div class="form-row">
@@ -769,15 +780,6 @@ router.get('/badges', (req, res) => {
                         </div>
                         
                         <div class="form-row">
-                            <div class="form-group">
-                                <label for="badgeAnimation">Animation:</label>
-                                <select id="badgeAnimation" name="animation">
-                                    <option value="pulse">Pulse</option>
-                                    <option value="bounce">Bounce</option>
-                                    <option value="rotate">Rotate</option>
-                                    <option value="glow">Glow</option>
-                                </select>
-                            </div>
                             <div class="form-group">
                                 <label for="badgePoints">Points:</label>
                                 <input type="number" id="badgePoints" name="points" min="0">
