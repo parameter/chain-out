@@ -1814,21 +1814,28 @@ router.get('/local-notifications', requireAuth, async (req, res) => {
 
 
 router.post('/local-notifications/mark-as-seen', requireAuth, async (req, res) => {
-  const { notificationId } = req.body;
+  const { notificationId, notificationIds } = req.body;
 
   const db = getDatabase();
   const localNotificationsCollection = db.collection('local-notifications');
 
-  const notifications = await localNotificationsCollection.updateOne(
-    { _id: new ObjectId(notificationId), forUser: req.user._id.toString() },
-    { $set: { status: 'seen' } }
-  );
+  if (notificationId) {
 
-  if (!notifications) {
-    return res.status(404).json({ message: 'notifications not found' });
+    await localNotificationsCollection.updateOne(
+      { _id: new ObjectId(notificationId), forUser: req.user._id.toString() },
+      { $set: { status: 'seen' } }
+    );
+    
+  } else if (notificationIds) {
+
+    await localNotificationsCollection.updateMany(
+      { _id: { $in: notificationIds.map(id => new ObjectId(id)) }, forUser: req.user._id.toString() },
+      { $set: { status: 'seen' } }
+    );
+
   }
 
-  res.json({ notifications });
+  res.json({ success: true });
 });
 
 
