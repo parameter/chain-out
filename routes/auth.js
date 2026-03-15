@@ -9,6 +9,8 @@ const { generateVerificationToken, sendVerificationEmail, sendPasswordResetEmail
 
 const router = express.Router();
 
+const requireAuth = passport.authenticate('jwt', { session: false });
+
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
@@ -107,6 +109,45 @@ router.post('/login', (req, res, next) => {
 
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out (token invalidation is client-side for JWT)' });
+});
+
+// Expo push token: store for React Native push notifications
+router.post('/push-token', requireAuth, [
+  body('pushToken').trim().notEmpty().withMessage('pushToken is required').isLength({ max: 256 }),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { pushToken } = req.body;
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+    await usersCollection.updateOne(
+      { _id: req.user._id },
+      { $set: { expoPushToken: pushToken, updated_at: new Date() } }
+    );
+    return res.status(200).json({ message: 'Push token saved' });
+  } catch (error) {
+    console.error('Push token save error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove stored Expo push token (e.g. on logout)
+router.delete('/push-token', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const usersCollection = db.collection('users');
+    await usersCollection.updateOne(
+      { _id: req.user._id },
+      { $unset: { expoPushToken: '' }, $set: { updated_at: new Date() } }
+    );
+    return res.status(200).json({ message: 'Push token removed' });
+  } catch (error) {
+    console.error('Push token remove error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
 });
 
 router.get('/status', (req, res) => {
