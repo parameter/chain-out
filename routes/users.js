@@ -1513,6 +1513,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
           sendUserNotification({
             forUserId: id,
             eventName: "scorecard-result-added",
+            payload: {
+              message: 'Scorecard completed',
+              scorecardId: scorecardId
+            },
             localNotification: {
               fromUser: req.user._id,
               type: 'scorecard-result-added',
