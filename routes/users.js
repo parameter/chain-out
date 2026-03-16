@@ -21,16 +21,21 @@ const pusher = new Pusher({
 });
 
 
-async function sendUserNotification({ forUserId, eventName, payload, localNotification }) {
+
+async function sendUserNotification({ forUserId, eventName, payload, expoPush, localNotification }) {
+
+  var db = getDatabase();
+
+  // The realtime 
   try {
     await pusher.trigger(forUserId.toString(), eventName, payload);
   } catch (e) {
     console.error('Error sending pusher notification:', e);
   }
 
+  //the message queue
   if (localNotification) {
     try {
-      const db = getDatabase();
       const localNotificationsCollection = db.collection('local-notifications');
       await localNotificationsCollection.insertOne({
         forUser: forUserId.toString(),
@@ -42,10 +47,37 @@ async function sendUserNotification({ forUserId, eventName, payload, localNotifi
       console.error('Error saving local notification:', e);
     }
   }
+
+  // the push 
+  if (expoPush) {
+    try {
+      const pushTokensCollection = db.collection('user-push-tokens');
+      const expoPushToken = await pushTokensCollection.findOne({ userId: forUserId });
+      await sendExpoPush({ to: expoPushToken, title: expoPush.title, body: expoPush.body, data: payload });
+    } catch (e) {
+      console.error('Error sending Expo push notification:', e);
+    }
+  }
+
 }
 
+async function sendExpoPush({ to, title, body, data }) {
+  if (!to) return; // no token, skip
 
-
+  try {
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ to, title, body, data })
+    });
+  } catch (e) {
+    console.error('Error sending Expo push notification:', e);
+  }
+}
 
 
 /*
@@ -446,6 +478,10 @@ router.post('/send-friend-request', requireAuth, async (req, res) => {
       await sendUserNotification({
         forUserId: userId,
         eventName: "friend-request-sent",
+        expoPush: {
+          title: `${senderUsername} sent you a friend request`,
+          body: `${senderUsername} sent you a friend request`,
+        },
         payload: {
           message: `${senderUsername} sent you a friend request`,
           senderUsername: senderUsername,
@@ -491,6 +527,10 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     await sendUserNotification({
       forUserId: userId,
       eventName: "friend-request-answered",
+      expoPush: {
+        title: `${senderUsername} ${answer} your friend request`,
+        body: `${senderUsername} ${answer} your friend request`,
+      },
       payload: {
         message: `${senderUsername} ${answer} your friend request`,
         from: req.user._id,
@@ -733,6 +773,10 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     await sendUserNotification({
       forUserId: userId,
       eventName: "new-fore",
+      expoPush: {
+        title: `Fore!`,
+        body: `Fore!`,
+      },
       payload: {
         message: 'Fore!',
         from: req.user._id,
@@ -940,6 +984,10 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
           sendUserNotification({
             forUserId: note.forUser,
             eventName: "scorecard-invite",
+            expoPush: {
+              title: `${req.user.username} has invited you to a scorecard`,
+              body: `${req.user.username} has invited you to a scorecard`,
+            },
             payload: {
               message: note.message,
               scorecardId: scorecardId,
@@ -992,6 +1040,10 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
     await sendUserNotification({
       forUserId: req.user._id,
       eventName: "scorecard-invite-answered",
+      expoPush: {
+        title: `${req.user.username} ${answer} your scorecard invite`,
+        body: `${req.user.username} ${answer} your scorecard invite`,
+      },
       payload: {
         message: 'Fore!',
         senderUsername: req.user.username,
@@ -1599,6 +1651,10 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
             payload: {
               message: 'Scorecard completed',
               scorecardId: scorecardId
+            },
+            expoPush: {
+              title: `Scorecard completed`,
+              body: `Scorecard completed`,
             },
             localNotification: {
               fromUser: req.user._id,

@@ -90,8 +90,8 @@ router.post('/login', (req, res, next) => {
 
     const token = jwt.sign(
       { sub: user._id, userType: user.userType },
-      process.env.JWT_SECRET || 'your-jwt-secret-change-this',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      process.env.JWT_SECRET || 'i72n342q-2c48btyyoq93n4---c98274c982374c982-734c98235B86M374c92--8374c92834c',
+      { expiresIn: process.env.JWT_EXPIRES_IN || '14d' }
     );
 
     return res.json({
@@ -111,7 +111,7 @@ router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out (token invalidation is client-side for JWT)' });
 });
 
-// Expo push token: store for React Native push notifications
+// Expo push token: store for React Native push notifications (separate collection)
 router.post('/push-token', requireAuth, [
   body('pushToken').trim().notEmpty().withMessage('pushToken is required').isLength({ max: 256 }),
 ], async (req, res) => {
@@ -122,10 +122,19 @@ router.post('/push-token', requireAuth, [
     }
     const { pushToken } = req.body;
     const db = getDatabase();
-    const usersCollection = db.collection('users');
-    await usersCollection.updateOne(
-      { _id: req.user._id },
-      { $set: { expoPushToken: pushToken, updated_at: new Date() } }
+    const pushTokensCollection = db.collection('user-push-tokens');
+    await pushTokensCollection.updateOne(
+      { userId: req.user._id },
+      {
+        $set: {
+          pushToken,
+          updated_at: new Date(),
+        },
+        $setOnInsert: {
+          created_at: new Date(),
+        },
+      },
+      { upsert: true }
     );
     return res.status(200).json({ message: 'Push token saved' });
   } catch (error) {
@@ -138,17 +147,16 @@ router.post('/push-token', requireAuth, [
 router.delete('/push-token', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
-    const usersCollection = db.collection('users');
-    await usersCollection.updateOne(
-      { _id: req.user._id },
-      { $unset: { expoPushToken: '' }, $set: { updated_at: new Date() } }
-    );
+    const pushTokensCollection = db.collection('user-push-tokens');
+    await pushTokensCollection.deleteOne({ userId: req.user._id });
     return res.status(200).json({ message: 'Push token removed' });
   } catch (error) {
     console.error('Push token remove error:', error);
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
+
 
 router.get('/status', (req, res) => {
   if (req.isAuthenticated()) {
