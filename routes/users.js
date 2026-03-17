@@ -1277,6 +1277,66 @@ router.get('/scorecards', requireAuth, async (req, res) => {
 });
 
 
+router.get('/scorecard', requireAuth, async (req, res) => {
+  const { scorecardId } = req.query;
+  if (!scorecardId) {
+    return res.status(400).json({ message: 'scorecardId is required' });
+  }
+
+  const db = getDatabase();
+  const scorecardsCollection = db.collection('scorecards');
+  const usersCollection = db.collection('users');
+
+  const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
+
+  if (!scorecard) {
+    return res.status(404).json({ message: 'Scorecard not found' });
+  }
+
+  const invitedIds = Array.isArray(scorecard.invites) && scorecard.invites.length > 0
+    ? scorecard.invites.map(i => i.invitedUserId)
+    : [];
+
+  const creatorId = scorecard.creatorId ? [scorecard.creatorId] : [];
+
+  let addedIds = [];
+  if (Array.isArray(scorecard.added)) {
+    addedIds = scorecard.added.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
+  } else if (Array.isArray(scorecard.players)) {
+    addedIds = scorecard.players.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
+  }
+
+  const allUserIds = Array.from(
+    new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
+  );
+
+  const users =
+    allUserIds.length > 0
+      ? await usersCollection
+          .find({ _id: { $in: allUserIds.map(id => new ObjectId(id)) } })
+          .project({ _id: 1, username: 1, email: 1 }) // include any additional fields if needed
+          .toArray()
+      : [];
+
+  const userMap = {};
+  users.forEach(u => (userMap[u._id.toString()] = u));
+
+  const participants = allUserIds.map(userId => {
+    const userObj = userMap[userId];
+    if (userObj) {
+      return { _id: userObj._id, username: userObj.username, email: userObj.email };
+    }
+    return { _id: userId };
+  });
+
+  const expandedScorecard = {
+    ...scorecard,
+    participants,
+  };
+
+  res.status(200).json({ scorecard: expandedScorecard });
+});
+
 
 router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
   const { scorecardId } = req.query;
@@ -1352,8 +1412,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       specifics,
       timestamp
     } = req.body;
-
-    console.log('req.body', req.body);
 
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
