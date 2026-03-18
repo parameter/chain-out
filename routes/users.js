@@ -916,7 +916,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     // Prepare invite objects
     const now = new Date();
     const invites = userIds.map(uid => ({
-      invitedUserId: uid,
+      invitedUserId: new ObjectId(uid),
       invitedBy: req.user._id,
       status: 'pending',
       date: now
@@ -1033,7 +1033,7 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
 
     const inviteStatus = answer === true ? 'accepted' : 'rejected';
     const result = await scorecardsCollection.updateOne(
-      { _id: new ObjectId(scorecardId), "invites.invitedUserId": req.user._id.toString() },
+      { _id: new ObjectId(scorecardId), "invites.invitedUserId": req.user._id },
       { $set: { "invites.$.status": inviteStatus } }
     );
 
