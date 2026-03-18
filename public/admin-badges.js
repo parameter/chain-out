@@ -463,6 +463,14 @@ async function displayBadges() {
         if (badge.done) className += ' done';
         
         badgeItem.className = className;
+        badgeItem.dataset.badgeIndex = String(index);
+        badgeItem.dataset.requiresHistoricalData = String(!!badge.requiresHistoricalData);
+        badgeItem.dataset.requiresWeatherApi = String(!!badge.requiresWeatherAPI);
+        badgeItem.dataset.requiresDate = String(!!badge.requiresDate);
+        badgeItem.dataset.trackTierThresholdZync = String(!!badge.trackTierThresholdZync);
+        badgeItem.dataset.doubles = String(!!badge.doubles);
+        badgeItem.dataset.isUnique = String(!!badge.isUnique);
+        badgeItem.dataset.trackUniqueCourses = String(!!badge.trackUniqueCourses);
         badgeItem.innerHTML = `
             <div class="badge-header">
                 <div class="badge-name">${badge.name}</div>
@@ -585,6 +593,45 @@ async function displayBadges() {
         btn.classList.remove('hidden');
     });
     
+    applyBadgeFilters();
+}
+
+function getBadgeFilterState() {
+    const requiresHistoricalData = document.getElementById('filter-requiresHistoricalData')?.checked ?? false;
+    const requiresWeatherAPI = document.getElementById('filter-requiresWeatherAPI')?.checked ?? false;
+    const requiresDate = document.getElementById('filter-requiresDate')?.checked ?? false;
+    const trackTierThresholdZync = document.getElementById('filter-trackTierThresholdZync')?.checked ?? false;
+    const doubles = document.getElementById('filter-doubles')?.checked ?? false;
+    const isUnique = document.getElementById('filter-isUnique')?.checked ?? false;
+    const trackUniqueCourses = document.getElementById('filter-trackUniqueCourses')?.checked ?? false;
+
+    return {
+        requiresHistoricalData,
+        requiresWeatherAPI,
+        requiresDate,
+        trackTierThresholdZync,
+        doubles,
+        isUnique,
+        trackUniqueCourses
+    };
+}
+
+function applyBadgeFilters() {
+    const filters = getBadgeFilterState();
+    const badgeItems = document.querySelectorAll('#badgeList .badge-item');
+
+    badgeItems.forEach((el) => {
+        const matches =
+            (!filters.requiresHistoricalData || el.dataset.requiresHistoricalData === 'true') &&
+            (!filters.requiresWeatherAPI || el.dataset.requiresWeatherApi === 'true') &&
+            (!filters.requiresDate || el.dataset.requiresDate === 'true') &&
+            (!filters.trackTierThresholdZync || el.dataset.trackTierThresholdZync === 'true') &&
+            (!filters.doubles || el.dataset.doubles === 'true') &&
+            (!filters.isUnique || el.dataset.isUnique === 'true') &&
+            (!filters.trackUniqueCourses || el.dataset.trackUniqueCourses === 'true');
+
+        el.style.display = matches ? '' : 'none';
+    });
 }
 
 
@@ -1396,6 +1443,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners for main buttons
     document.getElementById('addNewBadgeBtn').addEventListener('click', addNewBadge);
+
+    // Filter event listeners
+    document.getElementById('applyFilters')?.addEventListener('click', applyBadgeFilters);
 
     // Modal event listeners
     document.getElementById('closeModal').addEventListener('click', closeBadgeModal);

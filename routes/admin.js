@@ -624,6 +624,42 @@ router.get('/badges', (req, res) => {
                 
             </div>
 
+            <!-- Filter section, being able to filter badges on requiresHistoricalData, requiresWeatherAPI, requiresDate, trackTierThresholdZync, doubles, isUnique, trackUniqueCourses -->
+            <div class="filter-section">
+                <h3>🔍 Filter</h3>
+                <div class="filter-form">
+                    <div class="form-group">
+                        <label for="filter-requiresHistoricalData">Requires Historical Data</label>
+                        <input type="checkbox" id="filter-requiresHistoricalData" name="requiresHistoricalData">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-requiresWeatherAPI">Requires Weather API</label>
+                        <input type="checkbox" id="filter-requiresWeatherAPI" name="requiresWeatherAPI">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-requiresDate">Requires Date</label>
+                        <input type="checkbox" id="filter-requiresDate" name="requiresDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-trackTierThresholdZync">Track Tier Threshold Zync</label>
+                        <input type="checkbox" id="filter-trackTierThresholdZync" name="trackTierThresholdZync">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-doubles">Doubles</label>
+                        <input type="checkbox" id="filter-doubles" name="doubles">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-isUnique">Is Unique</label>
+                        <input type="checkbox" id="filter-isUnique" name="isUnique">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-trackUniqueCourses">Track Unique Courses</label>
+                        <input type="checkbox" id="filter-trackUniqueCourses" name="trackUniqueCourses">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+            </div>
+
         </div>
     </div>
 
