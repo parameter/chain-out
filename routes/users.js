@@ -1436,9 +1436,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     // Determine if entityId is a playerId (ObjectId) or teamName (string)
     // For singles mode, entityId is playerId. For doubles/team mode, entityId is teamName.
     // Store entityId consistently: convert to ObjectId if valid, otherwise keep as string
-    const entityIdToStore = ObjectId.isValid(entityId) 
-      ? new ObjectId(entityId) 
-      : entityId;
+    const entityIdToStore = new ObjectId(entityId);
 
     const resultObj = {
       entityId: entityIdToStore,
@@ -1469,11 +1467,9 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       ]
     };
 
-    // For comparison in MongoDB aggregation, compare entityId values
+    // For comparison in MongoDB aggregation,   compare entityId values
     // Use string comparison to handle both ObjectId and string cases consistently
-    const entityIdMatchCondition = ObjectId.isValid(entityId)
-      ? { $eq: [{ $toString: '$$r.entityId' }, String(entityId)] }
-      : { $eq: ['$$r.entityId', entityId] };
+    const entityIdMatchCondition = { $eq: ['$$r.entityId', new ObjectId(entityId)] };
 
     const updatePipeline = [
       {
