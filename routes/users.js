@@ -1462,7 +1462,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         notCompleted,
         {
           $or: [
-            { invites: { $elemMatch: { invitedUserId: req.user._id.toString() } } },
+            { invites: { $elemMatch: { invitedUserId: req.user._id } } },
             { creatorId: req.user._id }
           ]
         }
@@ -1562,10 +1562,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         return res.status(404).json({ message: 'Scorecard not found' });
       }
       if (scorecard.status === 'completed') {
-        console.log('round is already completed');
+        console.log('Cannot update result: round is already completed');
         return res.status(403).json({ message: 'Cannot update result: round is already completed', roundComplete: true });
       }
-      console.log('you are not invited to this scorecard');
+      console.log('You are not invited to this scorecard');
       return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
