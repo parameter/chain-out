@@ -821,6 +821,15 @@ router.get('/badges', (req, res) => {
                                 <input type="number" id="badgePoints" name="points" min="0">
                             </div>
                         </div>
+
+                        <!-- unique badge but with progress (asProgress) -->
+                        <div class="form-group">
+                            <label for="badgeAsProgress">As Progress</label>
+                            <input type="checkbox" id="badgeAsProgress" name="asProgress">
+                        </div>
+                        <small style="display: block; color: #666; margin-top: 5px;">
+                            When enabled, this badge will be tracked as progress.
+                        </small>
                     </div>
                     
                     <!-- Tier Configuration (for tiered and unique-with-thresholds badges) -->

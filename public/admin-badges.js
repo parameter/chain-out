@@ -1080,6 +1080,12 @@ function populateBadgeForm(badge) {
     if (isUniqueCheckbox) {
         isUniqueCheckbox.checked = badge.isUnique || false;
     }
+
+    // Handle asProgress checkbox (unique badge progress tracking)
+    const asProgressCheckbox = document.getElementById('badgeAsProgress');
+    if (asProgressCheckbox) {
+        asProgressCheckbox.checked = badge.asProgress || false;
+    }
     
     // Handle trackUniqueCourses checkbox
     const trackUniqueCoursesCheckbox = document.getElementById('trackUniqueCourses');
@@ -1269,6 +1275,7 @@ function collectBadgeFormData() {
         animation: document.getElementById('badgeAnimation').value,
         points: parseInt(document.getElementById('badgePoints').value) || 0,
         isUnique: document.getElementById('badgeIsUnique') ? document.getElementById('badgeIsUnique').checked : false,
+        asProgress: document.getElementById('badgeAsProgress') ? document.getElementById('badgeAsProgress').checked : false,
         trackUniqueCourses: document.getElementById('trackUniqueCourses') ? document.getElementById('trackUniqueCourses').checked : false,
         trackTierThresholdZync: document.getElementById('trackTierThresholdZync') ? document.getElementById('trackTierThresholdZync').checked : false,
         doubles: document.getElementById('badgeDoubles') ? document.getElementById('badgeDoubles').checked : false,
@@ -1403,6 +1410,7 @@ function addNewBadge() {
         name: "New Badge",
         quote: "A new badge description",
         isUnique: false,
+        asProgress: false,
         type: "unique", // New type field
         tier: "bronze",
         difficulty: "easy",
