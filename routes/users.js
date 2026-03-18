@@ -1414,6 +1414,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       specifics,
       timestamp
     } = req.body;
+    
+    console.log('req.body', req.body);
 
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
@@ -1560,8 +1562,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         return res.status(404).json({ message: 'Scorecard not found' });
       }
       if (scorecard.status === 'completed') {
+        console.log('round is already completed');
         return res.status(403).json({ message: 'Cannot update result: round is already completed', roundComplete: true });
       }
+      console.log('you are not invited to this scorecard');
       return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
