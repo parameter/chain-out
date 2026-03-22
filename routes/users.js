@@ -1604,7 +1604,9 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
 router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
   try {
-    const { scorecardId, entityId } = req.body;
+    const { scorecardId, entityId, entityType } = req.body;
+
+    console.log('req.body', req.body);
 
     if (!scorecardId || !playerId) {
       return res.status(400).json({ message: 'scorecardId and playerId are required' });
