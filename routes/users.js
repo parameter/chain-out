@@ -1608,7 +1608,7 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
 
     console.log('req.body', req.body);
 
-    if (!scorecardId || !playerId) {
+    if (!scorecardId || !entityId) {
       return res.status(400).json({ message: 'scorecardId and playerId are required' });
     }
 
