@@ -1563,7 +1563,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
-    const recipientIds = scorecard.invites.map(p => p.invitedUserId);
+    const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
 
     try {
 
@@ -1572,14 +1572,14 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
           sendUserNotification({
             forUserId: id,
-            eventName: "scorecard-result-added",
+            eventName: "scorecard-updated",
             payload: {
-              message: 'Scorecard completed',
+              message: 'Scorecard updated',
               scorecardId: scorecardId
             },
             localNotification: {
               fromUser: req.user._id,
-              type: 'scorecard-result-added',
+              type: 'scorecard-updated',
               message: `result added to scorecard`,
               scorecardId
             }
@@ -1589,7 +1589,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       );
 
     } catch (e) {
-      console.error('Error sending scorecard-result-added notifications:', e);
+      console.error('Error sending scorecard-updated notifications:', e);
     }
 
     res.status(201).json({ message: 'Result saved to scorecard', result: resultObj, roundComplete: allResultsEntered });
@@ -1615,15 +1615,48 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
-    const  updatedResult = await scorecardsCollection.updateOne(
+    // return the updated scorecard after the update
+    const updatedScorecard = await scorecardsCollection.findOneAndUpdate(
       {
         _id: new ObjectId(scorecardId)
       },
-      { $addToSet: { 'dnf': entityId } }
+      { $addToSet: { 'dnf': entityId } },
+      { returnDocument: 'after' }
     );
 
-    if (updatedResult.matchedCount === 0) {
-      return res.status(404).json({ message: 'Scorecard not found or player is not on the invite list' });
+    const scorecard = updatedScorecard;
+    
+    if (!scorecard) {
+      return res.status(404).json({ message: 'Scorecard not found' });
+    }
+
+    const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
+
+    try {
+
+      await Promise.all(
+        recipientIds.map(id =>
+
+          sendUserNotification({
+            forUserId: id,
+            eventName: "scorecard-updated",
+            payload: {
+              message: 'Scorecard updated',
+              scorecardId: scorecardId
+            },
+            localNotification: {
+              fromUser: req.user._id,
+              type: 'scorecard-updated',
+              message: `DNF`,
+              scorecardId
+            }
+          })
+
+        )
+      );
+
+    } catch (e) {
+      console.error('Error sending scorecard-updated notifications:', e);
     }
 
     res.status(200).json({ message: 'Player DNF set' });
