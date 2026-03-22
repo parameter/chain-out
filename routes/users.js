@@ -1415,8 +1415,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       specifics,
       timestamp
     } = req.body;
-
-    console.log('req.body', req.body);
     
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
@@ -1432,6 +1430,11 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
     if (!scorecard) {
       return res.status(404).json({ message: 'Scorecard not found' });
+    }
+
+    // return if entityId is in the dnf array
+    if (scorecard.dnf.includes(entityId)) {
+      return res.status(400).json({ message: 'Entity is DNF' });
     }
 
     const entityIdForStorage = entityType === 'player' ? new ObjectId(entityId) : entityId;
@@ -1671,24 +1674,56 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
 
 router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
   try {
-    const { scorecardId, playerId } = req.body;
+    const { scorecardId, entityId } = req.body;
 
-    if (!scorecardId || !playerId) {
-      return res.status(400).json({ message: 'scorecardId and playerId are required' });
+    if (!scorecardId || !entityId) {
+      return res.status(400).json({ message: 'scorecardId and entityId are required' });
     }
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
-    const updatedResult = await scorecardsCollection.updateOne(
+    const updatedScorecard = await scorecardsCollection.findOneAndUpdate(
       {
         _id: new ObjectId(scorecardId),
-        invites: { $elemMatch: { invitedUserId: playerId } }
+        invites: { $elemMatch: { invitedUserId: entityId } }
       },
-      { $pull: { invites: { invitedUserId: playerId } } }
+      { $pull: { invites: { invitedUserId: entityId } } },
+      { returnDocument: 'after' }
     );
 
-    if (updatedResult.matchedCount === 0) {
-      return res.status(404).json({ message: 'Scorecard not found or player is not on the invite list' });
+    if (!updatedScorecard) {
+      return res.status(404).json({ message: 'Scorecard not found' });
+    }
+
+    const scorecard = updatedScorecard;
+
+    const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
+
+    try {
+
+      await Promise.all(
+        recipientIds.map(id =>
+
+          sendUserNotification({
+            forUserId: id,
+            eventName: "scorecard-updated",
+            payload: {
+              message: 'Scorecard updated',
+              scorecardId: scorecardId
+            },
+            localNotification: {
+              fromUser: req.user._id,
+              type: 'scorecard-updated',
+              message: `DNF`,
+              scorecardId
+            }
+          })
+
+        )
+      );
+
+    } catch (e) {
+      console.error('Error sending scorecard-updated notifications:', e);
     }
 
     res.status(200).json({ message: 'Player removed from scorecard' });
