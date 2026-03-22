@@ -1627,6 +1627,9 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
     } else if (entityType === 'team') {
 
       // here since entityId for a team is "team-0", "team-1" we need to extract the number and use it to update the team DNF
+      // scorecard looks like this in the db 
+      
+
       const teamNumber = entityId.split('-')[1];
 
       updatedResult = await scorecardsCollection.updateOne(
