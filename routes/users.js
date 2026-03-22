@@ -1415,6 +1415,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       specifics,
       timestamp
     } = req.body;
+
+    console.log('req.body', req.body);
     
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
