@@ -1415,8 +1415,6 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       timestamp
     } = req.body;
     
-    console.log('req.body', req.body);
-
     const specificsFields = ['c1', 'c2', 'bullseye', 'scramble', 'throwIn'];
     for (const field of specificsFields) {
       if (typeof specifics[field] !== 'boolean') {
@@ -1433,13 +1431,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'Scorecard not found' });
     }
 
-    // Determine if entityId is a playerId (ObjectId) or teamName (string)
-    // For singles mode, entityId is playerId. For doubles/team mode, entityId is teamName.
-    // Store entityId consistently: convert to ObjectId if valid, otherwise keep as string
-    const entityIdToStore = new ObjectId(entityId);
-
     const resultObj = {
-      entityId: entityIdToStore,
+      entityId: entityType === 'player' ? new ObjectId(entityId) : entityId,
       holeNumber,
       score,
       putt,
@@ -1602,7 +1595,79 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/scorecard/set-player-dnf', requireAuth, async (req, res) => {
+  try {
+    const { scorecardId, playerId } = req.body;
 
+    if (!scorecardId || !playerId) {
+      return res.status(400).json({ message: 'scorecardId and playerId are required' });
+    }
+
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+    
+    if (entityType === 'player') {
+
+      const updatedResult = await scorecardsCollection.updateOne(
+        {
+          _id: new ObjectId(scorecardId),
+          invites: { $elemMatch: { invitedUserId: playerId } }
+        },
+        { $set: { 'invites.$.dnf': true } }
+      );
+
+    } else if (entityType === 'team') {
+
+      const updatedResult = await scorecardsCollection.updateOne(
+        {
+          _id: new ObjectId(scorecardId),
+          invites: { $elemMatch: { invitedUserId: entityId } }
+        },
+        { $set: { 'invites.$.dnf': true } }
+      );
+    }
+
+    if (updatedResult.matchedCount === 0) {
+      return res.status(404).json({ message: 'Scorecard not found or player is not on the invite list' });
+    }
+
+    res.status(200).json({ message: 'Player DNF set' });
+
+  } catch (e) {
+      console.error('Error setting player DNF:', e);
+    res.status(500).json({ message: 'Failed to set player DNF' });
+  }
+});
+
+router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
+  try {
+    const { scorecardId, playerId } = req.body;
+
+    if (!scorecardId || !playerId) {
+      return res.status(400).json({ message: 'scorecardId and playerId are required' });
+    }
+
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+    const updatedResult = await scorecardsCollection.updateOne(
+      {
+        _id: new ObjectId(scorecardId),
+        invites: { $elemMatch: { invitedUserId: playerId } }
+      },
+      { $pull: { invites: { invitedUserId: playerId } } }
+    );
+
+    if (updatedResult.matchedCount === 0) {
+      return res.status(404).json({ message: 'Scorecard not found or player is not on the invite list' });
+    }
+
+    res.status(200).json({ message: 'Player removed from scorecard' });
+
+  } catch (e) {
+      console.error('Error removing player from scorecard:', e);
+    res.status(500).json({ message: 'Failed to remove player from scorecard' });
+  }
+});
 
 router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
   try {
