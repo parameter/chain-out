@@ -1617,10 +1617,9 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
 
     const  updatedResult = await scorecardsCollection.updateOne(
       {
-        _id: new ObjectId(scorecardId),
-        invites: { $elemMatch: { invitedUserId: new ObjectId(entityId) } }
+        _id: new ObjectId(scorecardId)
       },
-      { $addToSet: { 'dnf': true } }
+      { $addToSet: { 'dnf': entityId } }
     );
 
     if (updatedResult.matchedCount === 0) {
