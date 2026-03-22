@@ -1621,7 +1621,7 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
       updatedResult = await scorecardsCollection.updateOne(
         {
           _id: new ObjectId(scorecardId),
-          invites: { $elemMatch: { invitedUserId: entityId } }
+          invites: { $elemMatch: { invitedUserId: new ObjectId(entityId) } }
         },
         { $set: { 'invites.$.dnf': true } }
       );
