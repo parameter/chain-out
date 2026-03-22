@@ -1407,6 +1407,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     const {
       scorecardId,
       entityId,
+      entityType,
       holeNumber,
       score,
       putt,
