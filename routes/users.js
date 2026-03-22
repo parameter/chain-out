@@ -1434,8 +1434,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'Scorecard not found' });
     }
 
+    const entityIdForStorage = entityType === 'player' ? new ObjectId(entityId) : entityId;
+
     const resultObj = {
-      entityId: entityType === 'player' ? new ObjectId(entityId) : entityId,
+      entityId: entityIdForStorage,
       holeNumber,
       score,
       putt,
@@ -1465,7 +1467,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
     // For comparison in MongoDB aggregation,   compare entityId values
     // Use string comparison to handle both ObjectId and string cases consistently
-    const entityIdMatchCondition = { $eq: ['$$r.entityId', new ObjectId(entityId)] };
+    const entityIdMatchCondition = { $eq: ['$$r.entityId', entityIdForStorage] };
 
     const updatePipeline = [
       {
