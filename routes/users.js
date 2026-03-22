@@ -1604,7 +1604,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
 
 router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
   try {
-    const { scorecardId, entityId, entityType } = req.body;
+    const { scorecardId, entityId } = req.body;
 
     console.log('req.body', req.body);
 
@@ -1614,34 +1614,14 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
-    
-    var updatedResult;
-    if (entityType === 'player') {
 
-      updatedResult = await scorecardsCollection.updateOne(
-        {
-          _id: new ObjectId(scorecardId),
-          invites: { $elemMatch: { invitedUserId: new ObjectId(entityId) } }
-        },
-        { $set: { 'invites.$.dnf': true } }
-      );
-
-    } else if (entityType === 'team') {
-
-      // here since entityId for a team is "team-0", "team-1" we need to extract the number and use it to update the team DNF
-      // scorecard looks like this in the db 
-      
-
-      const teamNumber = entityId.split('-')[1];
-
-      updatedResult = await scorecardsCollection.updateOne(
-        {
-          _id: new ObjectId(scorecardId),
-          invites: { $elemMatch: { teams: teamNumber } }
-        },
-        { $set: { 'teams.$.dnf': true } }
-      );
-    }
+    const  updatedResult = await scorecardsCollection.updateOne(
+      {
+        _id: new ObjectId(scorecardId),
+        invites: { $elemMatch: { invitedUserId: new ObjectId(entityId) } }
+      },
+      { $addToSet: { 'dnf': true } }
+    );
 
     if (updatedResult.matchedCount === 0) {
       return res.status(404).json({ message: 'Scorecard not found or player is not on the invite list' });
