@@ -1600,9 +1600,11 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/scorecard/set-player-dnf', requireAuth, async (req, res) => {
+
+
+router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
   try {
-    const { scorecardId, playerId } = req.body;
+    const { scorecardId, entityId } = req.body;
 
     if (!scorecardId || !playerId) {
       return res.status(400).json({ message: 'scorecardId and playerId are required' });
@@ -1611,24 +1613,28 @@ router.post('/scorecard/set-player-dnf', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
     
+    var updatedResult;
     if (entityType === 'player') {
 
-      const updatedResult = await scorecardsCollection.updateOne(
+      updatedResult = await scorecardsCollection.updateOne(
         {
           _id: new ObjectId(scorecardId),
-          invites: { $elemMatch: { invitedUserId: playerId } }
+          invites: { $elemMatch: { invitedUserId: entityId } }
         },
         { $set: { 'invites.$.dnf': true } }
       );
 
     } else if (entityType === 'team') {
 
-      const updatedResult = await scorecardsCollection.updateOne(
+      // here since entityId for a team is "team-0", "team-1" we need to extract the number and use it to update the team DNF
+      const teamNumber = entityId.split('-')[1];
+
+      updatedResult = await scorecardsCollection.updateOne(
         {
           _id: new ObjectId(scorecardId),
-          invites: { $elemMatch: { invitedUserId: entityId } }
+          invites: { $elemMatch: { teams: teamNumber } }
         },
-        { $set: { 'invites.$.dnf': true } }
+        { $set: { 'teams.$.dnf': true } }
       );
     }
 
@@ -1643,6 +1649,8 @@ router.post('/scorecard/set-player-dnf', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to set player DNF' });
   }
 });
+
+
 
 router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
   try {
