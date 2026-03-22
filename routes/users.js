@@ -1650,7 +1650,7 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
             localNotification: {
               fromUser: req.user._id,
               type: 'scorecard-updated',
-              message: `DNF`,
+              message: `Scorecard updated`,
               scorecardId
             }
           })
@@ -1714,7 +1714,7 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
             localNotification: {
               fromUser: req.user._id,
               type: 'scorecard-updated',
-              message: `DNF`,
+              message: `Scorecard updated`,
               scorecardId
             }
           })
@@ -1734,6 +1734,8 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
   }
 });
 
+
+
 router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
   try {
     const { scorecardId } = req.body;
@@ -1747,17 +1749,17 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const coursesCollection = db.collection('courses');
     const usersCollection = db.collection('users');
 
-    const updatedResult = await scorecardsCollection.findOneAndUpdate(
+    const updatedScorecard = await scorecardsCollection.findOneAndUpdate(
       { _id: new ObjectId(scorecardId) },
       { $set: { status: 'completed' } },
       { returnDocument: 'after' }
     );
 
-    if (!updatedResult) {
+    if (!updatedScorecard) {
       return res.status(404).json({ message: 'Scorecard not found' });
     }
 
-    let rawResults = updatedResult.results || [];
+    let rawResults = updatedScorecard.results || [];
     
     // Group by both holeNumber AND playerId to keep all players' results
     const latestByHoleAndPlayer = {};
@@ -1779,11 +1781,11 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     let earnedBadges = [];
     try {
       earnedBadges = await searchForEarnedBadges({ 
-        scorecardId: updatedResult._id, 
+        scorecardId: updatedScorecard._id, 
         results: results, 
-        courseId: updatedResult.courseId, 
-        layout: updatedResult.layout,
-        scorecard: updatedResult
+        courseId: updatedScorecard.courseId, 
+        layout: updatedScorecard.layout,
+        scorecard: updatedScorecard
       });
 
       console.log('earnedBadges', earnedBadges);
@@ -1806,29 +1808,35 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       earnedBadges = [];
     }
 
-    if (earnedBadges && earnedBadges.length > 0) {
+    // true if card had two players that completed the round, not in dnf
+    let cardVerified;
+    if (updatedScorecard.invites.length >= 2 && updatedScorecard.invites.every(i => !updatedScorecard.dnf.includes(i.invitedUserId.toString()))) {
+      cardVerified = true;
+    }
+
+    if (earnedBadges) {
       await scorecardsCollection.updateOne(
         { _id: new ObjectId(scorecardId) },
-        { $set: { earnedBadges: earnedBadges } }
+        { $set: { earnedBadges: earnedBadges, verified: cardVerified } }
       );
-      updatedResult.earnedBadges = earnedBadges;
+      updatedScorecard.earnedBadges = earnedBadges;
     }
     
-    const course = updatedResult.courseId 
-      ? await coursesCollection.findOne({ _id: new ObjectId(updatedResult.courseId) })
+    const course = updatedScorecard.courseId 
+      ? await coursesCollection.findOne({ _id: new ObjectId(updatedScorecard.courseId) })
       : null;
 
-    const invitedIds = Array.isArray(updatedResult.invites) && updatedResult.invites.length > 0
-      ? updatedResult.invites.map(i => i.invitedUserId)
+    const invitedIds = Array.isArray(updatedScorecard.invites) && updatedScorecard.invites.length > 0
+      ? updatedScorecard.invites.map(i => i.invitedUserId)
       : [];
 
-    const creatorId = updatedResult.creatorId ? [updatedResult.creatorId.toString()] : [];
+    const creatorId = updatedScorecard.creatorId ? [updatedScorecard.creatorId.toString()] : [];
 
     let addedIds = [];
-    if (Array.isArray(updatedResult.added)) {
-      addedIds = updatedResult.added.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
-    } else if (Array.isArray(updatedResult.players)) {
-      addedIds = updatedResult.players.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
+    if (Array.isArray(updatedScorecard.added)) {
+      addedIds = updatedScorecard.added.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
+    } else if (Array.isArray(updatedScorecard.players)) {
+      addedIds = updatedScorecard.players.map(a => typeof a === 'string' ? a : a.userId || a._id).filter(Boolean);
     }
 
     const allUserIds = Array.from(
@@ -1886,15 +1894,15 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     // Extract layout holes
     let layoutHoles = [];
-    if (updatedResult.layout) {
-      if (updatedResult.layout.latestVersion && Array.isArray(updatedResult.layout.latestVersion.holes)) {
-        layoutHoles = updatedResult.layout.latestVersion.holes.map(hole => ({
+    if (updatedScorecard.layout) {
+      if (updatedScorecard.layout.latestVersion && Array.isArray(updatedScorecard.layout.latestVersion.holes)) {
+        layoutHoles = updatedScorecard.layout.latestVersion.holes.map(hole => ({
           holeNumber: hole.number || hole.holeNumber,
           par: hole.par,
           length: hole.length
         }));
-      } else if (Array.isArray(updatedResult.layout.holes)) {
-        layoutHoles = updatedResult.layout.holes.map(hole => ({
+      } else if (Array.isArray(updatedScorecard.layout.holes)) {
+        layoutHoles = updatedScorecard.layout.holes.map(hole => ({
           holeNumber: hole.number || hole.holeNumber,
           par: hole.par,
           length: hole.length
@@ -1915,15 +1923,15 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     // Format response according to CompletedRoundData interface
     const completedRoundData = {
-      scorecard: updatedResult,
+      scorecard: updatedScorecard,
       results: results,
       courseName: course?.name,
-      courseId: updatedResult.courseId?.toString(),
+      courseId: updatedScorecard.courseId?.toString(),
       layout: layoutHoles.length > 0 ? { holes: layoutHoles } : undefined,
       participants: participants,
-      createdAt: updatedResult.createdAt?.toISOString(),
-      date: updatedResult.date?.toISOString() || updatedResult.createdAt?.toISOString(),
-      status: updatedResult.status,
+      createdAt: updatedScorecard.createdAt?.toISOString(),
+      date: updatedScorecard.date?.toISOString() || updatedScorecard.createdAt?.toISOString(),
+      status: updatedScorecard.status,
       geolocation: geolocation,
       country: course?.country
     };
