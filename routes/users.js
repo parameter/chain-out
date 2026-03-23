@@ -1695,25 +1695,26 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
     const { scorecardId, entityId } = req.body;
 
     if (!scorecardId || !entityId) {
-      return res.status(400).json({ message: 'scorecardId and entityId are required' });
+      return res.status(400).json({ message: 'scorecardId and playerId are required' });
     }
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
+
+    // return the updated scorecard after the update
     const updatedScorecard = await scorecardsCollection.findOneAndUpdate(
       {
-        _id: new ObjectId(scorecardId),
-        invites: { $elemMatch: { invitedUserId: entityId } }
+        _id: new ObjectId(scorecardId)
       },
-      { $pull: { invites: { invitedUserId: entityId } } },
+      { $addToSet: { 'removed': { entityId: entityId, userRemoved: req.user._id } } },
       { returnDocument: 'after' }
     );
 
-    if (!updatedScorecard) {
+    const scorecard = updatedScorecard;
+    
+    if (!scorecard) {
       return res.status(404).json({ message: 'Scorecard not found' });
     }
-
-    const scorecard = updatedScorecard;
 
     const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
 
