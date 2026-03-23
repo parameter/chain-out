@@ -1433,7 +1433,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
     }
 
     // return if entityId is in the dnf array
-    if (scorecard.dnf.includes(entityId)) {
+    if (scorecard.dnf && scorecard.dnf.includes(entityId)) {
       return res.status(400).json({ message: 'Entity is DNF' });
     }
 
