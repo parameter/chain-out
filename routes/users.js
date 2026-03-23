@@ -1778,34 +1778,40 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     // Create a sorted array of results by hole number
     const results = Object.values(latestByHoleAndPlayer).sort((a, b) => a.holeNumber - b.holeNumber);
 
+    const shouldSearchBadges = updatedScorecard.mode !== 'doubles';
     let earnedBadges = [];
-    try {
-      earnedBadges = await searchForEarnedBadges({ 
-        scorecardId: updatedScorecard._id, 
-        results: results, 
-        courseId: updatedScorecard.courseId, 
-        layout: updatedScorecard.layout,
-        scorecard: updatedScorecard
-      });
 
-      console.log('earnedBadges', earnedBadges);
+    if (shouldSearchBadges) {
+      try {
+        earnedBadges = await searchForEarnedBadges({
+          scorecardId: updatedScorecard._id,
+          results: results,
+          courseId: updatedScorecard.courseId,
+          layout: updatedScorecard.layout,
+          scorecard: updatedScorecard
+        });
 
-      // Verify that searchForEarnedBadges completed successfully
-      if (!Array.isArray(earnedBadges)) {
-        console.error('❌ [add-result] searchForEarnedBadges returned invalid result:', typeof earnedBadges);
-        earnedBadges = []; // Default to empty array on invalid result
-      } else {
-        console.log('✅ [add-result] Badge search completed successfully. Found badges for', earnedBadges.length, 'player(s)');
         console.log('earnedBadges', earnedBadges);
+
+        // Verify that searchForEarnedBadges completed successfully
+        if (!Array.isArray(earnedBadges)) {
+          console.error('❌ [add-result] searchForEarnedBadges returned invalid result:', typeof earnedBadges);
+          earnedBadges = []; // Default to empty array on invalid result
+        } else {
+          console.log('✅ [add-result] Badge search completed successfully. Found badges for', earnedBadges.length, 'player(s)');
+          console.log('earnedBadges', earnedBadges);
+        }
+      } catch (badgeError) {
+        // Log error but don't fail the entire request - badge search is non-critical
+        console.error('❌ [add-result] Error in searchForEarnedBadges:', badgeError);
+        console.error('   Error stack:', badgeError.stack);
+        console.error('   Scorecard ID:', scorecardId);
+        console.error('   Results count:', results.length);
+        // Continue with empty earnedBadges array so the request can complete
+        earnedBadges = [];
       }
-    } catch (badgeError) {
-      // Log error but don't fail the entire request - badge search is non-critical
-      console.error('❌ [add-result] Error in searchForEarnedBadges:', badgeError);
-      console.error('   Error stack:', badgeError.stack);
-      console.error('   Scorecard ID:', scorecardId);
-      console.error('   Results count:', results.length);
-      // Continue with empty earnedBadges array so the request can complete
-      earnedBadges = [];
+    } else {
+      console.log('⏭️ [complete-round] Skipping badge search for doubles mode');
     }
 
     // true if card had two players that completed the round, not in dnf
@@ -1814,12 +1820,19 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       cardVerified = true;
     }
 
-    if (earnedBadges) {
+    const scorecardSetUpdates = {};
+    if (typeof cardVerified === 'boolean') {
+      scorecardSetUpdates.verified = cardVerified;
+    }
+    if (shouldSearchBadges) {
+      scorecardSetUpdates.earnedBadges = earnedBadges;
+      updatedScorecard.earnedBadges = earnedBadges;
+    }
+    if (Object.keys(scorecardSetUpdates).length > 0) {
       await scorecardsCollection.updateOne(
         { _id: new ObjectId(scorecardId) },
-        { $set: { earnedBadges: earnedBadges, verified: cardVerified } }
+        { $set: scorecardSetUpdates }
       );
-      updatedScorecard.earnedBadges = earnedBadges;
     }
     
     const course = updatedScorecard.courseId 
@@ -1842,8 +1855,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const allUserIds = Array.from(
       new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
     );
-
-    console.log('check 1', allUserIds);
 
     // Notify everyone involved with the scorecard (invited users, added players, and creator)
     try {
