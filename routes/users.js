@@ -1834,14 +1834,13 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     // true if card had two players that completed the round, not in dnf
     let cardVerified;
-    if (updatedScorecard.invites.length >= 2 && updatedScorecard.invites.every(i => !updatedScorecard.dnf.includes(i.invitedUserId.toString()))) {
+    if (updatedScorecard.invites.length - updatedScorecard.dnf.length >= 2) {
       cardVerified = true;
     }
 
     const scorecardSetUpdates = {};
-    if (typeof cardVerified === 'boolean') {
-      scorecardSetUpdates.verified = cardVerified;
-    }
+    scorecardSetUpdates.verified = cardVerified;
+    
     if (shouldSearchBadges) {
       scorecardSetUpdates.earnedBadges = earnedBadges;
       updatedScorecard.earnedBadges = earnedBadges;
