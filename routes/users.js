@@ -554,6 +554,24 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
 });
 
 
+router.post('/cancel-friend-request', requireAuth, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    const db = getDatabase();
+    const friendsCollection = db.collection('friends');
+    const result = await friendsCollection.deleteOne({ from: req.user._id, to: new ObjectId(userId), status: 'pending' });
+    res.json({ result: result.deletedCount });
+  } catch (e) {
+    console.error('Error canceling friend request:', e);  
+    res.status(500).json({ message: 'Failed to cancel friend request' });
+  }
+});
+
 
 router.get('/pending-friend-requests', requireAuth, async (req, res) => {
   try {
