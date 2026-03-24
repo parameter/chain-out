@@ -24,6 +24,8 @@ const pusher = new Pusher({
 
 async function sendUserNotification({ forUserId, eventName, payload, expoPush, localNotification }) {
 
+  console.log('sendUserNotification', forUserId, eventName, payload, expoPush, localNotification);
+
   var db = getDatabase();
 
   // The realtime 
