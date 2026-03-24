@@ -1605,6 +1605,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
           sendUserNotification({
             forUserId: id,
             eventName: "scorecard-updated",
+            expoPush: {
+              title: `Scorecard updated`,
+              body: `Scorecard updated`,
+            },
             payload: {
               message: 'Scorecard updated',
               scorecardId: scorecardId
