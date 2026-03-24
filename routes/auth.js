@@ -113,21 +113,24 @@ router.post('/logout', (req, res) => {
 
 // Expo push token: store for React Native push notifications (separate collection)
 router.post('/push-token', requireAuth, [
-  body('pushToken').trim().notEmpty().withMessage('pushToken is required').isLength({ max: 256 }),
+  body('expoPushToken').trim().notEmpty().withMessage('pushToken is required').isLength({ max: 256 }),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { pushToken } = req.body;
+    const { expoPushToken } = req.body;
+
+    console.log('expoPushToken', expoPushToken);
+    
     const db = getDatabase();
-    const pushTokensCollection = db.collection('user-push-tokens');
-    await pushTokensCollection.updateOne(
+    const expoPushTokensCollection = db.collection('expoPushTokens');
+    await expoPushTokensCollection.updateOne(
       { userId: req.user._id },
       {
         $set: {
-          pushToken,
+          expoPushToken,
           updated_at: new Date(),
         },
         $setOnInsert: {
@@ -136,9 +139,9 @@ router.post('/push-token', requireAuth, [
       },
       { upsert: true }
     );
-    return res.status(200).json({ message: 'Push token saved' });
+    return res.status(200).json({ message: 'Expo push token saved' });
   } catch (error) {
-    console.error('Push token save error:', error);
+    console.error('Expo push token save error:', error);
     return res.status(500).json({ message: 'Server error' });
   }
 });

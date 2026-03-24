@@ -1627,8 +1627,6 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
   try {
     const { scorecardId, entityId } = req.body;
 
-    console.log('req.body', req.body);
-
     if (!scorecardId || !entityId) {
       return res.status(400).json({ message: 'scorecardId and playerId are required' });
     }
@@ -1706,7 +1704,7 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
       {
         _id: new ObjectId(scorecardId)
       },
-      { $addToSet: { 'removed': { entityId: entityId, userRemoved: req.user._id } } },
+      { $addToSet: { 'removed': { entityId: entityId, removedBy: req.user._id } } },
       { returnDocument: 'after' }
     );
 
@@ -1834,8 +1832,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     }
 
     // true if card had two players that completed the round, not in dnf
-    let cardVerified;
-    if (updatedScorecard.invites.length - (updatedScorecard.invites?.length ?? 0) >= 2) {
+    let cardVerified = false;
+    if (updatedScorecard.invites.length - (updatedScorecard.ndf?.length ?? 0) >= 2) {
       cardVerified = true;
     }
 
