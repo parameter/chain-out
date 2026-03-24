@@ -56,7 +56,7 @@ async function sendUserNotification({ forUserId, eventName, payload, expoPush, l
       const expoPushTokensCollection = db.collection('expoPushTokens');
       const expoPushToken = await expoPushTokensCollection.findOne({ userId: forUserId });
       console.log('expoPushToken', expoPushToken);
-      await sendExpoPush({ to: expoPushToken, title: expoPush.title, body: expoPush.body, data: payload });
+      await sendExpoPush({ to: expoPushToken, title: expoPush.title, body: expoPush.body });
     } catch (e) {
       console.error('Error sending Expo push notification:', e);
     }
@@ -64,7 +64,7 @@ async function sendUserNotification({ forUserId, eventName, payload, expoPush, l
 
 }
 
-async function sendExpoPush({ to, title, body, data }) {
+async function sendExpoPush({ to, title, body }) {
   if (!to) return; // no token, skip
 
   try {
@@ -75,7 +75,7 @@ async function sendExpoPush({ to, title, body, data }) {
         'Accept-encoding': 'gzip, deflate',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ to, title, body, data })
+      body: JSON.stringify({ to, title, body })
     });
 
     console.log('response', response);
