@@ -2007,7 +2007,7 @@ router.get('/user', requireAuth, async (req, res) => {
     const usersCollection = db.collection('users');
     const user = await usersCollection.findOne(
       { _id: new ObjectId(userId) },
-      { projection: { password: 0, created_at: 0, updated_at: 0, _id: 0 } }
+      { projection: { password: 0, created_at: 0, updated_at: 0, _id: 0, isBetatester: 1, isDev: 1 } }
     );
 
     if (!user) {
