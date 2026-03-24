@@ -75,7 +75,7 @@ async function sendExpoPush({ to, title, body }) {
         'Accept-encoding': 'gzip, deflate',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ to, title, body })
+      body: JSON.stringify({ to: to?.expoPushToken, title: title, body: body })
     });
 
     console.log('response', response);
