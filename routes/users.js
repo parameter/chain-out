@@ -1844,7 +1844,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     // true if card had two players that completed the round, not in dnf
     let cardVerified = false;
-    if (updatedScorecard.invites.length - (updatedScorecard.ndf?.length ?? 0) >= 2) {
+    if ((updatedScorecard.invites.length + 1) - (updatedScorecard.ndf?.length ?? 0) >= 2) {
       cardVerified = true;
     }
 
