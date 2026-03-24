@@ -51,8 +51,8 @@ async function sendUserNotification({ forUserId, eventName, payload, expoPush, l
   // the push 
   if (expoPush) {
     try {
-      const pushTokensCollection = db.collection('user-push-tokens');
-      const expoPushToken = await pushTokensCollection.findOne({ userId: forUserId });
+      const expoPushTokensCollection = db.collection('expoPushTokens');
+      const expoPushToken = await expoPushTokensCollection.findOne({ userId: forUserId });
       await sendExpoPush({ to: expoPushToken, title: expoPush.title, body: expoPush.body, data: payload });
     } catch (e) {
       console.error('Error sending Expo push notification:', e);
