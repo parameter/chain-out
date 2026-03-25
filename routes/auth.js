@@ -12,11 +12,11 @@ const router = express.Router();
 const requireAuth = passport.authenticate('jwt', { session: false });
 
 router.post('/register', [
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail().normalizeEmail({ gmail_remove_dots: false }),
   body('password').isLength({ min: 6 }),
   body('username').trim().isLength({ min: 2 }),
-  body('fname').trim().isLength({ min: 1 }).withMessage('First name is required'),
-  body('sname').trim().isLength({ min: 1 }).withMessage('Surname is required')
+  body('fname').trim().isLength({ min: 2 }).withMessage('First name is required'),
+  body('sname').trim().isLength({ min: 2 }).withMessage('Surname is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -123,7 +123,6 @@ router.post('/push-token', requireAuth, [
     const { expoPushToken } = req.body;
 
     console.log('expoPushToken', expoPushToken);
-    
     const db = getDatabase();
     const expoPushTokensCollection = db.collection('expoPushTokens');
     await expoPushTokensCollection.updateOne(
@@ -270,7 +269,7 @@ const hashOneTimeToken = (token) => {
 
 // Request password reset (sends email if user exists)
 router.post('/request-password-reset', [
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail().normalizeEmail({ gmail_remove_dots: false }),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
