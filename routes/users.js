@@ -140,6 +140,14 @@ function getLevelFromXP(totalXP) {
   return level;
 }
 
+function calculateVerifiedPercentage(allRounds) {
+  const eligible = (allRounds || []).filter(r => r.mode !== 'doubles');
+  const eligibleCount = eligible.length;
+  if (eligibleCount === 0) return 0;
+  const verifiedCount = eligible.filter(r => r.verified === 'verified' || r.verified === true).length;
+  return Math.round((verifiedCount / eligibleCount) * 100);
+}
+
 const LEADERBOARD_TYPES = ['friends', 'global', 'country', '100km'];
 
 router.get('/xp-leaderboard', requireAuth, async (req, res) => {
@@ -2747,9 +2755,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     const uniqueCoursesCount = scorecardData.uniqueCourses?.[0]?.count || 0;
     const allRounds = scorecardData.allRounds || [];
 
-    // Calculate verified percentage
-    const verifiedRounds = allRounds.filter(r => r.verified === 'verified' || r.verified === true).length;
-    const verifiedPercentage = roundsCount > 0 ? Math.round((verifiedRounds / roundsCount) * 100) : 0;
+    const verifiedPercentage = calculateVerifiedPercentage(allRounds);
 
     // Calculate weekly streak
     const roundsByWeek = new Map();
