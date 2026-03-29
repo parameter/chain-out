@@ -204,7 +204,9 @@ router.post('/settings', requireAuth, async (req, res) => {
 
     const existing = await userSettingsCollection.findOne({ userId: req.user._id });
 
-    const slots = normalizeBraggingSlots(existing.braggingSlots ? existing.braggingSlots : []);
+    const braggingSlots = existing ? existing.braggingSlots : [];
+
+    const slots = normalizeBraggingSlots(braggingSlots);
     slots[idx] = badgeId;
 
     const newValue = { ...existing.braggingSlots, braggingSlots: slots };
