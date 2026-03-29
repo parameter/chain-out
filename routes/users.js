@@ -178,34 +178,37 @@ router.get('/settings', requireAuth, async (req, res) => {
 router.post('/settings', requireAuth, async (req, res) => {
   try {
     const { value } = req.body;
-
-    console.log('value', value);
     if (!value || typeof value !== 'object') {
       return res.status(400).json({ message: 'value is required' });
     }
 
-    const { badgeId, slotIndex, braggingSlots: incomingSlots } = value;
+    const { badgeId, slotIndex } = value;
+    if (slotIndex === undefined || slotIndex === null) {
+      return res.status(400).json({ message: 'slotIndex is required' });
+    }
+    if (badgeId === undefined) {
+      return res.status(400).json({ message: 'badgeId is required' });
+    }
+
+    const idx = Number(slotIndex);
+    if (!Number.isInteger(idx) || idx < 0 || idx >= BRAGGING_SLOTS_COUNT) {
+      return res.status(400).json({
+        message: `slotIndex must be an integer from 0 to ${BRAGGING_SLOTS_COUNT - 1}`
+      });
+    }
+
     const db = getDatabase();
     const userSettingsCollection = db.collection('userSettings');
 
     const existing = await userSettingsCollection.findOne({ userId: req.user._id });
-    existing.braggingSlots = existing.braggingSlots ? existing.braggingSlots : [];
-
-    let slots = normalizeBraggingSlots(
-      incomingSlots !== undefined ? incomingSlots : existing.value?.braggingSlots
-    );
-
-    if (slotIndex !== undefined && slotIndex !== null) {
-      const idx = Number(slotIndex);
-      if (!Number.isInteger(idx) || idx < 0 || idx >= BRAGGING_SLOTS_COUNT) {
-        return res.status(400).json({
-          message: `slotIndex must be an integer from 0 to ${BRAGGING_SLOTS_COUNT - 1}`
-        });
-      }
-      slots[idx] = badgeId !== undefined ? badgeId : null;
+    if (!existing) {
+      return res.status(404).json({ message: 'User settings not found' });
     }
 
-    const newValue = { ...existing, braggingSlots: slots };
+    const slots = normalizeBraggingSlots(existing.value?.braggingSlots);
+    slots[idx] = badgeId;
+
+    const newValue = { ...(existing.value || {}), braggingSlots: slots };
     const userSettings = await userSettingsCollection.findOneAndUpdate(
       { userId: req.user._id },
       { $set: { value: newValue } },
