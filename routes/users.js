@@ -205,10 +205,11 @@ router.post('/settings', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'User settings not found' });
     }
 
-    const slots = normalizeBraggingSlots(existing.value?.braggingSlots);
+    const existingValue = existing.value != null ? existing.value : {};
+    const slots = normalizeBraggingSlots(existingValue.braggingSlots);
     slots[idx] = badgeId;
 
-    const newValue = { ...(existing.value || {}), braggingSlots: slots };
+    const newValue = { ...existingValue, braggingSlots: slots };
     const userSettings = await userSettingsCollection.findOneAndUpdate(
       { userId: req.user._id },
       { $set: { value: newValue } },
