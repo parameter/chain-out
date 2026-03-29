@@ -188,6 +188,9 @@ router.post('/settings', requireAuth, async (req, res) => {
     const db = getDatabase();
     const userSettingsCollection = db.collection('userSettings');
 
+    const existing = await userSettingsCollection.findOne({ userId: req.user._id });
+    existing.braggingSlots = existing.braggingSlots ? existing.braggingSlots : [];
+
     let slots = normalizeBraggingSlots(
       incomingSlots !== undefined ? incomingSlots : existing.value?.braggingSlots
     );
@@ -202,7 +205,7 @@ router.post('/settings', requireAuth, async (req, res) => {
       slots[idx] = badgeId !== undefined ? badgeId : null;
     }
 
-    const newValue = { ...(existing.value || {}), braggingSlots: slots };
+    const newValue = { ...existing, braggingSlots: slots };
     const userSettings = await userSettingsCollection.findOneAndUpdate(
       { userId: req.user._id },
       { $set: { value: newValue } },
