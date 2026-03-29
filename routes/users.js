@@ -150,7 +150,15 @@ function calculateVerifiedPercentage(allRounds) {
 
 const LEADERBOARD_TYPES = ['friends', 'global', 'country', '100km'];
 
+const BRAGGING_SLOTS_COUNT = 6;
 
+function normalizeBraggingSlots(arr) {
+  const slots = Array.isArray(arr) ? arr.slice() : [];
+  while (slots.length < BRAGGING_SLOTS_COUNT) {
+    slots.push(null);
+  }
+  return slots.slice(0, BRAGGING_SLOTS_COUNT);
+}
 
 router.get('/settings', requireAuth, async (req, res) => {
   try {
@@ -170,17 +178,39 @@ router.get('/settings', requireAuth, async (req, res) => {
 router.post('/settings', requireAuth, async (req, res) => {
   try {
     const { value } = req.body;
-    console.log('value', value);
+    if (!value || typeof value !== 'object') {
+      return res.status(400).json({ message: 'value is required' });
+    }
+
+    const { badgeId, slotIndex, braggingSlots: incomingSlots } = value;
     const db = getDatabase();
     const userSettingsCollection = db.collection('userSettings');
-    const userSettings = await userSettingsCollection.findOneAndUpdate(
-      { userId: req.user._id },
-      { $set: { value } },
-      { returnDocument: 'after' }
-    );
-    if (!userSettings) {
+
+    const existing = await userSettingsCollection.findOne({ userId: req.user._id });
+    if (!existing) {
       return res.status(404).json({ message: 'User settings not found' });
     }
+
+    let slots = normalizeBraggingSlots(
+      incomingSlots !== undefined ? incomingSlots : existing.value?.braggingSlots
+    );
+
+    if (slotIndex !== undefined && slotIndex !== null) {
+      const idx = Number(slotIndex);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= BRAGGING_SLOTS_COUNT) {
+        return res.status(400).json({
+          message: `slotIndex must be an integer from 0 to ${BRAGGING_SLOTS_COUNT - 1}`
+        });
+      }
+      slots[idx] = badgeId !== undefined ? badgeId : null;
+    }
+
+    const newValue = { ...(existing.value || {}), braggingSlots: slots };
+    const userSettings = await userSettingsCollection.findOneAndUpdate(
+      { userId: req.user._id },
+      { $set: { value: newValue } },
+      { returnDocument: 'after' }
+    );
     res.json(userSettings);
   } catch (err) {
     console.error('[POST /users/settings]', err);
