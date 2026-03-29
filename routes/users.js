@@ -188,11 +188,6 @@ router.post('/settings', requireAuth, async (req, res) => {
     const db = getDatabase();
     const userSettingsCollection = db.collection('userSettings');
 
-    const existing = await userSettingsCollection.findOne({ userId: req.user._id });
-    if (!existing) {
-      return res.status(404).json({ message: 'User settings not found' });
-    }
-
     let slots = normalizeBraggingSlots(
       incomingSlots !== undefined ? incomingSlots : existing.value?.braggingSlots
     );
