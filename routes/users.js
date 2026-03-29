@@ -209,7 +209,7 @@ router.post('/settings', requireAuth, async (req, res) => {
     const slots = normalizeBraggingSlots(braggingSlots);
     slots[idx] = badgeId;
 
-    const newValue = { ...existing.braggingSlots, braggingSlots: slots };
+    const newValue = { ...braggingSlots, braggingSlots: slots };
     const userSettings = await userSettingsCollection.findOneAndUpdate(
       { userId: req.user._id },
       { $set: { value: newValue } },
