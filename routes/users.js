@@ -170,6 +170,7 @@ router.get('/settings', requireAuth, async (req, res) => {
 router.post('/settings', requireAuth, async (req, res) => {
   try {
     const { value } = req.body;
+    console.log('value', value);
     const db = getDatabase();
     const userSettingsCollection = db.collection('userSettings');
     const userSettings = await userSettingsCollection.findOneAndUpdate(
