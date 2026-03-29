@@ -150,6 +150,45 @@ function calculateVerifiedPercentage(allRounds) {
 
 const LEADERBOARD_TYPES = ['friends', 'global', 'country', '100km'];
 
+
+
+router.get('/settings', requireAuth, async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const db = getDatabase();
+    const userSettingsCollection = db.collection('userSettings');
+    const userSettings = await userSettingsCollection.findOne({ userId: new ObjectId(userId) });
+    res.json(userSettings);
+  } catch (err) {
+    console.error('[GET /users/settings]', err);
+    res.status(500).json({ message: 'Failed to get user settings' });
+  }
+});
+
+
+
+router.post('/settings', requireAuth, async (req, res) => {
+  try {
+    const { value } = req.body;
+    const db = getDatabase();
+    const userSettingsCollection = db.collection('userSettings');
+    const userSettings = await userSettingsCollection.findOneAndUpdate(
+      { userId: req.user._id },
+      { $set: { value } },
+      { returnDocument: 'after' }
+    );
+    if (!userSettings) {
+      return res.status(404).json({ message: 'User settings not found' });
+    }
+    res.json(userSettings);
+  } catch (err) {
+    console.error('[POST /users/settings]', err);
+    res.status(500).json({ message: 'Failed to update user settings' });
+  }
+});
+
+
+
 router.get('/xp-leaderboard', requireAuth, async (req, res) => {
   try {
     const { type } = req.query;
