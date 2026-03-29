@@ -178,6 +178,8 @@ router.get('/settings', requireAuth, async (req, res) => {
 router.post('/settings', requireAuth, async (req, res) => {
   try {
     const { value } = req.body;
+
+    console.log('value', value);
     if (!value || typeof value !== 'object') {
       return res.status(400).json({ message: 'value is required' });
     }
