@@ -619,7 +619,7 @@ router.post('/answer-friend-request', requireAuth, async (req, res) => {
     });
     
     await sendUserNotification({
-      forUserId: userId,
+      forUserId: to,
       eventName: "friend-request-answered",
       expoPush: {
         title: `${senderUsername} ${answer} your friend request`,
