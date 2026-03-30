@@ -190,17 +190,12 @@ router.post('/settings', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'badgeId is required' });
     }
 
-    console.log('badgeId', badgeId);
-    console.log('slotIndex', slotIndex);
-
     const idx = Number(slotIndex);
     if (!Number.isInteger(idx) || idx < 0 || idx >= BRAGGING_SLOTS_COUNT) {
       return res.status(400).json({
         message: `slotIndex must be an integer from 0 to ${BRAGGING_SLOTS_COUNT - 1}`
       });
     }
-
-    console.log('idx', idx);
 
     const db = getDatabase();
     const userSettingsCollection = db.collection('userSettings');
@@ -215,9 +210,10 @@ router.post('/settings', requireAuth, async (req, res) => {
     const userSettings = await userSettingsCollection.findOneAndUpdate(
       { userId: req.user._id },
       { $set: { braggingSlots: slots } },
+      { projection: { _id: 0, userId: 0 } },
       { upsert: true, returnDocument: 'after' }
     );
-    console.log('userSettings', userSettings);
+    
     res.json(userSettings);
   } catch (err) {
     console.error('[POST /users/settings]', err);
