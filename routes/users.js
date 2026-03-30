@@ -215,7 +215,7 @@ router.post('/settings', requireAuth, async (req, res) => {
     const userSettings = await userSettingsCollection.findOneAndUpdate(
       { userId: req.user._id },
       { $set: { braggingSlots: slots } },
-      { returnDocument: 'after' }
+      { upsert: true, returnDocument: 'after' }
     );
     console.log('userSettings', userSettings);
     res.json(userSettings);
