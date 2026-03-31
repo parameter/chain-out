@@ -979,13 +979,38 @@ const createGuestPlayers = async (guestPlayers) => {
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams } = req.body;
+    const normalizedInvitedUserIds = (() => {
+      if (Array.isArray(invitedUserIds)) {
+        return invitedUserIds;
+      }
+
+      if (typeof invitedUserIds === 'string') {
+        const trimmed = invitedUserIds.trim();
+        if (!trimmed) {
+          return [];
+        }
+
+        try {
+          const parsed = JSON.parse(trimmed);
+          return Array.isArray(parsed) ? parsed : [parsed];
+        } catch (_) {
+          return [trimmed];
+        }
+      }
+
+      if (invitedUserIds == null) {
+        return [];
+      }
+
+      return [invitedUserIds];
+    })();
 
     console.log('guestPlayers', guestPlayers);
-    console.log('invitedUserIds', invitedUserIds);
+    console.log('invitedUserIds', normalizedInvitedUserIds);
 
     const guestPlayerIds = await createGuestPlayers(guestPlayers);
     console.log('guestPlayerIds',guestPlayerIds);
-    const userIds = [...invitedUserIds, ...guestPlayerIds];
+    const userIds = [...normalizedInvitedUserIds, ...guestPlayerIds];
 
     console.log('userIds',userIds);
 
