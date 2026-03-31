@@ -852,8 +852,12 @@ router.get('/friends', requireAuth, async (req, res) => {
 
 
 router.post('/say-fore', requireAuth, async (req, res) => {
+
+  console.log('say-fore', req.body);
   try {
     const { userId, message } = req.body;
+
+    console.log('userId', userId);
 
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
