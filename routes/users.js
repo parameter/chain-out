@@ -1025,6 +1025,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       { _id: new ObjectId(courseId) }
     );
 
+    console.log('userIds', userIds);
+
     // Prepare invite objects
     const now = new Date();
     const invites = userIds.map(uid => ({
