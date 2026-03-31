@@ -980,6 +980,9 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams } = req.body;
 
+    console.log('guestPlayers', guestPlayers);
+    console.log('invitedUserIds', invitedUserIds);
+
     const guestPlayerIds = await createGuestPlayers(guestPlayers);
     const userIds = [...invitedUserIds, ...guestPlayerIds];
 
@@ -1024,8 +1027,6 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     const course = await coursesCollection.findOne(
       { _id: new ObjectId(courseId) }
     );
-
-    console.log('userIds', userIds);
 
     // Prepare invite objects
     const now = new Date();
