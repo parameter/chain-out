@@ -984,6 +984,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     console.log('invitedUserIds', invitedUserIds);
 
     const guestPlayerIds = await createGuestPlayers(guestPlayers);
+    console.log('guestPlayerIds',guestPlayerIds);
     const userIds = [...invitedUserIds, ...guestPlayerIds];
 
     console.log('userIds',userIds);
