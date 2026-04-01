@@ -1223,6 +1223,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     const scorecards = await scorecardsCollection.aggregate([
       {
         $match: {
+          status: { $ne: 'archived' },
           $or: [
             { "invites.invitedUserId": req.user._id },
             { creatorId: req.user._id }
@@ -1834,12 +1835,19 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'All results are submitted for this player' });
     }
 
-    // return the updated scorecard after the update
+    // Build update dynamically: archive scorecard when this is the last remaining result.
+    const updateQuery = {
+      $addToSet: { 'removed': { entityId: entityId, removedBy: req.user._id } }
+    };
+    if (resultsCheck.results.length === 1) {
+      updateQuery.$set = { status: 'archived' };
+    }
+
     const updatedScorecard = await scorecardsCollection.findOneAndUpdate(
       {
         _id: new ObjectId(scorecardId)
       },
-      { $addToSet: { 'removed': { entityId: entityId, removedBy: req.user._id } } },
+      updateQuery,
       { returnDocument: 'after' }
     );
 
