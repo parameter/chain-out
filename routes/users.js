@@ -922,24 +922,24 @@ router.post('/say-fore', requireAuth, async (req, res) => {
 
 
 
-router.get('/friends/received-fores', requireAuth, async (req, res) => {
+router.get('/friends/fores-thread', requireAuth, async (req, res) => {
   try {
     const { userId } = req.query;
     
     if (!userId) {
       return res.status(400).json({ message: 'userId query parameter is required' });
     }
-    
-    const targetUserId = new ObjectId(userId);
-    const currentUserId = req.user._id;
+
+    const userIDObjectId = new ObjectId(userId);
+    const currentUserIDObjectId = new ObjectId(req.user._id);
     
     const db = getDatabase();
     const foresCollection = db.collection('fores');
     
     const result = await foresCollection.find({
       $or: [
-        { from: currentUserId, to: targetUserId },
-        { from: targetUserId, to: currentUserId }
+        { from: currentUserIDObjectId, to: userIDObjectId },
+        { from: userIDObjectId, to: currentUserIDObjectId }
       ]
     }).sort({ createdAt: -1 }).toArray();
     
