@@ -1828,7 +1828,7 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
 
     // checking if the users (entityId) results are not all submitted
     // the users results must be same length as the holes in the layout
-    const resultsCheck = await scorecardsCollection.findOne({ _id: new ObjectId(scorecard.layoutId) });
+    const resultsCheck = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
     const usersResults = resultsCheck.results.filter(r => r.playerId === entityId);
     if (usersResults && usersResults.length === resultsCheck.layout.latestVersion.holes.length) {
       return res.status(400).json({ message: 'All results are submitted for this player' });
