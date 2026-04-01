@@ -925,6 +925,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
 router.get('/friends/fore-thread', requireAuth, async (req, res) => {
   try {
     const { userId } = req.query;
+
+    console.log('userId', userId);
     
     if (!userId) {
       return res.status(400).json({ message: 'userId query parameter is required' });
