@@ -922,7 +922,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
 
 
 
-router.get('/friends/fores-thread', requireAuth, async (req, res) => {
+router.get('/friends/fore-thread', requireAuth, async (req, res) => {
   try {
     const { userId } = req.query;
     
