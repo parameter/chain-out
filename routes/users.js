@@ -895,7 +895,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       },
       payload: {
         message: 'Fore!',
-        from: req.user._id,
+        from: req.user._id.toString(),
         to: userId
       },
       localNotification: {
