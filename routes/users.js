@@ -985,6 +985,7 @@ const createGuestPlayers = async (guestPlayers) => {
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
     const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams } = req.body;
+
     const normalizedInvitedUserIds = (() => {
       if (Array.isArray(invitedUserIds)) {
         return invitedUserIds;
@@ -1011,14 +1012,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       return [invitedUserIds];
     })();
 
-    console.log('guestPlayers', guestPlayers);
-    console.log('invitedUserIds', normalizedInvitedUserIds);
-
-    const guestPlayerIds = await createGuestPlayers(guestPlayers);
-    console.log('guestPlayerIds',guestPlayerIds);
-    const userIds = [...normalizedInvitedUserIds, ...guestPlayerIds];
-
-    console.log('userIds',userIds);
+    await createGuestPlayers(guestPlayers);
+    const userIds = [...normalizedInvitedUserIds];
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
@@ -1152,6 +1147,22 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         )
       );
     }
+
+    sendUserNotification({
+      forUserId: req.user._id.toString(),
+      eventName: "scorecard-invite",
+      payload: {
+        message: null,
+        scorecardId: scorecardId,
+        courseName: course.name
+      },
+      localNotification: {
+        fromUser: note.fromUser,
+        type: note.type,
+        message: null,
+        scorecardId
+      }
+    })
 
     res.status(201).json({
       message: userIds.length > 1 ? 'Users invited to scorecard' : 'User invited to scorecard',
