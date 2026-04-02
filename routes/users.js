@@ -1149,7 +1149,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     }
 
     sendUserNotification({
-      forUserId: req.user._id.toString(),
+      forUserId: req.user._id,
       eventName: "scorecard-invite",
       payload: {
         message: null,
@@ -1157,8 +1157,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         courseName: course.name
       },
       localNotification: {
-        fromUser: note.fromUser,
-        type: note.type,
+        fromUser: req.user._id,
+        type: "scorecard-invite",
         message: null,
         scorecardId
       }
