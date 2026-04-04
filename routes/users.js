@@ -877,6 +877,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       from: req.user._id,
       to: new ObjectId(userId),
       message: message,
+      status: 'unseen',
       createdAt: now
     };
 
@@ -922,11 +923,31 @@ router.post('/say-fore', requireAuth, async (req, res) => {
 
 
 
+router.post('/mark-fores-as-seen', requireAuth, async (req, res) => {
+  try {
+    const { foreIds } = req.body;
+
+    if (!Array.isArray(foreIds) || foreIds.length === 0) {
+      return res.status(400).json({ message: 'foreIds is required' });
+    }
+
+    const db = getDatabase();
+    const foresCollection = db.collection('fores');
+
+    const result = await foresCollection.updateMany({ _id: { $in: foreIds.map(id => new ObjectId(id)) }, to: new ObjectId(req.user._id) }, { $set: { status: 'seen' } });
+    
+    res.json({ result: result.modifiedCount });
+  } catch (e) {
+    console.error('Error marking fore as seen:', e);
+    res.status(500).json({ message: 'Failed to mark fore as seen' });
+  }
+});
+
+
+
 router.get('/friends/fore-thread', requireAuth, async (req, res) => {
   try {
     const { userId } = req.query;
-
-    console.log('userId', userId);
     
     if (!userId) {
       return res.status(400).json({ message: 'userId query parameter is required' });
@@ -934,21 +955,18 @@ router.get('/friends/fore-thread', requireAuth, async (req, res) => {
 
     const userIDObjectId = new ObjectId(userId);
     const currentUserIDObjectId = new ObjectId(req.user._id);
-
-    console.log('currentUserIDObjectId', currentUserIDObjectId);
     
     const db = getDatabase();
     const foresCollection = db.collection('fores');
     
     const result = await foresCollection.find({
+      status: 'unseen',
       $or: [
         { from: currentUserIDObjectId, to: userIDObjectId },
         { from: userIDObjectId, to: currentUserIDObjectId }
       ]
     }).sort({ createdAt: -1 }).toArray();
 
-    console.log('result', result);
-    
     res.json({ fores: result });
   } catch (e) {
     console.error('Error fetching fores:', e);
