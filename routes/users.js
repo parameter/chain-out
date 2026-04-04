@@ -934,6 +934,8 @@ router.get('/friends/fore-thread', requireAuth, async (req, res) => {
 
     const userIDObjectId = new ObjectId(userId);
     const currentUserIDObjectId = new ObjectId(req.user._id);
+
+    console.log('currentUserIDObjectId', currentUserIDObjectId);
     
     const db = getDatabase();
     const foresCollection = db.collection('fores');
