@@ -960,7 +960,6 @@ router.get('/friends/fore-thread', requireAuth, async (req, res) => {
     const foresCollection = db.collection('fores');
     
     const result = await foresCollection.find({
-      status: 'unseen',
       $or: [
         { from: currentUserIDObjectId, to: userIDObjectId },
         { from: userIDObjectId, to: currentUserIDObjectId }
