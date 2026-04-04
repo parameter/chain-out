@@ -944,6 +944,8 @@ router.get('/friends/fore-thread', requireAuth, async (req, res) => {
         { from: userIDObjectId, to: currentUserIDObjectId }
       ]
     }).sort({ createdAt: -1 }).toArray();
+
+    console.log('result', result);
     
     res.json({ fores: result });
   } catch (e) {
