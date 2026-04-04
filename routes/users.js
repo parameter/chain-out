@@ -927,6 +927,8 @@ router.post('/mark-fores-as-seen', requireAuth, async (req, res) => {
   try {
     const { foreIds } = req.body;
 
+    console.log('foreIds', foreIds);
+
     if (!Array.isArray(foreIds) || foreIds.length === 0) {
       return res.status(400).json({ message: 'foreIds is required' });
     }
