@@ -938,6 +938,8 @@ router.post('/mark-fores-as-seen', requireAuth, async (req, res) => {
       { _id: { $in: foreIds.map(id => new ObjectId(id)) } }, 
       { $set: { status: 'seen' } 
     });
+
+    console.log('result', result);
     
     res.json({ result: result.modifiedCount });
   } catch (e) {
