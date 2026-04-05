@@ -934,7 +934,10 @@ router.post('/mark-fores-as-seen', requireAuth, async (req, res) => {
     const db = getDatabase();
     const foresCollection = db.collection('fores');
 
-    const result = await foresCollection.updateMany({ _id: { $in: foreIds.map(id => new ObjectId(id)) }, to: new ObjectId(req.user._id) }, { $set: { status: 'seen' } });
+    const result = await foresCollection.updateMany(
+      { _id: { $in: foreIds.map(id => new ObjectId(id)) } }, 
+      { $set: { status: 'seen' } 
+    });
     
     res.json({ result: result.modifiedCount });
   } catch (e) {
