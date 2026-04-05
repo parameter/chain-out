@@ -817,10 +817,8 @@ router.get('/friends', requireAuth, async (req, res) => {
           },
         },
         {
-          $unwind: {
-            path: '$user',
-            preserveNullAndEmptyArrays: true,
-          },
+          // Omit rows where the other account no longer exists (lookup empty).
+          $unwind: { path: '$user' },
         },
         {
           $project: {
