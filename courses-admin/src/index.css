@@ -201,6 +201,12 @@ code {
   flex: 1;
 }
 
+.json-textarea {
+  min-height: 420px;
+  font-family: Consolas, 'Courier New', monospace;
+  white-space: pre;
+}
+
 .hole-item {
   padding: 15px;
   margin-bottom: 15px;

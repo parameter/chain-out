@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chain-out.local/schemas/badge-definition.schema.json",
+  "title": "BadgeDefinition",
+  "description": "Schema for documents stored in the badgeDefinitions collection.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id",
+    "name",
+    "done",
+    "condition"
+  ],
+  "properties": {
+    "_id": {
+      "description": "MongoDB ObjectId represented as string in exported JSON.",
+      "type": [
+        "string",
+        "object"
+      ]
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quote": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "functionalDescription": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "animation": {
+      "type": "string"
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tier": {
+      "type": "string"
+    },
+    "difficulty": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "tierNames": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tierThresholds": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "tierPoints": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "tierDescriptionPrefix": {
+      "type": "string"
+    },
+    "tierDescriptionSuffix": {
+      "type": "string"
+    },
+    "isUnique": {
+      "type": "boolean"
+    },
+    "asProgress": {
+      "type": "boolean"
+    },
+    "trackUniqueCourses": {
+      "type": "boolean"
+    },
+    "trackTierThresholdZync": {
+      "type": "boolean"
+    },
+    "doubles": {
+      "type": "boolean"
+    },
+    "requiresHistoricalData": {
+      "type": "boolean"
+    },
+    "requiresWeatherAPI": {
+      "type": "boolean"
+    },
+    "requiresDate": {
+      "type": "boolean"
+    },
+    "done": {
+      "type": "boolean"
+    },
+    "condition": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "requiresHistoricalData": {
+            "const": true
+          }
+        },
+        "required": [
+          "requiresHistoricalData"
+        ]
+      },
+      "then": {
+        "$comment": "Historical badge: condition compiles with (playerIdObj, playerIdStr, courseId, courseIdStr, ObjectId, now) and should return { facetPipeline, valueField }."
+      },
+      "else": {
+        "$comment": "Round badge: condition compiles with (results, layout, allOtherPlayersResults) and returns false/0 for no change, or numeric/truthy progress."
+      }
+    }
+  ],
+  "$defs": {
+    "RoundResultRow": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "entityId": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "playerId": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "holeNumber": {
+          "type": "number"
+        },
+        "score": {
+          "type": "number"
+        },
+        "putt": {
+          "type": [
+            "string",
+            "number",
+            "null"
+          ]
+        },
+        "obCount": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "specifics": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "c1": {
+              "type": "boolean"
+            },
+            "c2": {
+              "type": "boolean"
+            },
+            "bullseye": {
+              "type": "boolean"
+            },
+            "scramble": {
+              "type": "boolean"
+            },
+            "throwIn": {
+              "type": "boolean"
+            },
+            "fairway": {
+              "type": "boolean"
+            }
+          }
+        },
+        "timestamp": {
+          "description": "Date in runtime, usually ISO string in JSON.",
+          "type": [
+            "string",
+            "object"
+          ]
+        },
+        "hitBullseye": {
+          "type": "boolean"
+        },
+        "isAce": {
+          "type": "boolean"
+        },
+        "isSecretAchieved": {
+          "type": "boolean"
+        },
+        "courseId": {
+          "type": [
+            "string",
+            "object"
+          ]
+        }
+      },
+      "required": [
+        "holeNumber",
+        "score"
+      ]
+    },
+    "LayoutHole": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "holeNumber": {
+          "type": "number"
+        },
+        "number": {
+          "type": "number"
+        },
+        "par": {
+          "type": "number"
+        },
+        "length": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "measureInMeters": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "RoundConditionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "results",
+        "layout",
+        "allOtherPlayersResults"
+      ],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoundResultRow"
+          }
+        },
+        "layout": {
+          "type": "object",
+          "required": [
+            "holes"
+          ],
+          "properties": {
+            "holes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/LayoutHole"
+              }
+            }
+          }
+        },
+        "allOtherPlayersResults": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoundResultRow"
+          }
+        }
+      }
+    },
+    "HistoricalConditionReturn": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "valueField"
+      ],
+      "properties": {
+        "facetPipeline": {
+          "type": "array"
+        },
+        "pipeline": {
+          "description": "Legacy alias used by runtime before normalizing to facetPipeline.",
+          "type": "array"
+        },
+        "valueField": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "facetPipeline"
+          ]
+        },
+        {
+          "required": [
+            "pipeline"
+          ]
+        }
+      ]
+    }
+  }
+}

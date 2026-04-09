@@ -1264,6 +1264,119 @@ router.post('/api/courses', async (req, res) => {
    }
 });
 
+const normalizeCourseGeoFields = (courseData) => {
+  if (!courseData || typeof courseData !== 'object') {
+    return;
+  }
+
+  if (courseData.geolocation && courseData.geolocation.lng != null && courseData.geolocation.lat != null) {
+    const lng = parseFloat(courseData.geolocation.lng);
+    const lat = parseFloat(courseData.geolocation.lat);
+
+    if (!Number.isNaN(lng) && !Number.isNaN(lat)) {
+      courseData.geolocation = { lng, lat };
+
+      if (!courseData.location) {
+        courseData.location = {
+          type: 'Point',
+          coordinates: [lng, lat]
+        };
+      }
+    }
+  }
+};
+
+// GET /api/courses/:id - Fetch one course by Mongo _id
+router.get('/api/courses/:id', async (req, res) => {
+  try {
+    const courseId = req.params.id;
+
+    if (!ObjectId.isValid(courseId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid course id'
+      });
+    }
+
+    const db = getDatabase();
+    const coursesCollection = db.collection('courses');
+    const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      course
+    });
+  } catch (error) {
+    console.error('Error fetching course:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch course',
+      error: error.message
+    });
+  }
+});
+
+// PUT /api/courses/:id - Update one course by Mongo _id
+router.put('/api/courses/:id', async (req, res) => {
+  try {
+    const courseId = req.params.id;
+
+    if (!ObjectId.isValid(courseId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid course id'
+      });
+    }
+
+    const updatedCourse = req.body;
+    if (!updatedCourse || typeof updatedCourse !== 'object' || Array.isArray(updatedCourse)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request body must be a course object'
+      });
+    }
+
+    // _id must remain immutable in MongoDB updates.
+    delete updatedCourse._id;
+    normalizeCourseGeoFields(updatedCourse);
+
+    const db = getDatabase();
+    const coursesCollection = db.collection('courses');
+    const result = await coursesCollection.updateOne(
+      { _id: new ObjectId(courseId) },
+      { $set: updatedCourse }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+    res.json({
+      success: true,
+      message: 'Course updated successfully',
+      course
+    });
+  } catch (error) {
+    console.error('Error updating course:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update course',
+      error: error.message
+    });
+  }
+});
+
 // Serve courses-admin React app
 const coursesAdminBuildPath = path.resolve(__dirname, '../courses-admin/build');
 

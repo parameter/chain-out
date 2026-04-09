@@ -23,8 +23,12 @@ function CourseForm() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [loadingCourseById, setLoadingCourseById] = useState(false);
+  const [savingEditedCourse, setSavingEditedCourse] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [editMongoId, setEditMongoId] = useState('');
+  const [editCourseJson, setEditCourseJson] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -141,12 +145,103 @@ function CourseForm() {
     }
   };
 
+  const handleLoadCourseById = async () => {
+    setError(null);
+    setSuccess(null);
+
+    const trimmedId = editMongoId.trim();
+    if (!trimmedId) {
+      setError('Enter a Mongo _id to load a course');
+      return;
+    }
+
+    setLoadingCourseById(true);
+    try {
+      const response = await axios.get(`/admin/api/courses/${trimmedId}`);
+      setEditCourseJson(JSON.stringify(response.data.course, null, 2));
+      setSuccess(`Course loaded: ${trimmedId}`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to load course');
+      setEditCourseJson('');
+    } finally {
+      setLoadingCourseById(false);
+    }
+  };
+
+  const handleSaveEditedCourse = async () => {
+    setError(null);
+    setSuccess(null);
+
+    const trimmedId = editMongoId.trim();
+    if (!trimmedId) {
+      setError('Enter a Mongo _id before saving');
+      return;
+    }
+
+    if (!editCourseJson.trim()) {
+      setError('Course JSON is empty');
+      return;
+    }
+
+    let parsedCourse;
+    try {
+      parsedCourse = JSON.parse(editCourseJson);
+    } catch (parseError) {
+      setError(`Invalid JSON: ${parseError.message}`);
+      return;
+    }
+
+    setSavingEditedCourse(true);
+    try {
+      const response = await axios.put(`/admin/api/courses/${trimmedId}`, parsedCourse);
+      setEditCourseJson(JSON.stringify(response.data.course, null, 2));
+      setSuccess(`Course updated successfully: ${trimmedId}`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to update course');
+    } finally {
+      setSavingEditedCourse(false);
+    }
+  };
+
   return (
     <div className="card">
-      <form onSubmit={handleSubmit}>
+      <div className="section">
+        <div className="section-title">Edit Existing Course By Mongo _id</div>
+
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
+        <div className="form-group">
+          <label>Mongo _id</label>
+          <div className="form-row">
+            <input
+              type="text"
+              value={editMongoId}
+              onChange={(e) => setEditMongoId(e.target.value)}
+              className="form-control"
+              placeholder="e.g. 68da916b30d97419bf9cb2d9"
+            />
+            <button type="button" className="btn" onClick={handleLoadCourseById} disabled={loadingCourseById}>
+              {loadingCourseById ? 'Loading...' : 'Load Course'}
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={handleSaveEditedCourse} disabled={savingEditedCourse || !editCourseJson.trim()}>
+              {savingEditedCourse ? 'Saving...' : 'Save Edited Course'}
+            </button>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Editable Course Object (JSON)</label>
+          <textarea
+            className="form-control json-textarea"
+            value={editCourseJson}
+            onChange={(e) => setEditCourseJson(e.target.value)}
+            placeholder="Load a course by _id to edit it here..."
+          />
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
         <div className="section">
           <div className="section-title">Course Information</div>
           

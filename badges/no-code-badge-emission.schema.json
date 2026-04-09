@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chain-out.local/schemas/no-code-badge-emission.schema.json",
+  "title": "NoCodeBadgeEmission",
+  "description": "Schema for no-code admin output before persisting to badgeDefinitions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "badge",
+    "conditionSpec"
+  ],
+  "properties": {
+    "badge": {
+      "$ref": "badge-definition.schema.json"
+    },
+    "conditionSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "conditionSource"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "round",
+            "historical"
+          ]
+        },
+        "conditionSource": {
+          "type": "string",
+          "minLength": 1,
+          "description": "JavaScript string emitted by no-code builder into badge.condition."
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "returns": {
+          "type": "string",
+          "enum": [
+            "boolean_or_zero_or_numeric",
+            "historical_aggregate_config"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "round"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "inputs": {
+                "const": [
+                  "results",
+                  "layout",
+                  "allOtherPlayersResults"
+                ]
+              },
+              "returns": {
+                "const": "boolean_or_zero_or_numeric"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "historical"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "inputs": {
+                "const": [
+                  "playerIdObj",
+                  "playerIdStr",
+                  "courseId",
+                  "courseIdStr",
+                  "ObjectId",
+                  "now"
+                ]
+              },
+              "returns": {
+                "const": "historical_aggregate_config"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "conditionSpec": {
+            "properties": {
+              "mode": {
+                "const": "round"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "badge": {
+            "properties": {
+              "requiresHistoricalData": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "conditionSpec": {
+            "properties": {
+              "mode": {
+                "const": "historical"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "badge": {
+            "properties": {
+              "requiresHistoricalData": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

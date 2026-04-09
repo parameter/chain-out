@@ -7,7 +7,7 @@ function App() {
     <div className="App">
       <header className="header">
         <div className="header-content">
-          <h1>Courses Admin - Create New Course</h1>
+          <h1>Courses Admin - Create / Edit Course</h1>
         </div>
       </header>
       <div className="container">
