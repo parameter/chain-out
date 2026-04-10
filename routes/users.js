@@ -1266,6 +1266,18 @@ router.get('/scorecards', requireAuth, async (req, res) => {
           $or: [
             { "invites.invitedUserId": req.user._id },
             { creatorId: req.user._id }
+          ],
+          $nor: [
+            {
+              removed: {
+                $elemMatch: {
+                  $or: [
+                    { entityId: req.user._id },
+                    { entityId: req.user._id.toString() }
+                  ]
+                }
+              }
+            }
           ]
         }
       },
