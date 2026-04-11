@@ -2066,11 +2066,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       new Set([...invitedIds, ...addedIds, ...creatorId].map(String))
     );
 
-    console.log('invitedIds', invitedIds);
-    console.log('addedIds', addedIds);
-    console.log('creatorId', creatorId);
-    console.log('allUserIds', allUserIds);
-
     // Notify everyone involved with the scorecard (invited users, added players, and creator)
     try {
       await Promise.all(
