@@ -23,9 +23,6 @@ const pusher = new Pusher({
 
 
 async function sendUserNotification({ forUserId, eventName, payload, expoPush, localNotification }) {
-
-  console.log('sendUserNotification', forUserId, eventName, payload, expoPush, localNotification);
-
   var db = getDatabase();
 
   // The realtime 
@@ -1780,7 +1777,7 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
             localNotification: {
               fromUser: req.user._id,
               type: 'scorecard-updated',
-              message: `result added to scorecard`,
+              message: null,
               scorecardId
             }
           })
@@ -1845,7 +1842,7 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
             localNotification: {
               fromUser: req.user._id,
               type: 'scorecard-updated',
-              message: `Scorecard updated`,
+              message: `Player set as DNF`,
               scorecardId
             }
           })

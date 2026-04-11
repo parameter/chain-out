@@ -36,4 +36,22 @@ router.post('/suggest-new-course', requireAuth, async (req, res) => {
     }
 });
 
+
+
+router.get('/courses', requireAuth, async (req, res) => {
+  try {
+    
+    const db = getDatabase();
+    const coursesCollection = db.collection('courses');
+    const courses = await coursesCollection.find({}).toArray();
+
+    res.json({ courses });
+
+  } catch (e) {
+    console.error('Error fetching courses:', e);
+    res.status(500).json({ message: 'Failed to fetch courses' });
+  }
+});
+
+
 module.exports = router;
