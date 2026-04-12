@@ -92,7 +92,7 @@ router.post('/update-course', requireAuth, async (req, res) => {
     // check if current user is the owner of the course in course-admins
     const db = getDatabase();
     const courseAdminsCollection = db.collection('course-admins');
-    const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(courseId), userId: new ObjectId(req.user._id) });
+    const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(courseId), userId: req.user._id });
     if (!courseAdmin) {
       return res.status(403).json({ message: 'You are not authorized to update this course' });
     }
