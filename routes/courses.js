@@ -38,6 +38,28 @@ router.post('/suggest-new-course', requireAuth, async (req, res) => {
 
 
 
+router.get('/', requireAuth, async (req, res) => {
+  try {
+
+    const { courseId } = req.query;
+
+    if (!courseId) {
+      return res.status(400).json({ message: 'Course id is required' });
+    }
+
+    const db = getDatabase();
+    const coursesCollection = db.collection('courses');
+    const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+
+    res.json({ course });
+
+  } catch (e) {
+    console.error('Error fetching course:', e);
+    res.status(500).json({ message: 'Failed to fetch course' });
+  }
+});
+
+
 router.get('/courses', requireAuth, async (req, res) => {
   try {
     
