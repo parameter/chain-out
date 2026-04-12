@@ -107,11 +107,6 @@ router.post('/update-course', requireAuth, async (req, res) => {
 
 router.post('/save-new-course', requireAuth, async (req, res) => {
   try {
-    const { courseId } = req.body;
-
-    if (!courseId) {
-      return res.status(400).json({ message: 'Course id is required' });
-    }
 
     // check if current user is super-admin
     if (req.user.admin !== 'super-admin') {
