@@ -98,7 +98,7 @@ router.post('/update-course', requireAuth, async (req, res) => {
     }
 
     const coursesCollection = db.collection('courses');
-    const result = await coursesCollection.updateOne({ _id: new ObjectId(courseId) }, { $set: req.body });
+    const result = await coursesCollection.updateOne({ id: new ObjectId(courseId) }, { $set: req.body });
 
     res.json({ result: result.modifiedCount });
   } catch (e) {
