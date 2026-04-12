@@ -20,19 +20,6 @@ const initializePassport = () => {
       let user = await usersCollection.findOne({ email: email, emailVerified: true });
       let userType = 'user';
       
-      // If not found in users, check operators collection
-      if (!user) {
-        const operatorsCollection = db.collection('operators');
-        user = await operatorsCollection.findOne({ email: email });
-        userType = 'operator';
-      }
-
-      if (!user) {
-        const serviceUsersCollection = db.collection('service-users');
-        user = await serviceUsersCollection.findOne({ email: email });
-        userType = 'service-user';
-      }
-      
       if (!user) {
         return done(null, false, { message: 'Invalid email or password 1' });
       }
