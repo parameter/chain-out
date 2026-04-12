@@ -76,4 +76,74 @@ router.get('/courses', requireAuth, async (req, res) => {
 });
 
 
+
+router.post('/update-course', requireAuth, async (req, res) => {
+  try {
+    const { courseId } = req.body;
+
+    if (!courseId) {
+      return res.status(400).json({ message: 'Course id is required' });
+    }
+
+    // check if current user is the owner of the course
+    const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (course.userId !== req.user._id) {
+      return res.status(403).json({ message: 'You are not the owner of this course' });
+    }
+
+    const db = getDatabase();
+    const coursesCollection = db.collection('courses');
+
+    const result = await coursesCollection.updateOne(
+      { _id: new ObjectId(courseId) },
+      { $set: { saved: true } },
+      { upsert: true }
+    );
+
+    res.json({ result: result.modifiedCount + result.upsertedCount });
+  } catch (e) {
+    console.error('Error saving course:', e);
+    res.status(500).json({ message: 'Failed to save course' });
+  }
+});
+
+
+
+router.post('/assign-course-to-user', requireAuth, async (req, res) => {
+  try {
+
+    const { courseId, userEmail } = req.body;
+
+    // check if user is super-admin 
+    if (req.user.admin !== 'super-admin') {
+      return res.status(403).json({ message: 'You are not authorized to assign courses to users' });
+    }
+
+    if (!courseId || !userEmail) {
+      return res.status(400).json({ message: 'Course id and user email are required' });
+    }
+
+    const db = getDatabase();
+    const courseAdminsCollection = db.collection('course-admins');
+
+    // upsert user id to course admins collection
+    const result = await courseAdminsCollection.updateOne(
+      { courseId: new ObjectId(courseId), userEmail: userEmail }, 
+      { $set: { userId: new ObjectId(req.user._id) } }, 
+      { upsert: true }
+    );
+
+    res.json({ result: result.modifiedCount + result.upsertedCount });
+    
+  } catch (e) {
+    console.error('Error assigning course to user:', e);
+    res.status(500).json({ message: 'Failed to assign course to user' });
+  }
+});
+
+
+
 module.exports = router;
