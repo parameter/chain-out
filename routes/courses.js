@@ -85,31 +85,49 @@ router.post('/update-course', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Course id is required' });
     }
 
-    // check if current user is the owner of the course
-    const course = await coursesCollection.findOne({ _id: new ObjectId(courseId) });
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-    if (course.userId !== req.user._id) {
-      return res.status(403).json({ message: 'You are not the owner of this course' });
-    }
-
+    // check if current user is the owner of the course in course-admins
     const db = getDatabase();
+    const courseAdminsCollection = db.collection('course-admins');
+    const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(courseId), userId: new ObjectId(req.user._id) });
+    if (!courseAdmin) {
+      return res.status(403).json({ message: 'You are not authorized to update this course' });
+    }
+
     const coursesCollection = db.collection('courses');
+    const result = await coursesCollection.updateOne({ _id: new ObjectId(courseId) }, { $set: req.body });
 
-    const result = await coursesCollection.updateOne(
-      { _id: new ObjectId(courseId) },
-      { $set: { saved: true } },
-      { upsert: true }
-    );
-
-    res.json({ result: result.modifiedCount + result.upsertedCount });
+    res.json({ result: result.modifiedCount });
   } catch (e) {
     console.error('Error saving course:', e);
     res.status(500).json({ message: 'Failed to save course' });
   }
 });
 
+
+
+router.post('/save-new-course', requireAuth, async (req, res) => {
+  try {
+    const { courseId } = req.body;
+
+    if (!courseId) {
+      return res.status(400).json({ message: 'Course id is required' });
+    }
+
+    // check if current user is super-admin
+    if (req.user.admin !== 'super-admin') {
+      return res.status(403).json({ message: 'You are not authorized to save new courses' });
+    }
+
+    const db = getDatabase();
+    const coursesCollection = db.collection('courses');
+    const result = await coursesCollection.insertOne(req.body);
+
+    res.json({ result: result.modifiedCount });
+  } catch (e) {
+    console.error('Error saving course:', e);
+    res.status(500).json({ message: 'Failed to save course' });
+  }
+});
 
 
 
