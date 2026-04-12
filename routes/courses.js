@@ -79,9 +79,9 @@ router.get('/courses', requireAuth, async (req, res) => {
 
 router.post('/update-course', requireAuth, async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const { _id } = req.body;
 
-    if (!courseId) {
+    if (!_id) {
       return res.status(400).json({ message: 'Course id is required' });
     }
 
@@ -92,13 +92,13 @@ router.post('/update-course', requireAuth, async (req, res) => {
     // check if current user is the owner of the course in course-admins
     const db = getDatabase();
     const courseAdminsCollection = db.collection('course-admins');
-    const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(courseId), userId: req.user._id });
+    const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(_id), userId: req.user._id });
     if (!courseAdmin) {
       return res.status(403).json({ message: 'You are not authorized to update this course' });
     }
 
     const coursesCollection = db.collection('courses');
-    const result = await coursesCollection.updateOne({ id: new ObjectId(courseId) }, { $set: req.body });
+    const result = await coursesCollection.updateOne({ id: new ObjectId(_id) }, { $set: req.body });
 
     res.json({ result: result.modifiedCount });
   } catch (e) {
