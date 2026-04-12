@@ -85,6 +85,10 @@ router.post('/update-course', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Course id is required' });
     }
 
+
+    console.log('courseId', courseId);
+    console.log('req.user._id', req.user._id);
+
     // check if current user is the owner of the course in course-admins
     const db = getDatabase();
     const courseAdminsCollection = db.collection('course-admins');
