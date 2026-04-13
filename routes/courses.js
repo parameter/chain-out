@@ -85,7 +85,6 @@ router.post('/update-course', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Course id is required' });
     }
 
-
     // check if current user is the owner of the course in course-admins
     const db = getDatabase();
     const courseAdminsCollection = db.collection('course-admins');
@@ -95,7 +94,7 @@ router.post('/update-course', requireAuth, async (req, res) => {
     }
 
     const coursesCollection = db.collection('courses');
-    const result = await coursesCollection.updateOne({ id: new ObjectId(_id) }, { $set: req.body });
+    const result = await coursesCollection.updateOne({ _id: new ObjectId(_id) }, { $set: req.body });
 
     res.json({ result: result.modifiedCount });
   } catch (e) {
