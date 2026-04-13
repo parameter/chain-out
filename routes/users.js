@@ -1,6 +1,5 @@
 const express = require('express');
 const passport = require('passport');
-const crypto = require('crypto');
 const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
@@ -977,29 +976,19 @@ router.get('/friends/fore-thread', requireAuth, async (req, res) => {
 
 
 
-const createGuestPlayers = async (guestPlayers) => {
+const normalizeGuestPlayers = (guestPlayers) => {
 
   if (!Array.isArray(guestPlayers) || guestPlayers.length === 0) {
     return [];
   }
 
-  const db = getDatabase();
-  const usersCollection = db.collection('users');
-
-  const base = `guest-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-  const guestPlayersForInsert = guestPlayers.map((player, i) => ({
-    email: `${base}-${i}@guest.local`,
-    password: player.password,
-    username: player.username,
-    fname: '',
-    sname: '',
-    emailVerified: false,
-    created_at: new Date(),
-    updated_at: new Date()
+  return guestPlayers.map((player) => ({
+    _id: player?._id,
+    username: player?.username || player?.fname || 'Guest',
+    fname: player?.fname || '',
+    sname: player?.sname || '',
+    braggingSlots: Array.isArray(player?.braggingSlots) ? player.braggingSlots : []
   }));
-
-  const result = await usersCollection.insertMany(guestPlayersForInsert);
-  return Object.values(result.insertedIds).map((id) => id.toString());
 }
 
 
@@ -1035,7 +1024,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
       return [invitedUserIds];
     })();
 
-    await createGuestPlayers(guestPlayers);
+    const normalizedGuestPlayers = normalizeGuestPlayers(guestPlayers);
     const userIds = [...normalizedInvitedUserIds];
 
     const db = getDatabase();
@@ -1101,6 +1090,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         layout,
         results: [],
         invites,
+        guestPlayers: normalizedGuestPlayers,
         mode: mode,
         teams: mode === 'doubles' && Array.isArray(teams) ? teams : undefined,
         createdAt: now,
@@ -1188,9 +1178,14 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
     })
 
     res.status(201).json({
-      message: userIds.length > 1 ? 'Users invited to scorecard' : 'User invited to scorecard',
+      message: userIds.length > 1
+        ? 'Users invited to scorecard'
+        : normalizedGuestPlayers.length > 0
+          ? 'Guest players added to scorecard'
+          : 'User invited to scorecard',
       scorecardId,
       invitedUserIds: userIds,
+      guestPlayers: normalizedGuestPlayers,
       status: 'pending',
       date: now
     });

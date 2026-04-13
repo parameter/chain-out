@@ -59,6 +59,7 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
+/*
 
 router.get('/courses', requireAuth, async (req, res) => {
   try {
@@ -75,7 +76,7 @@ router.get('/courses', requireAuth, async (req, res) => {
   }
 });
 
-
+*/
 
 router.post('/update-course', requireAuth, async (req, res) => {
   try {
