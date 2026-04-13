@@ -1634,7 +1634,10 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Entity is DNF' });
     }
 
-    const entityIdForStorage = entityType === 'player' ? new ObjectId(entityId) : entityId;
+    const entityIdForStorage =
+      entityType === 'player' && ObjectId.isValid(entityId)
+        ? new ObjectId(entityId)
+        : entityId;
 
     const resultObj = {
       entityId: entityIdForStorage,
