@@ -81,6 +81,9 @@ router.post('/update-course', requireAuth, async (req, res) => {
   try {
     const { _id } = req.body;
 
+    console.log('_id', _id);
+    console.log('req.body', req.body);
+
     if (!_id) {
       return res.status(400).json({ message: 'Course id is required' });
     }
