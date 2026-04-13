@@ -96,10 +96,14 @@ router.post('/update-course', requireAuth, async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to update this course' });
     }
 
+    if (req.body._id) {
+      delete req.body._id;
+    }
+
     const coursesCollection = db.collection('courses');
     const result = await coursesCollection.updateOne({ _id: new ObjectId(_id) }, { $set: req.body });
 
-    res.json({ result: result.modifiedCount });
+    res.json({ success: true, message: 'Course updated successfully', result: result.modifiedCount });
   } catch (e) {
     console.error('Error saving course:', e);
     res.status(500).json({ message: 'Failed to save course' });
