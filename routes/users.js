@@ -984,10 +984,7 @@ const normalizeGuestPlayers = (guestPlayers) => {
 
   return guestPlayers.map((player) => ({
     _id: player?._id,
-    username: player?.username || player?.fname || 'Guest',
-    fname: player?.fname || '',
-    sname: player?.sname || '',
-    braggingSlots: Array.isArray(player?.braggingSlots) ? player.braggingSlots : []
+    username: player?.username,
   }));
 }
 
@@ -1444,6 +1441,17 @@ router.get('/scorecards', requireAuth, async (req, res) => {
                 }
               }
             }
+          }
+        }
+      },
+      {
+        $addFields: {
+          guestPlayers: {
+            $cond: [
+              { $isArray: "$guestPlayers" },
+              "$guestPlayers",
+              []
+            ]
           }
         }
       },
