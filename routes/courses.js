@@ -148,13 +148,24 @@ router.post('/assign-course-to-user', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Course id and user email are required' });
     }
 
+    if (!ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: 'Invalid course id' });
+    }
+
     const db = getDatabase();
     const courseAdminsCollection = db.collection('course-admins');
+    const usersCollection = db.collection('users');
+    const normalizedEmail = String(userEmail).trim().toLowerCase();
 
-    // upsert user id to course admins collection
+    const targetUser = await usersCollection.findOne({ email: normalizedEmail }, { projection: { _id: 1 } });
+    if (!targetUser) {
+      return res.status(404).json({ message: 'No user found with this email' });
+    }
+
+    // Upsert assignment using the target user's id (the one matching userEmail)
     const result = await courseAdminsCollection.updateOne(
-      { courseId: new ObjectId(courseId), userEmail: userEmail }, 
-      { $set: { userId: new ObjectId(req.user._id) } }, 
+      { courseId: new ObjectId(courseId), userEmail: normalizedEmail },
+      { $set: { userId: targetUser._id } },
       { upsert: true }
     );
 
@@ -216,6 +227,7 @@ router.get('/course-admins', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch course admins' });
   }
 });
+
 
 
 router.get('/my-courses', requireAuth, async (req, res) => {
