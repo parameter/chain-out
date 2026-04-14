@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const courseRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
+const adminBadgeBuilderRoutes = require('./routes/admin-badge-builder');
 const { initializePassport } = require('./config/passport');
 const { initializeDatabase } = require('./config/database');
 
@@ -36,7 +37,8 @@ app.use(morgan('combined'));
 // Define an array of allowed URLs (can be set via env or hardcoded)
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'https://chainout-course-admin.vercel.app'
 ];
 
 if (process.env.CLIENT_URL) {
@@ -92,6 +94,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/admin', adminRoutes);
+app.use('/admin', adminBadgeBuilderRoutes);
 
 // Health
 app.get('/api/health', (req, res) => {

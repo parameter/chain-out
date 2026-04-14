@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Badge builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin-badge-builder.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-inner">
+        <h1 class="title">Badge builder</h1>
+        <p class="subtitle">Define badges visually — conditions are generated on save.</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-ghost" id="btnRefresh">Refresh list</button>
+        <button type="button" class="btn btn-primary" id="btnNew">New badge</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <label class="search-label" for="searchInput">Search</label>
+        <input type="search" id="searchInput" class="search-input" placeholder="Name or id…" autocomplete="off" />
+        <ul class="badge-list" id="badgeList"></ul>
+      </aside>
+
+      <main class="editor" id="editorPanel">
+        <div class="empty-state" id="emptyState">
+          <p>Select a badge or create a new one.</p>
+        </div>
+
+        <form class="editor-form hidden" id="editorForm">
+          <div id="inferBanner" class="banner hidden" role="status"></div>
+
+          <section class="card">
+            <h2 class="card-title">Basics</h2>
+            <div class="grid2">
+              <label class="field">
+                <span>Badge id</span>
+                <input name="id" required />
+              </label>
+              <label class="field">
+                <span>Name</span>
+                <input name="name" required />
+              </label>
+            </div>
+            <div class="grid2">
+              <label class="field">
+                <span>Type</span>
+                <select name="type">
+                  <option value="unique">Unique</option>
+                  <option value="tiered">Tiered</option>
+                  <option value="secret">Secret</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Animation</span>
+                <select name="animation">
+                  <option value="none">None</option>
+                  <option value="pulse">Pulse</option>
+                  <option value="bounce">Bounce</option>
+                  <option value="rotate">Rotate</option>
+                  <option value="glow">Glow</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid2">
+              <label class="field">
+                <span>Icon key</span>
+                <input name="icon" placeholder="e.g. birdiehunter" />
+              </label>
+              <label class="field">
+                <span>Category</span>
+                <input name="category" placeholder="e.g. allRounds" />
+              </label>
+            </div>
+            <label class="field">
+              <span>Quote</span>
+              <textarea name="quote" rows="2"></textarea>
+            </label>
+            <label class="field">
+              <span>Description</span>
+              <textarea name="description" rows="2"></textarea>
+            </label>
+            <label class="field">
+              <span>Functional description</span>
+              <textarea name="functionalDescription" rows="2"></textarea>
+            </label>
+          </section>
+
+          <section class="card">
+            <h2 class="card-title">Flags</h2>
+            <div class="flags">
+              <label class="chk"><input type="checkbox" name="trackUniqueCourses" /> Track unique courses</label>
+              <label class="chk"><input type="checkbox" name="requiresWeatherAPI" /> Requires weather API</label>
+              <label class="chk"><input type="checkbox" name="requiresDate" /> Requires date</label>
+              <label class="chk"><input type="checkbox" name="trackTierThresholdZync" /> Tier threshold zync (one round)</label>
+              <label class="chk"><input type="checkbox" name="doubles" /> Doubles</label>
+              <label class="chk"><input type="checkbox" name="isUnique" /> Unique</label>
+              <label class="chk"><input type="checkbox" name="done" /> Done (published)</label>
+            </div>
+          </section>
+
+          <section class="card" id="uniqueCard">
+            <h2 class="card-title">Unique badge</h2>
+            <div class="grid3">
+              <label class="field">
+                <span>Tier</span>
+                <select name="tier">
+                  <option value="bronze">Bronze</option>
+                  <option value="silver">Silver</option>
+                  <option value="gold">Gold</option>
+                  <option value="platinum">Platinum</option>
+                  <option value="diamond">Diamond</option>
+                  <option value="emerald">Emerald</option>
+                  <option value="ruby">Ruby</option>
+                  <option value="cosmic">Cosmic</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Difficulty</span>
+                <select name="difficulty">
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                  <option value="extreme">Extreme</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Points</span>
+                <input type="number" name="points" min="0" value="0" />
+              </label>
+            </div>
+            <label class="chk"><input type="checkbox" name="asProgress" /> As progress</label>
+          </section>
+
+          <section class="card" id="tieredCard">
+            <h2 class="card-title">Tier configuration</h2>
+            <div class="grid2">
+              <label class="field">
+                <span>Tier description prefix</span>
+                <input name="tierDescriptionPrefix" placeholder="Make" />
+              </label>
+              <label class="field">
+                <span>Tier description suffix</span>
+                <input name="tierDescriptionSuffix" placeholder="birdies" />
+              </label>
+            </div>
+            <label class="field">
+              <span>Tier thresholds (comma-separated)</span>
+              <input name="tierThresholds" placeholder="5,50,100" />
+            </label>
+            <label class="field">
+              <span>Tier points (comma-separated)</span>
+              <input name="tierPoints" placeholder="100,250,500" />
+            </label>
+            <label class="field">
+              <span>Tier names (one per line)</span>
+              <textarea name="tierNames" rows="6"></textarea>
+            </label>
+          </section>
+
+          <section class="card card-accent">
+            <h2 class="card-title">Condition (visual)</h2>
+            <p class="hint">Pick a template and parameters. Raw JavaScript is not edited here.</p>
+            <label class="field">
+              <span>Evaluation mode</span>
+              <select id="conditionMode" name="conditionMode">
+                <option value="round">This round (results + layout)</option>
+                <option value="historical">Historical (Mongo aggregate)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Template</span>
+              <select id="templateSelect"></select>
+            </label>
+            <div id="paramFields" class="param-fields"></div>
+            <div class="actions-row">
+              <button type="button" class="btn btn-secondary" id="btnTestRound">Test condition (round)</button>
+            </div>
+            <p class="hint small" id="testHint">Uses sample results/layout against <code>/admin/api/badges/test</code>. Historical templates are validated on save only.</p>
+            <pre class="test-out hidden" id="testOut"></pre>
+          </section>
+
+          <div class="footer-actions">
+            <button type="button" class="btn btn-ghost" id="btnCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnSave">Save badge</button>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="/admin-badge-builder.js"></script>
+</body>
+</html>
