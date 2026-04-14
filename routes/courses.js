@@ -218,4 +218,36 @@ router.get('/course-admins', requireAuth, async (req, res) => {
 });
 
 
+router.get('/my-courses', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const courseAdminsCollection = db.collection('course-admins');
+    const courses = await courseAdminsCollection.aggregate([
+      { $match: { userId: req.user._id } },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'courseId',
+          foreignField: '_id',
+          as: 'course'
+        }
+      },
+      { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          courseId: 1,
+          courseName: '$course.name'
+        }
+      }
+    ]).toArray();
+    res.json({ courses });
+  } catch (e) {
+    console.error('Error fetching my courses:', e);
+    res.status(500).json({ message: 'Failed to fetch my courses' });
+
+  }
+});
+
+
 module.exports = router;
