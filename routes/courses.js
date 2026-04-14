@@ -168,4 +168,27 @@ router.post('/assign-course-to-user', requireAuth, async (req, res) => {
 
 
 
+router.get('/course-admins', requireAuth, async (req, res) => {
+  try {
+
+    if (req.user.admin !== 'super-admin') {
+      return res.status(403).json({ message: 'You are not authorized to save new courses' });
+    }
+
+    if (!courseId) {
+      return res.status(400).json({ message: 'Course id is required' });
+    }
+
+    const db = getDatabase();
+    const courseAdminsCollection = db.collection('course-admins');
+    const courseAdmins = await courseAdminsCollection.find().toArray();
+
+    res.json({ courseAdmins });
+  } catch (e) {
+    console.error('Error fetching course admins:', e);
+    res.status(500).json({ message: 'Failed to fetch course admins' });
+  }
+});
+
+
 module.exports = router;
