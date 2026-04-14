@@ -177,13 +177,37 @@ router.get('/course-admins', requireAuth, async (req, res) => {
 
     const db = getDatabase();
     const courseAdminsCollection = db.collection('course-admins');
-    const courseAdmins = await courseAdminsCollection.find().toArray();
 
-    // join users.username and name of course from courses collection
-    const coursesCollection = db.collection('courses');
-    const courseAdminsWithUsers = await coursesCollection.aggregate([
-      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
-      { $unwind: '$user' },
+    // Fetch course-admins and join user + course in one aggregate pipeline
+    const courseAdminsWithUsers = await courseAdminsCollection.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'courseId',
+          foreignField: '_id',
+          as: 'course'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          userId: 1,
+          courseId: 1,
+          userEmail: 1,
+          username: '$user.username',
+          courseName: '$course.name'
+        }
+      }
     ]).toArray();
 
     res.json({ courseAdmins: courseAdminsWithUsers });
