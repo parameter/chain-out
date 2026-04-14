@@ -175,10 +175,6 @@ router.get('/course-admins', requireAuth, async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to save new courses' });
     }
 
-    if (!courseId) {
-      return res.status(400).json({ message: 'Course id is required' });
-    }
-
     const db = getDatabase();
     const courseAdminsCollection = db.collection('course-admins');
     const courseAdmins = await courseAdminsCollection.find().toArray();
