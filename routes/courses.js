@@ -179,7 +179,14 @@ router.get('/course-admins', requireAuth, async (req, res) => {
     const courseAdminsCollection = db.collection('course-admins');
     const courseAdmins = await courseAdminsCollection.find().toArray();
 
-    res.json({ courseAdmins });
+    // join users.username and name of course from courses collection
+    const coursesCollection = db.collection('courses');
+    const courseAdminsWithUsers = await coursesCollection.aggregate([
+      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+      { $unwind: '$user' },
+    ]).toArray();
+
+    res.json({ courseAdmins: courseAdminsWithUsers });
   } catch (e) {
     console.error('Error fetching course admins:', e);
     res.status(500).json({ message: 'Failed to fetch course admins' });
