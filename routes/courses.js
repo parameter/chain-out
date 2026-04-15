@@ -126,6 +126,7 @@ router.post('/save-new-course', requireAuth, async (req, res) => {
 
     const courseObject = req.body;
     courseObject.createdAt = new Date();
+    courseObject.createdBy = req.user._id;
 
     const result = await coursesCollection.insertOne(courseObject);
 
