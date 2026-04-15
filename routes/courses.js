@@ -123,7 +123,11 @@ router.post('/save-new-course', requireAuth, async (req, res) => {
 
     const db = getDatabase();
     const coursesCollection = db.collection('courses');
-    const result = await coursesCollection.insertOne(req.body);
+
+    const courseObject = req.body;
+    courseObject.createdAt = new Date();
+
+    const result = await coursesCollection.insertOne(courseObject);
 
     res.json({ result: result.modifiedCount });
   } catch (e) {
@@ -163,13 +167,11 @@ router.post('/assign-course-to-user', requireAuth, async (req, res) => {
     }
 
     // Upsert assignment using the target user's id (the one matching userEmail)
-    const result = await courseAdminsCollection.updateOne(
-      { courseId: new ObjectId(courseId), userEmail: normalizedEmail },
-      { $set: { userId: targetUser._id } },
-      { upsert: true }
+    const result = await courseAdminsCollection.insertOne(
+      { courseId: new ObjectId(courseId), userId: targetUser._id, userEmail: normalizedEmail }
     );
 
-    res.json({ result: result.modifiedCount + result.upsertedCount });
+    res.json({ result: result.insertedId });
     
   } catch (e) {
     console.error('Error assigning course to user:', e);
