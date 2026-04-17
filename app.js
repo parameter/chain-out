@@ -96,7 +96,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin', adminBadgeBuilderRoutes);
-app.use('api/achievements', achievementsRoutes);
+app.use('/api/achievements', achievementsRoutes);
 
 // Health
 app.get('/api/health', (req, res) => {
