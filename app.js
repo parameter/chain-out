@@ -11,6 +11,7 @@ const userRoutes = require('./routes/users');
 const courseRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
 const adminBadgeBuilderRoutes = require('./routes/admin-badge-builder');
+const achievementRoutes = require('./routes/achievements');
 const { initializePassport } = require('./config/passport');
 const { initializeDatabase } = require('./config/database');
 
@@ -95,6 +96,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin', adminBadgeBuilderRoutes);
+app.use('api/achievements', achievementRoutes);
 
 // Health
 app.get('/api/health', (req, res) => {
