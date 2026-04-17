@@ -13,6 +13,9 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
     try {
         const { achievement } = req.body;
 
+        console.log('achievement', achievement);
+        console.log('req.user._id', req.user._id);
+
         if (!achievement) {
             return res.status(400).json({ message: 'All fields are required' });
         }
@@ -21,7 +24,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         // check so user is admin för the course in course-admins 
         const courseAdminsCollection = db.collection('course-admins');
-        const courseAdmin = await courseAdminsCollection.findOne({ userId: req.user._id, courseId: achievement.courseId });
+        const courseAdmin = await courseAdminsCollection.findOne({ userId: new ObjectId(req.user._id), courseId: new ObjectId(achievement.courseId) });
         if (!courseAdmin) {
             return res.status(403).json({ message: 'You are not authorized to create achievements for this course' });
         }
@@ -53,7 +56,7 @@ router.get('/get-course-achievements', requireAuth, async (req, res) => {
 
         // check so user is admin för the course in course-admins 
         const courseAdminsCollection = db.collection('course-admins');
-        const courseAdmin = await courseAdminsCollection.findOne({ userId: req.user._id, courseId: courseId });
+        const courseAdmin = await courseAdminsCollection.findOne({ userId: new ObjectId(req.user._id), courseId: new ObjectId(courseId) });
         if (!courseAdmin) {
             return res.status(403).json({ message: 'You are not authorized to create achievements for this course' });
         }
