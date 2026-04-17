@@ -4,7 +4,7 @@ const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
-const { searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges } = require('../lib/badges');
+const { searchForEarnedAchievements, searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges } = require('../lib/badges');
 
 
 const router = express.Router();
@@ -1994,9 +1994,19 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     const shouldSearchBadges = updatedScorecard.mode !== 'doubles';
     let earnedBadges = [];
+    let earnedAchievements = [];
 
     if (shouldSearchBadges) {
       try {
+
+        earnedAchievements = await searchForEarnedAchievements({
+          scorecardId: updatedScorecard._id,
+          results: results,
+          courseId: updatedScorecard.courseId,
+          layout: updatedScorecard.layout,
+          scorecard: updatedScorecard
+        });
+
         earnedBadges = await searchForEarnedBadges({
           scorecardId: updatedScorecard._id,
           results: results,
@@ -2039,7 +2049,9 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     
     if (shouldSearchBadges) {
       scorecardSetUpdates.earnedBadges = earnedBadges;
+      scorecardSetUpdates.earnedAchievements = earnedAchievements;
       updatedScorecard.earnedBadges = earnedBadges;
+      updatedScorecard.earnedAchievements = earnedAchievements;
     }
     if (Object.keys(scorecardSetUpdates).length > 0) {
       await scorecardsCollection.updateOne(
