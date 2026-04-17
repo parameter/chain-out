@@ -31,6 +31,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         achievement.createdAt = new Date();
         achievement.createdBy = req.user._id;
+        achievement.courseId = new ObjectId(achievement.courseId);
 
         const achievementsCollection = db.collection('achievements');
         const achievementResult = await achievementsCollection.insertOne(achievement);
@@ -60,10 +61,10 @@ router.get('/get-course-achievements', requireAuth, async (req, res) => {
         if (!courseAdmin) {
             return res.status(403).json({ message: 'You are not authorized to create achievements for this course' });
         }
-
         
         const achievementsCollection = db.collection('achievements');
         const achievements = await achievementsCollection.find({ courseId: new ObjectId(courseId) }).toArray();
+
         res.status(200).json({ achievements });
     } catch (error) {
         console.error('Error getting all achievements:', error);
