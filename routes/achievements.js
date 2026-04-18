@@ -80,7 +80,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         achievement.createdAt = new Date();
         achievement.createdBy = req.user._id;
-        achievement.courseId = new ObjectId(achievement.courseId);
+        achievement.courseId = courseIdObject;
 
         const achievementResult = await achievementsCollection.insertOne(achievement);
 
