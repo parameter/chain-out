@@ -2015,8 +2015,6 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
           scorecard: updatedScorecard
         });
 
-        console.log('earnedBadges', earnedBadges);
-
         // Verify that searchForEarnedBadges completed successfully
         if (!Array.isArray(earnedBadges)) {
           console.error('❌ [add-result] searchForEarnedBadges returned invalid result:', typeof earnedBadges);
