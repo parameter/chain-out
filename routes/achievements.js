@@ -48,15 +48,15 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         existingAchievements.forEach(achi => {
             const achi_copy = {
                 ...achi,
-                courseId: undefined,
-                id: undefined,
-                description: undefined,
-                title: undefined,
-                createdAt: undefined,
-                createdBy: undefined,
-                updatedAt: undefined,
-                updatedBy: undefined,
             };
+            delete achi_copy._id;
+            delete achi_copy.courseId;
+            delete achi_copy.description;
+            delete achi_copy.title;
+            delete achi_copy.createdAt;
+            delete achi_copy.createdBy;
+            delete achi_copy.updatedAt;
+            delete achi_copy.updatedBy;
             console.log('achi', achi);
             console.log('achi_copy', achi_copy);
             const areAchievementsSame = _.isEqual(achievement, achi_copy);
