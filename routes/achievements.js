@@ -25,7 +25,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         // check so user is admin för the course in course-admins 
         const courseAdminsCollection = db.collection('course-admins');
-        const courseAdmin = await courseAdminsCollection.findOne({ userId: new ObjectId(req.user._id), courseId: new ObjectId(achievement.courseId) });
+        const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(achievement.courseId) });
         if (!courseAdmin) {
             return res.status(403).json({ message: 'You are not authorized to create achievements for this course' });
         }
