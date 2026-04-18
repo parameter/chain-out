@@ -33,7 +33,10 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         // the name is the only attribute that can be the same
         const achievementsCollection = db.collection('achievements');
 
-        const existingAchievement = await achievementsCollection.findOne({ courseId: new ObjectId(achievement.courseId), ...achievement });
+        const courseIdObject = new ObjectId(achievement.courseId);
+        delete achievement.courseId;
+
+        const existingAchievement = await achievementsCollection.findOne({ courseId: courseIdObject, ...achievement });
         if (existingAchievement) {
             console.log('Achievement with the same attributes already exists for this course');
             return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
