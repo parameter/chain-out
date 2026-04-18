@@ -55,7 +55,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         delete new_achievement_for_comparison.updatedAt;
         delete new_achievement_for_comparison.updatedBy;
 
-        let areAchievementsSame = false;
+        let refuseToCreateAchievement = false;
 
         existingAchievements.forEach(achi => {
             const achi_copy = {
@@ -74,11 +74,11 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
             let areAchievementsSame = _.isEqual(achievement, achi_copy);
             if (areAchievementsSame) {
                 console.log('Achievement with the same attributes already exists for this course');
-                areAchievementsSame = true;
+                refuseToCreateAchievement = true;
             }
         });
 
-        if (areAchievementsSame) {
+        if (refuseToCreateAchievement) {
             return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
         }
 
