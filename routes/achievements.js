@@ -9,13 +9,6 @@ const requireAuth = passport.authenticate('jwt', { session: false });
 const router = express.Router();
 
 
-const checkIfAchievementsAreSame = (achievement, existingAchievements) => {
-    return existingAchievements.some(a => a.name === achievement.name);
-    if (achievement.description === existingAchievement.description) {
-        return true;
-    }
-    return false;
-}
 
 router.post('/create-new-achievement', requireAuth, async (req, res) => {
     try {
@@ -45,6 +38,8 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         const existingAchievements = await achievementsCollection.find({ courseId: courseIdObject }).toArray();
 
+        console.log('existingAchievements', existingAchievements.length);
+
         const new_achievement_for_comparison = achievement;
         delete new_achievement_for_comparison._id;
         delete new_achievement_for_comparison.courseId;
@@ -71,7 +66,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
             delete achi_copy.updatedBy;
 
             console.log('achi_copy', achi_copy);
-            
+
             let areAchievementsSame = _.isEqual(achievement, achi_copy);
             if (areAchievementsSame) {
                 console.log('Achievement with the same attributes already exists for this course');
