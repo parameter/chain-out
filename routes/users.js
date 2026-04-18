@@ -1835,6 +1835,8 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
 
     const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
 
+    console.log('set player DNF recipientIds', recipientIds);
+
     try {
 
       await Promise.all(
@@ -1914,6 +1916,8 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
     }
 
     const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
+
+    console.log('remove player recipientIds', recipientIds);
 
     try {
 
