@@ -1080,12 +1080,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
 
     let cardIsDead = (scorecard.invites.length + 1) === ((scorecard?.removed?.length || 0) + (scorecard?.dnf?.length || 0));
 
-    console.log('cardIsDead', cardIsDead);
-    console.log('scorecard.invites.length', scorecard.invites.length);
-    console.log('scorecard?.removed?.length', scorecard?.removed?.length);
-    console.log('scorecard?.dnf?.length', scorecard?.dnf?.length);
-
-    if (!scorecard && !cardIsDead) {
+    if (!scorecard || !cardIsDead) {
       const layout = course?.layouts?.find(l => l.id === layoutId) || null;
 
       const newScorecard = {
