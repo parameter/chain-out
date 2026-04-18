@@ -57,6 +57,8 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
                 updatedAt: undefined,
                 updatedBy: undefined,
             };
+            console.log('achi', achi);
+            console.log('achi_copy', achi_copy);
             const areAchievementsSame = _.isEqual(achievement, achi_copy);
             if (areAchievementsSame) {
                 console.log('Achievement with the same attributes already exists for this course');
