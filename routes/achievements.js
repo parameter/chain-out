@@ -70,7 +70,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
             console.log('achi_copy', achi_copy);
 
-            let areAchievementsSame = _.isEqual(achievement, achi_copy);
+            let areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
             if (areAchievementsSame) {
                 console.log('Achievement with the same attributes already exists for this course');
                 refuseToCreateAchievement = true;
