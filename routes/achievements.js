@@ -29,11 +29,20 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to create achievements for this course' });
         }
 
+        // check so there is no achievement with the same attributes on the same course
+        // the name is the only attribute that can be the same
+        const achievementsCollection = db.collection('achievements');
+
+        const existingAchievement = await achievementsCollection.findOne({ courseId: new ObjectId(achievement.courseId), ...achievement });
+        if (existingAchievement) {
+            console.log('Achievement with the same attributes already exists for this course');
+            return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
+        }
+
         achievement.createdAt = new Date();
         achievement.createdBy = req.user._id;
         achievement.courseId = new ObjectId(achievement.courseId);
 
-        const achievementsCollection = db.collection('achievements');
         const achievementResult = await achievementsCollection.insertOne(achievement);
 
         res.status(201).json({ achievementResult });
