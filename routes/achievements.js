@@ -38,8 +38,6 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         const existingAchievements = await achievementsCollection.find({ courseId: courseIdObject }).toArray();
 
-        console.log('existingAchievements', existingAchievements.length);
-
         const new_achievement_for_comparison = {...achievement};
 
         delete new_achievement_for_comparison._id;
@@ -52,6 +50,10 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         delete new_achievement_for_comparison.updatedBy;
 
         let refuseToCreateAchievement = false;
+
+
+        console.log('new_achievement_for_comparison', new_achievement_for_comparison);
+        console.log('existingAchievements', existingAchievements.length);
 
         existingAchievements.forEach(achi => {
             const achi_copy = {
