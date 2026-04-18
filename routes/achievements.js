@@ -40,7 +40,8 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         console.log('existingAchievements', existingAchievements.length);
 
-        const new_achievement_for_comparison = [...achievement];
+        const new_achievement_for_comparison = {...achievement};
+
         delete new_achievement_for_comparison._id;
         delete new_achievement_for_comparison.courseId;
         delete new_achievement_for_comparison.description;
