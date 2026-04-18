@@ -64,14 +64,6 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
             }
         });
 
-        const areAchievementsSame = _.isEqual(achievement, other); 
-
-
-        if (existingAchievement) {
-            console.log('Achievement with the same attributes already exists for this course');
-            return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
-        }
-
         achievement.createdAt = new Date();
         achievement.createdBy = req.user._id;
         achievement.courseId = new ObjectId(achievement.courseId);
