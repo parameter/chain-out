@@ -2,12 +2,20 @@ const express = require('express');
 const passport = require('passport');
 const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
+var _ = require('lodash');
 const path = require('path');
 
 const requireAuth = passport.authenticate('jwt', { session: false });
 const router = express.Router();
 
 
+const checkIfAchievementsAreSame = (achievement, existingAchievements) => {
+    return existingAchievements.some(a => a.name === achievement.name);
+    if (achievement.description === existingAchievement.description) {
+        return true;
+    }
+    return false;
+}
 
 router.post('/create-new-achievement', requireAuth, async (req, res) => {
     try {
@@ -34,9 +42,31 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         const achievementsCollection = db.collection('achievements');
 
         const courseIdObject = new ObjectId(achievement.courseId);
-        delete achievement.courseId;
 
-        const existingAchievement = await achievementsCollection.findOne({ courseId: courseIdObject, ...achievement });
+        const existingAchievements = await achievementsCollection.find({ courseId: courseIdObject }).toArray();
+
+        existingAchievements.forEach(achi => {
+            const achi_copy = {
+                ...achi,
+                courseId: undefined,
+                id: undefined,
+                description: undefined,
+                title: undefined,
+                createdAt: undefined,
+                createdBy: undefined,
+                updatedAt: undefined,
+                updatedBy: undefined,
+            };
+            const areAchievementsSame = _.isEqual(achievement, achi_copy);
+            if (areAchievementsSame) {
+                console.log('Achievement with the same attributes already exists for this course');
+                return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
+            }
+        });
+
+        const areAchievementsSame = _.isEqual(achievement, other); 
+
+
         if (existingAchievement) {
             console.log('Achievement with the same attributes already exists for this course');
             return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
