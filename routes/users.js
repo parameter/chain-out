@@ -1835,8 +1835,6 @@ router.post('/scorecard/set-entity-dnf', requireAuth, async (req, res) => {
 
     const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
 
-    console.log('set player DNF recipientIds', recipientIds);
-
     try {
 
       await Promise.all(
@@ -1976,9 +1974,19 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'All holes must be scored for all players' });
     }
 
+    // an array of player results that are not in .removed or .dnf for easier querying the db
+    const playerResults = scorecard.results.filter(result => !scorecard.removed.includes(result.playerId) && !scorecard.dnf.includes(result.playerId));
+    // group by playerId to get the results for each player
+    const playerResultsGrouped = playerResults.reduce((acc, result) => {
+      acc[result.playerId] = [...(acc[result.playerId] || []), result];
+      return acc;
+    }, {});
+    
+    console.log('playerResultsGrouped', playerResultsGrouped);
+
     const updatedScorecard = await scorecardsCollection.findOneAndUpdate(
       { _id: new ObjectId(scorecardId) },
-      { $set: { status: 'completed' } },
+      { $set: { status: 'completed', playersTotalScores: playerResultsGrouped } },
       { returnDocument: 'after' }
     );
 
