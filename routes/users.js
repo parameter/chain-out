@@ -1983,7 +1983,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     // an array of player results that are not in .removed or .dnf for easier querying the db
     const playerResults = scorecard.results.filter(result => !removed.includes(result.entityId) && !dnf.includes(result.entityId));
-    // group by entityId and sum strokes per player → [{ entityId, result: [total] }, ...]
+    // group by entityId and sum strokes per player → [{ entityId, result: total }, ...]
     const sumsByEntity = playerResults.reduce((acc, result) => {
       const key =
         result.entityId && typeof result.entityId.toString === 'function'
@@ -1997,7 +1997,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     }, {});
     const playerResultsGrouped = Object.values(sumsByEntity).map(({ entityId, sum }) => ({
       entityId,
-      result: [sum]
+      result: sum
     }));
     
     console.log('playerResultsGrouped', playerResultsGrouped);
