@@ -1982,7 +1982,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     }
 
     // an array of player results that are not in .removed or .dnf for easier querying the db
-    const playerResults = scorecard.results.filter(result => !scorecard.removed.includes(result.playerId) && !scorecard.dnf.includes(result.playerId));
+    const playerResults = scorecard.results.filter(result => !removed.includes(result.playerId) && !dnf.includes(result.playerId));
     // group by playerId to get the results for each player
     const playerResultsGrouped = playerResults.reduce((acc, result) => {
       acc[result.playerId] = [...(acc[result.playerId] || []), result];
