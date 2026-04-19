@@ -219,6 +219,101 @@ router.post('/settings', requireAuth, async (req, res) => {
 
 
 
+router.get('/course-leaderboard', requireAuth, async (req, res) => {
+  try {
+    const { courseId, layoutId, limit: limitRaw } = req.query;
+
+    if (!courseId || !ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: 'Valid course id is required' });
+    }
+
+    const limit = Math.min(Math.max(parseInt(String(limitRaw || '50'), 10) || 50, 1), 200);
+
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+
+    const match = {
+      courseId: new ObjectId(courseId),
+      status: 'completed',
+      'playersTotalScores.0': { $exists: true }
+    };
+
+    if (layoutId != null && String(layoutId).trim() !== '') {
+      match['layout.id'] = layoutId;
+    }
+
+    const rounds = await scorecardsCollection
+      .aggregate([
+        { $match: match },
+        { $unwind: { path: '$playersTotalScores' } },
+        {
+          $match: {
+            'playersTotalScores.result': { $type: 'number', $gte: 0 }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            scorecardId: '$_id',
+            entityId: '$playersTotalScores.entityId',
+            result: '$playersTotalScores.result',
+            layoutId: '$layout.id',
+            layoutName: '$layout.name',
+            updatedAt: '$updatedAt',
+            createdAt: '$createdAt'
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            let: { entityId: '$entityId' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $or: [
+                      { $eq: ['$_id', '$$entityId'] },
+                      { $eq: [{ $toString: '$_id' }, { $toString: '$$entityId' }] }
+                    ]
+                  }
+                }
+              },
+              { $project: { _id: 0, username: 1 } },
+              { $limit: 1 }
+            ],
+            as: '_lbUser'
+          }
+        },
+        {
+          $set: {
+            username: {
+              $cond: {
+                if: { $gt: [{ $size: { $ifNull: ['$_lbUser', []] } }, 0] },
+                then: {
+                  $let: {
+                    vars: { u: { $arrayElemAt: ['$_lbUser', 0] } },
+                    in: '$$u.username'
+                  }
+                },
+                else: null
+              }
+            }
+          }
+        },
+        { $project: { _lbUser: 0 } },
+        { $sort: { result: 1, updatedAt: -1 } },
+        { $limit: limit }
+      ])
+      .toArray();
+
+    res.json({ rounds });
+  } catch (e) {
+    console.error('Error fetching course leaderboard:', e);
+    res.status(500).json({ message: 'Failed to fetch course leaderboard' });
+  }
+});
+
+
 router.get('/xp-leaderboard', requireAuth, async (req, res) => {
   try {
     const { type } = req.query;
