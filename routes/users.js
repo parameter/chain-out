@@ -278,7 +278,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
                   }
                 }
               },
-              { $project: { _id: 0, username: 1 } },
+              { $project: { _id: 0, username: 1, fname: 1, sname: 1, profileImage: 1 } },
               { $limit: 1 }
             ],
             as: '_lbUser'
