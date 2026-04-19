@@ -1969,7 +1969,14 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     // find out if all holes are scored for all players if not in .removed or .dnf
     const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
-    const allHolesScored = scorecard.results.every(result => result.holeNumber !== null && !scorecard.removed.includes(result.playerId) && !scorecard.dnf.includes(result.playerId));
+    const removed = Array.isArray(scorecard.removed) ? scorecard.removed : [];
+    const dnf = Array.isArray(scorecard.dnf) ? scorecard.dnf : [];
+    const allHolesScored = scorecard.results.every(
+      result =>
+        result.holeNumber !== null &&
+        !removed.includes(result.playerId) &&
+        !dnf.includes(result.playerId)
+    );
     if (!allHolesScored) {
       return res.status(400).json({ message: 'All holes must be scored for all players' });
     }
