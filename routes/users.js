@@ -1974,20 +1974,31 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const allHolesScored = scorecard.results.every(
       result =>
         result.holeNumber !== null &&
-        !removed.includes(result.playerId) &&
-        !dnf.includes(result.playerId)
+        !removed.includes(result.entityId) &&
+        !dnf.includes(result.entityId)
     );
     if (!allHolesScored) {
       return res.status(400).json({ message: 'All holes must be scored for all players' });
     }
 
     // an array of player results that are not in .removed or .dnf for easier querying the db
-    const playerResults = scorecard.results.filter(result => !removed.includes(result.playerId) && !dnf.includes(result.playerId));
-    // group by playerId to get the results for each player
-    const playerResultsGrouped = playerResults.reduce((acc, result) => {
-      acc[result.playerId] = [...(acc[result.playerId] || []), result];
+    const playerResults = scorecard.results.filter(result => !removed.includes(result.entityId) && !dnf.includes(result.entityId));
+    // group by entityId and sum strokes per player → [{ entityId, result: [total] }, ...]
+    const sumsByEntity = playerResults.reduce((acc, result) => {
+      const key =
+        result.entityId && typeof result.entityId.toString === 'function'
+          ? result.entityId.toString()
+          : String(result.entityId);
+      if (!acc[key]) {
+        acc[key] = { entityId: result.entityId, sum: 0 };
+      }
+      acc[key].sum += Number(result.score) || 0;
       return acc;
     }, {});
+    const playerResultsGrouped = Object.values(sumsByEntity).map(({ entityId, sum }) => ({
+      entityId,
+      result: [sum]
+    }));
     
     console.log('playerResultsGrouped', playerResultsGrouped);
 
