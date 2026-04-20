@@ -248,7 +248,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
         { $unwind: { path: '$playersTotalScores' } },
         {
           $match: {
-            'playersTotalScores.result': { $type: 'number', $gte: 0 }
+            'playersTotalScores.strokes': { $type: 'number', $gte: 0 }
           }
         },
         {
@@ -256,7 +256,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             _id: 0,
             scorecardId: '$_id',
             entityId: '$playersTotalScores.entityId',
-            result: '$playersTotalScores.result',
+            strokes: '$playersTotalScores.strokes',
             layoutId: '$layout.id',
             layoutName: '$layout.name',
             updatedAt: '$updatedAt',
@@ -298,7 +298,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
           }
         },
         { $project: { _lbUser: 0, _lbUserFirst: 0 } },
-        { $sort: { result: 1, updatedAt: -1 } },
+        { $sort: { strokes: 1, updatedAt: -1 } },
         { $limit: limit }
       ])
       .toArray();
