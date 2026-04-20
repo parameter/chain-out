@@ -2092,14 +2092,13 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       acc[key].sum += Number(result.score) || 0;
       return acc;
     }, {});
+
     const playerResultsGrouped = Object.values(sumsByEntity).map(({ entityId, sum }) => ({
       entityId,
       strokes: sum,
-      score: coursePar - sum
+      score: sum - coursePar
     }));
     
-    console.log('playerResultsGrouped', playerResultsGrouped);
-
     const updatedScorecard = await scorecardsCollection.findOneAndUpdate(
       { _id: new ObjectId(scorecardId) },
       { $set: { status: 'completed', playersTotalScores: playerResultsGrouped } },
