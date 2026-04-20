@@ -258,6 +258,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             scorecardId: '$_id',
             entityId: '$playersTotalScores.entityId',
             strokes: '$playersTotalScores.strokes',
+            score: '$playersTotalScores.score',
             layoutId: '$layout.id',
             layoutName: '$layout.name',
             updatedAt: '$updatedAt',
