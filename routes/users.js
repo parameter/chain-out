@@ -286,32 +286,31 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
         },
         {
           $set: {
-            username: {
-              $cond: {
-                if: { $gt: [{ $size: { $ifNull: ['$_lbUser', []] } }, 0] },
-                then: {
-                  $let: {
-                    vars: { u: { $arrayElemAt: ['$_lbUser', 0] } },
-                    in: '$$u.username'
-                  }
-                },
-                else: null
-              }
-            }
+            _lbUserFirst: { $arrayElemAt: [{ $ifNull: ['$_lbUser', []] }, 0] }
           }
         },
-        { $project: { _lbUser: 0 } },
+        {
+          $set: {
+            username: '$_lbUserFirst.username',
+            fname: '$_lbUserFirst.fname',
+            sname: '$_lbUserFirst.sname',
+            profileImage: '$_lbUserFirst.profileImage'
+          }
+        },
+        { $project: { _lbUser: 0, _lbUserFirst: 0 } },
         { $sort: { result: 1, updatedAt: -1 } },
         { $limit: limit }
       ])
       .toArray();
 
     res.json({ rounds });
+
   } catch (e) {
     console.error('Error fetching course leaderboard:', e);
     res.status(500).json({ message: 'Failed to fetch course leaderboard' });
   }
 });
+
 
 
 router.get('/xp-leaderboard', requireAuth, async (req, res) => {
