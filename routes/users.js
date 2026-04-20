@@ -228,12 +228,13 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
     }
 
     const limit = Math.min(Math.max(parseInt(String(limitRaw || '50'), 10) || 50, 1), 200);
+    const courseObjectId = new ObjectId(courseId);
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
     const match = {
-      courseId: new ObjectId(courseId),
+      courseId: courseObjectId,
       status: 'completed',
       'playersTotalScores.0': { $exists: true }
     };
@@ -261,6 +262,47 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             layoutName: '$layout.name',
             updatedAt: '$updatedAt',
             createdAt: '$createdAt'
+          }
+        },
+        {
+          $lookup: {
+            from: 'scorecards',
+            let: { entityId: '$entityId' },
+            pipeline: [
+              {
+                $match: {
+                  courseId: courseObjectId,
+                  status: 'completed',
+                  'playersTotalScores.0': { $exists: true },
+                  ...(layoutId != null && String(layoutId).trim() !== '' ? { 'layout.id': layoutId } : {})
+                }
+              },
+              { $unwind: { path: '$playersTotalScores' } },
+              {
+                $match: {
+                  $expr: {
+                    $or: [
+                      { $eq: ['$playersTotalScores.entityId', '$$entityId'] },
+                      { $eq: [{ $toString: '$playersTotalScores.entityId' }, { $toString: '$$entityId' }] }
+                    ]
+                  }
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  lastPlayed: { $ifNull: ['$updatedAt', '$createdAt'] }
+                }
+              },
+              { $sort: { lastPlayed: -1 } },
+              { $limit: 1 }
+            ],
+            as: '_lastPlayed'
+          }
+        },
+        {
+          $set: {
+            lastPlayed: { $arrayElemAt: ['$_lastPlayed.lastPlayed', 0] }
           }
         },
         {
@@ -297,7 +339,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             profileImage: '$_lbUserFirst.profileImage'
           }
         },
-        { $project: { _lbUser: 0, _lbUserFirst: 0 } },
+        { $project: { _lbUser: 0, _lbUserFirst: 0, _lastPlayed: 0 } },
         { $sort: { strokes: 1, updatedAt: -1 } },
         { $limit: limit }
       ])
