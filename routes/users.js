@@ -2076,6 +2076,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'All holes must be scored for all players' });
     }
 
+    const coursePar = scorecard.layout.latestVersion.holes.reduce((acc, hole) => acc + hole.par, 0);
+
     // an array of player results that are not in .removed or .dnf for easier querying the db
     const playerResults = scorecard.results.filter(result => !removed.includes(result.entityId) && !dnf.includes(result.entityId));
     // group by entityId and sum strokes per player → [{ entityId, result: total }, ...]
@@ -2092,7 +2094,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     }, {});
     const playerResultsGrouped = Object.values(sumsByEntity).map(({ entityId, sum }) => ({
       entityId,
-      result: sum
+      strokes: sum,
+      score: coursePar - sum
     }));
     
     console.log('playerResultsGrouped', playerResultsGrouped);
