@@ -1130,7 +1130,7 @@ const normalizeGuestPlayers = (guestPlayers) => {
 // should only create new scorecard if no active scorecard exists for the current user and course
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
-    const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams } = req.body;
+    const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams, isDiceMode } = req.body;
 
     const normalizedInvitedUserIds = (() => {
       if (Array.isArray(invitedUserIds)) {
@@ -1231,7 +1231,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         teams: mode === 'doubles' && Array.isArray(teams) ? teams : undefined,
         createdAt: now,
         updatedAt: now,
-        status: 'active'
+        status: 'active',
+        isDiceMode: isDiceMode
       };
       const result = await scorecardsCollection.insertOne(newScorecard);
       scorecard = { ...newScorecard, _id: result.insertedId };
@@ -1383,32 +1384,39 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
 
 router.get('/scorecards', requireAuth, async (req, res) => {
   try {
+    const { page = 0 } = req.query;
+    const limit = 50;
+    const pageNum = Math.max(0, parseInt(String(page), 10) || 0);
+    const skip = pageNum * limit;
+
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
-    // The aggregation computes the participants array and looks up user data in-line
-    const scorecards = await scorecardsCollection.aggregate([
-      {
-        $match: {
-          status: { $ne: 'archived' },
-          $or: [
-            { "invites.invitedUserId": req.user._id },
-            { creatorId: req.user._id }
-          ],
-          $nor: [
-            {
-              removed: {
-                $elemMatch: {
-                  $or: [
-                    { entityId: req.user._id },
-                    { entityId: req.user._id.toString() }
-                  ]
-                }
-              }
+    const matchFilter = {
+      status: { $ne: 'archived' },
+      $or: [
+        { 'invites.invitedUserId': req.user._id },
+        { creatorId: req.user._id }
+      ],
+      $nor: [
+        {
+          removed: {
+            $elemMatch: {
+              $or: [{ entityId: req.user._id }, { entityId: req.user._id.toString() }]
             }
-          ]
+          }
         }
-      },
+      ]
+    };
+
+    // The aggregation computes the participants array and looks up user data in-line
+    const [totalScorecards, scorecards] = await Promise.all([
+      scorecardsCollection.countDocuments(matchFilter),
+      scorecardsCollection.aggregate([
+      { $match: matchFilter },
+      { $sort: { updatedAt: -1, createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
       {
         $lookup: {
           from: 'courses',
@@ -1604,9 +1612,10 @@ router.get('/scorecards', requireAuth, async (req, res) => {
           allUsers: 0
         }
       }
-    ]).toArray();
+    ]).toArray()
+    ]);
 
-    res.status(200).json({ scorecards });
+    res.status(200).json({ scorecards, totalScorecards, page: pageNum, limit });
 
   } catch (e) {
     console.error('Error fetching active scorecards:', e);
