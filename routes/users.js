@@ -2204,11 +2204,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
         // Verify that searchForEarnedBadges completed successfully
         if (!Array.isArray(earnedBadges)) {
-          console.error('❌ [add-result] searchForEarnedBadges returned invalid result:', typeof earnedBadges);
           earnedBadges = []; // Default to empty array on invalid result
-        } else {
-          console.log('✅ [add-result] Badge search completed successfully. Found badges for', earnedBadges.length, 'player(s)');
-          console.log('earnedBadges', earnedBadges);
         }
       } catch (badgeError) {
         // Log error but don't fail the entire request - badge search is non-critical
