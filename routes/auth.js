@@ -119,13 +119,37 @@ router.post('/login', (req, res, next) => {
 
 
 // refresh token
-router.post('/refresh-token', (req, res) => {
-  const token = jwt.sign(
-    { sub: req.user._id, userType: req.user.userType },
-    process.env.JWT_SECRET || 'i72n342q-2c48btyyoq93n4---c98274c982374c982-734c98235B86M374c92--8374c92834c',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '10s' }
-  );
-  res.json({ token });
+router.post("/refresh-token", (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Missing refresh token" });
+    }
+
+    // Verify refresh token (use refresh secret)
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET || "refresh-secret"
+    );
+
+    // Issue NEW access token (short-lived)
+    const token = jwt.sign(
+      { sub: decoded.sub, userType: decoded.userType },
+      process.env.JWT_SECRET || "access-secret",
+      { expiresIn: process.env.JWT_EXPIRES_IN || "10s" }
+    );
+
+    // Optional: rotate refresh token
+    const newRefreshToken = jwt.sign(
+      { sub: decoded.sub, userType: decoded.userType },
+      process.env.JWT_REFRESH_SECRET || "refresh-secret",
+      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" }
+    );
+
+    return res.json({ token, refreshToken: newRefreshToken });
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid refresh token" });
+  }
 });
 
 
