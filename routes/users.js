@@ -1615,10 +1615,6 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     ]).toArray()
     ]);
 
-    console.log('totalScorecards', totalScorecards);
-    console.log('pageNum', pageNum);
-    console.log('limit', limit);
-
     res.status(200).json({ scorecards, totalScorecards, page: pageNum, limit });
 
   } catch (e) {
