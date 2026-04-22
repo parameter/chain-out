@@ -2363,9 +2363,24 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
 
 router.get('/badges', requireAuth, async (req, res) => {
-  console.log('get badges', req.user._id);
   const badges = await getUserAllBadges(req.user._id);
   res.json({ badges });
+});
+
+
+
+router.get('/achievements', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const achievementsCollection = db.collection('userAchievementProgress');
+    const achievements = await achievementsCollection.find({ userId: new ObjectId(req.user._id) }).toArray();
+
+    res.json({ achievements });
+
+  } catch (e) {
+    console.error('Error fetching achievements:', e);
+    res.status(500).json({ message: 'Failed to fetch achievements' });
+  }
 });
 
 
