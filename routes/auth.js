@@ -95,13 +95,20 @@ router.post('/login', (req, res, next) => {
 
     const token = jwt.sign(
       { sub: user._id, userType: user.userType },
-      process.env.JWT_SECRET || 'i72n342q-2c48btyyoq93n4---c98274c982374c982-734c98235B86M374c92--8374c92834c',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '10s' }
+      process.env.JWT_SECRET || "access-secret",
+      { expiresIn: process.env.JWT_EXPIRES_IN || "10s" }
+    );
+
+    const refreshToken = jwt.sign(
+      { sub: user._id, userType: user.userType },
+      process.env.JWT_REFRESH_SECRET || "refresh-secret",
+      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "10s" }
     );
 
     return res.json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
+      refreshToken,
       user: {
         _id: user._id,
         email: user.email,
@@ -113,6 +120,7 @@ router.post('/login', (req, res, next) => {
         userType: user.userType
       }
     });
+
   })(req, res, next);
 });
 
