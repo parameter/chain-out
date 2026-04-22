@@ -11,6 +11,8 @@ const router = express.Router();
 
 const requireAuth = passport.authenticate('jwt', { session: false });
 
+
+
 router.post('/register', [
   body('email').isEmail().normalizeEmail({ gmail_remove_dots: false }),
   body('password').isLength({ min: 6 }),
@@ -64,11 +66,14 @@ router.post('/register', [
       userId: result.insertedId,
       emailSent: emailSent
     });
+
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
 
 router.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
@@ -91,7 +96,7 @@ router.post('/login', (req, res, next) => {
     const token = jwt.sign(
       { sub: user._id, userType: user.userType },
       process.env.JWT_SECRET || 'i72n342q-2c48btyyoq93n4---c98274c982374c982-734c98235B86M374c92--8374c92834c',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '14d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '10s' }
     );
 
     return res.json({
@@ -111,9 +116,25 @@ router.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
+
+
+// refresh token
+router.post('/refresh-token', (req, res) => {
+  const token = jwt.sign(
+    { sub: req.user._id, userType: req.user.userType },
+    process.env.JWT_SECRET || 'i72n342q-2c48btyyoq93n4---c98274c982374c982-734c98235B86M374c92--8374c92834c',
+    { expiresIn: process.env.JWT_EXPIRES_IN || '10s' }
+  );
+  res.json({ token });
+});
+
+
+
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out (token invalidation is client-side for JWT)' });
 });
+
+
 
 // Expo push token: store for React Native push notifications (separate collection)
 router.post('/push-token', requireAuth, [
