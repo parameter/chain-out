@@ -102,7 +102,7 @@ router.post('/login', (req, res, next) => {
     const refreshToken = jwt.sign(
       { sub: user._id, userType: user.userType },
       process.env.JWT_REFRESH_SECRET || "refresh-secret",
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "10s" }
+      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "14d" }
     );
 
     return res.json({
