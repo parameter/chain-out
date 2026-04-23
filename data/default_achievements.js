@@ -64,7 +64,8 @@ const default_achievements = [
         "result": "-2",
         "zone": null,
         "condition": {
-          "verifiedRound": "Yes"
+          "verifiedRound": "Yes",
+          "mustBePar": 4
         },
         "streak": {
           "minimum": 1,
