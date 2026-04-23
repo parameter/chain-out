@@ -118,10 +118,8 @@ router.post('/set-default-achievements', requireAuth, async (req, res) => {
         if (req.user.admin !== 'super-admin' && !courseAdmin) {
             return res.status(403).json({ message: 'You are not authorized to set default achievements' });
         }
-
-        // put templateIds in collection course-achievements-templates
         
-        const courseAchievementsTemplatesCollection = db.collection('course-achievements-templates');
+        const courseAchievementsTemplatesCollection = db.collection('active-course-achievements');
         const result = await courseAchievementsTemplatesCollection.updateOne(
             { courseId: new ObjectId(courseId) }, 
             { $set: { courseId: new ObjectId(courseId), templateIds: templateIds, createdAt: new Date(), createdBy: new ObjectId(req.user._id) } },
