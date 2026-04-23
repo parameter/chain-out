@@ -17,7 +17,7 @@ const default_achievements = [
         ],
         "reward": "800",
         "difficulty": "Hard",
-        "verifiedOnly": true
+        "verifiedOnly": false
     },
     {
         id: "default-1",
@@ -37,7 +37,7 @@ const default_achievements = [
         ],
         "reward": "500",
         "difficulty": "hard",
-        "verifiedOnly": true
+        "verifiedOnly": false
     },
     {
         id: "default-2",
@@ -57,7 +57,7 @@ const default_achievements = [
         ],
         "reward": "500",
         "difficulty": "Cosmic",
-        "verifiedOnly": true
+        "verifiedOnly": false
     },
     {
         id: "default-3",
@@ -75,7 +75,7 @@ const default_achievements = [
         "selectedHoles": [],
         "reward": "800",
         "difficulty": "Medium",
-        "verifiedOnly": true
+        "verifiedOnly": false
     },
     {
         id: "default-4",
@@ -94,7 +94,7 @@ const default_achievements = [
         ],
         "reward": "1200",
         "difficulty": "Medium",
-        "verifiedOnly": true
+        "verifiedOnly": false
     }
       
 ]
