@@ -111,6 +111,7 @@ router.post('/set-default-achievements', requireAuth, async (req, res) => {
     try {
         const { courseId, templateIds } = req.body;
 
+        const db = getDatabase();
         const courseAdminsCollection = db.collection('course-admins');
         const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(courseId), userId: new ObjectId(req.user._id) });
 
@@ -119,7 +120,7 @@ router.post('/set-default-achievements', requireAuth, async (req, res) => {
         }
 
         // put templateIds in collection course-achievements-templates
-        const db = getDatabase();
+        
         const courseAchievementsTemplatesCollection = db.collection('course-achievements-templates');
         const courseAchievementsTemplates = await courseAchievementsTemplatesCollection.findOne({ courseId: new ObjectId(courseId) });
         if (!courseAchievementsTemplates) {
