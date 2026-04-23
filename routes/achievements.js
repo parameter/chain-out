@@ -122,7 +122,11 @@ router.post('/set-default-achievements', requireAuth, async (req, res) => {
         // put templateIds in collection course-achievements-templates
         
         const courseAchievementsTemplatesCollection = db.collection('course-achievements-templates');
-        await courseAchievementsTemplatesCollection.updateOne({ courseId: new ObjectId(courseId) }, { $set: { templateIds: templateIds } });
+        await courseAchievementsTemplatesCollection.updateOne(
+            { courseId: new ObjectId(courseId) }, 
+            { $set: { courseId: new ObjectId(courseId), templateIds: templateIds, createdAt: new Date(), createdBy: new ObjectId(req.user._id) } },
+            { upsert: true }
+        );
         
         res.status(200).json({ message: 'Default achievements set successfully' });
     
