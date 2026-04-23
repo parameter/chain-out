@@ -107,6 +107,30 @@ const default_achievements = [
 
 
 
+router.post('/set-default-achievements', requireAuth, async (req, res) => {
+    try {
+        const { courseId, templateIds } = req.body;
+
+        // put templateIds in collection course-achievements-templates
+        const db = getDatabase();
+        const courseAchievementsTemplatesCollection = db.collection('course-achievements-templates');
+        const courseAchievementsTemplates = await courseAchievementsTemplatesCollection.findOne({ courseId: new ObjectId(courseId) });
+        if (!courseAchievementsTemplates) {
+            return res.status(400).json({ message: 'Course achievements templates not found' });
+        }
+        courseAchievementsTemplates.templateIds = templateIds;
+        await courseAchievementsTemplatesCollection.updateOne({ courseId: new ObjectId(courseId) }, { $set: { templateIds: templateIds } });
+        
+        res.status(200).json({ message: 'Default achievements set successfully' });
+    
+    } catch (e) {
+        console.error('Error setting default achievements:', e);
+        res.status(500).json({ message: 'Failed to set default achievements' });
+    }
+});
+
+
+
 router.post('/create-new-achievement', requireAuth, async (req, res) => {
     try {
         const { achievement } = req.body;
