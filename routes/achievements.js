@@ -7,7 +7,7 @@ const path = require('path');
 
 const requireAuth = passport.authenticate('jwt', { session: false });
 const router = express.Router();
-const defaultAchievements = require('../data/default_achievements');
+const default_achievements = require('../data/default_achievements');
 
 
 
@@ -70,7 +70,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         // check so there is no default achievement with the same attributes on the same course
         const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
-        const defaultAchievementsForCourse = defaultAchievements;
+        const defaultAchievementsForCourse = default_achievements;
 
 
         const existingAchievements = await achievementsCollection.find({ courseId: courseIdObject }).toArray();

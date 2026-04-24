@@ -100,4 +100,4 @@ const default_achievements = [
       
 ]
 
-export default default_achievements;
+module.exports = default_achievements;
