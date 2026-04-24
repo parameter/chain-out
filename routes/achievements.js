@@ -120,6 +120,9 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         // if the matching achievement is a default achievement, we need to activate it in active-default-course-achievements
         if (theMatchingAchievement && theMatchingAchievement.id.startsWith('default-')) {
+
+            console.log('theMatchingAchievement', theMatchingAchievement);
+            
             await activeDefaultCourseAchievementsCollection.updateOne(
                 { courseId: courseIdObject },
                 { $addToSet: { templateIds: theMatchingAchievement.id } },
