@@ -22,8 +22,8 @@ router.post('/set-default-achievements', requireAuth, async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to set default achievements' });
         }
         
-        const courseAchievementsTemplatesCollection = db.collection('active-course-achievements');
-        const result = await courseAchievementsTemplatesCollection.updateOne(
+        const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
+        const result = await activeDefaultCourseAchievementsCollection.updateOne(
             { courseId: new ObjectId(courseId) }, 
             { $set: { courseId: new ObjectId(courseId), templateIds: templateIds, createdAt: new Date(), createdBy: new ObjectId(req.user._id) } },
             { upsert: true, returnDocument: 'after' }
@@ -157,6 +157,3 @@ router.get('/get-course-achievements', requireAuth, async (req, res) => {
 
 
 module.exports = router;
-
-
-
