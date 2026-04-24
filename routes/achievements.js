@@ -106,7 +106,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         console.log('new_achievement_for_comparison', new_achievement_for_comparison);
         console.log('existingAchievements', existingAchievements.length);
 
-        existingAchievements.forEach(achi => {
+        [...existingAchievements, ...defaultAchievementsForCourse].forEach(achi => {
             const achi_copy = normalizeAchievementForComparison(achi);
             console.log('achi_copy', achi_copy);
             const areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
@@ -119,16 +119,6 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         if (refuseToCreateAchievement) {
             return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
         }
-
-        defaultAchievementsForCourse.forEach(achi => {
-            if (matchedDefaultTemplateId) return;
-            const achi_copy = normalizeAchievementForComparison(achi);
-            console.log('achi_copy', achi_copy);
-            const areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
-            if (areAchievementsSame) {
-                matchedDefaultTemplateId = achi.id;
-            }
-        });
 
         if (matchedDefaultTemplateId) {
             const userIdObject = new ObjectId(req.user._id);
