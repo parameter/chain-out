@@ -104,18 +104,49 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
             return achi_copy;
         };
 
+        const debugComparisonDiff = (left, right) => {
+            const leftKeys = Object.keys(left || {});
+            const rightKeys = Object.keys(right || {});
+            const allKeys = Array.from(new Set([...leftKeys, ...rightKeys])).sort();
+            const diffs = [];
+
+            allKeys.forEach((key) => {
+                const leftValue = left ? left[key] : undefined;
+                const rightValue = right ? right[key] : undefined;
+                if (!_.isEqual(leftValue, rightValue)) {
+                    diffs.push({
+                        key,
+                        leftType: Array.isArray(leftValue) ? 'array' : typeof leftValue,
+                        rightType: Array.isArray(rightValue) ? 'array' : typeof rightValue,
+                        leftValue,
+                        rightValue
+                    });
+                }
+            });
+
+            return diffs;
+        };
+
         let refuseToCreateAchievement = false;
         let matchedDefaultTemplateId = null;
 
         console.log('new_achievement_for_comparison', new_achievement_for_comparison);
         console.log('existingAchievements', existingAchievements.length);
+        console.log('defaultAchievementsForCourse', defaultAchievementsForCourse.length);
 
-        [...existingAchievements, ...defaultAchievementsForCourse].forEach(achi => {
+        [...existingAchievements, ...defaultAchievementsForCourse].forEach((achi, index) => {
+            const source = index < existingAchievements.length ? 'existing' : 'default';
             const achi_copy = normalizeAchievementForComparison(achi);
-            console.log('achi_copy', achi_copy);
+            console.log('achi_copy', { source, id: achi?.id || achi?._id, achi_copy });
             const areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
+            if (!areAchievementsSame) {
+                const diffs = debugComparisonDiff(new_achievement_for_comparison, achi_copy);
+                if (diffs.length > 0) {
+                    console.log('achievement mismatch details', { source, id: achi?.id || achi?._id, diffs });
+                }
+            }
             if (areAchievementsSame) {
-                console.log('Achievement with the same attributes already exists for this course');
+                console.log('Achievement with the same attributes already exists for this course', { source, id: achi?.id || achi?._id });
                 refuseToCreateAchievement = true;
             }
         });
