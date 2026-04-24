@@ -122,10 +122,11 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         if (theMatchingAchievement && theMatchingAchievement.id.startsWith('default-')) {
 
             console.log('theMatchingAchievement', theMatchingAchievement);
-            
+
             await activeDefaultCourseAchievementsCollection.updateOne(
                 { courseId: courseIdObject },
                 { $addToSet: { templateIds: theMatchingAchievement.id } },
+                { upsert: true }
             );
         }
 
