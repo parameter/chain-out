@@ -7,6 +7,7 @@ const path = require('path');
 
 const requireAuth = passport.authenticate('jwt', { session: false });
 const router = express.Router();
+const defaultAchievements = require('../data/default_achievements');
 
 
 
@@ -67,6 +68,11 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         const courseIdObject = new ObjectId(achievement.courseId);
 
+        // check so there is no default achievement with the same attributes on the same course
+        const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
+        const defaultAchievementsForCourse = defaultAchievements;
+
+
         const existingAchievements = await achievementsCollection.find({ courseId: courseIdObject }).toArray();
 
         const new_achievement_for_comparison = {...achievement};
@@ -80,17 +86,10 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         delete new_achievement_for_comparison.updatedAt;
         delete new_achievement_for_comparison.updatedBy;
 
-        let refuseToCreateAchievement = false;
-
-
-        console.log('new_achievement_for_comparison', new_achievement_for_comparison);
-        console.log('existingAchievements', existingAchievements.length);
-
-        existingAchievements.forEach(achi => {
-            const achi_copy = {
-                ...achi,
-            };
+        const normalizeAchievementForComparison = (ach) => {
+            const achi_copy = { ...ach };
             delete achi_copy._id;
+            delete achi_copy.id;
             delete achi_copy.courseId;
             delete achi_copy.description;
             delete achi_copy.title;
@@ -98,10 +97,19 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
             delete achi_copy.createdBy;
             delete achi_copy.updatedAt;
             delete achi_copy.updatedBy;
+            return achi_copy;
+        };
 
+        let refuseToCreateAchievement = false;
+        let matchedDefaultTemplateId = null;
+
+        console.log('new_achievement_for_comparison', new_achievement_for_comparison);
+        console.log('existingAchievements', existingAchievements.length);
+
+        existingAchievements.forEach(achi => {
+            const achi_copy = normalizeAchievementForComparison(achi);
             console.log('achi_copy', achi_copy);
-
-            let areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
+            const areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
             if (areAchievementsSame) {
                 console.log('Achievement with the same attributes already exists for this course');
                 refuseToCreateAchievement = true;
@@ -110,6 +118,43 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         if (refuseToCreateAchievement) {
             return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
+        }
+
+        defaultAchievementsForCourse.forEach(achi => {
+            if (matchedDefaultTemplateId) return;
+            const achi_copy = normalizeAchievementForComparison(achi);
+            console.log('achi_copy', achi_copy);
+            const areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
+            if (areAchievementsSame) {
+                matchedDefaultTemplateId = achi.id;
+            }
+        });
+
+        if (matchedDefaultTemplateId) {
+            const userIdObject = new ObjectId(req.user._id);
+            await activeDefaultCourseAchievementsCollection.updateOne(
+                { courseId: courseIdObject },
+                {
+                    $setOnInsert: {
+                        courseId: courseIdObject,
+                        createdAt: new Date(),
+                        createdBy: userIdObject
+                    },
+                    $set: {
+                        updatedAt: new Date(),
+                        updatedBy: userIdObject
+                    },
+                    $addToSet: {
+                        templateIds: matchedDefaultTemplateId
+                    }
+                },
+                { upsert: true }
+            );
+
+            return res.status(200).json({
+                message: 'Matched default achievement activated for this course',
+                templateId: matchedDefaultTemplateId
+            });
         }
 
         achievement.createdAt = new Date();
