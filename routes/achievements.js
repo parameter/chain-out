@@ -83,6 +83,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         delete new_achievement_for_comparison.title;
         delete new_achievement_for_comparison.reward;
         delete new_achievement_for_comparison.createdAt;
+        delete new_achievement_for_comparison.imageName;
         delete new_achievement_for_comparison.createdBy;
         delete new_achievement_for_comparison.updatedAt;
         delete new_achievement_for_comparison.updatedBy;
@@ -95,6 +96,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
             delete achi_copy.description;
             delete achi_copy.title;
             delete achi_copy.reward;
+            delete achi_copy.imageName;
             delete achi_copy.createdAt;
             delete achi_copy.createdBy;
             delete achi_copy.updatedAt;
