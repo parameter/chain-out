@@ -107,7 +107,7 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
         let refuseToCreateAchievement = false;
         let matchedDefaultTemplateId = null;
 
-        const theMatchingAchievement = null;
+        let theMatchingAchievement = null;
 
         [...existingAchievements, ...defaultAchievementsForCourse].forEach((achi, index) => {
             const achi_copy = normalizeAchievementForComparison(achi);
