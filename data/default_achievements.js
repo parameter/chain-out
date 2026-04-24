@@ -3,9 +3,7 @@ const default_achievements = [
         id: "default-0",
         "result": "ace",
         "zone": null,
-        "condition": {
-          "verifiedRound": "Yes"
-        },
+        "condition": {},
         "streak": {
           "minimum": 1,
           "scope": "same-round"
@@ -23,9 +21,7 @@ const default_achievements = [
         id: "default-1",
         "result": "-1",
         "zone": null,
-        "condition": {
-          "verifiedRound": "Yes"
-        },
+        "condition": {},
         "streak": {
           "minimum": 5,
           "scope": "in-a-row-same-round"
@@ -43,8 +39,7 @@ const default_achievements = [
         id: "default-2",
         "zone": null,
         "condition": {
-          "scramble": "Yes",
-          "verifiedRound": "Yes"
+          "scramble": "Yes"
         },
         "streak": {
           "minimum": 3,
@@ -64,7 +59,6 @@ const default_achievements = [
         "result": "-2",
         "zone": null,
         "condition": {
-          "verifiedRound": "Yes",
           "mustBePar": 4
         },
         "streak": {
@@ -81,9 +75,7 @@ const default_achievements = [
     {
         id: "default-4",
         "zone": "Bullseye",
-        "condition": {
-          "verifiedRound": "Yes"
-        },
+        "condition": {},
         "streak": {
           "minimum": 3,
           "scope": "same-round"
