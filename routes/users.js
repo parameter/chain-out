@@ -1291,6 +1291,7 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
               fromUser: note.fromUser,
               type: note.type,
               message: note.message,
+              courseName: course.name,
               scorecardId
             }
           })
