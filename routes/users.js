@@ -257,6 +257,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             _id: 0,
             scorecardId: '$_id',
             entityId: '$playersTotalScores.entityId',
+            entityKey: { $toString: '$playersTotalScores.entityId' },
             strokes: '$playersTotalScores.strokes',
             score: '$playersTotalScores.score',
             layoutId: '$layout.id',
@@ -265,6 +266,15 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             createdAt: '$createdAt'
           }
         },
+        // Keep only one leaderboard entry per user (their best round)
+        { $sort: { entityKey: 1, strokes: 1, updatedAt: -1 } },
+        {
+          $group: {
+            _id: '$entityKey',
+            bestRound: { $first: '$$ROOT' }
+          }
+        },
+        { $replaceRoot: { newRoot: '$bestRound' } },
         {
           $lookup: {
             from: 'scorecards',
@@ -340,7 +350,7 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             profileImage: '$_lbUserFirst.profileImage'
           }
         },
-        { $project: { _lbUser: 0, _lbUserFirst: 0, _lastPlayed: 0 } },
+        { $project: { _lbUser: 0, _lbUserFirst: 0, _lastPlayed: 0, entityKey: 0 } },
         { $sort: { strokes: 1, updatedAt: -1 } },
         { $limit: limit }
       ])
