@@ -2582,6 +2582,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     // Match completed scorecards where user is creator or participant (playerId or entityId for singles)
     const scorecardMatch = {
       status: 'completed',
+      isDiceMode: false,
       $or: [
         { creatorId: userId },
         { 'results.playerId': userId },
