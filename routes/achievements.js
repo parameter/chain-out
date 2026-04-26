@@ -177,6 +177,28 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
 
 
+router.get('/course-achievements', requireAuth, async (req, res) => {
+    try {
+        const { courseId } = req.query;
+        if (!courseId) {
+            return res.status(400).json({ message: 'Course id is required' });
+        }
+
+        const db = getDatabase();
+        const achievementsCollection = db.collection('achievements');
+        const achievements = await achievementsCollection.find({ courseId: new ObjectId(courseId) }).toArray();
+
+        res.status(200).json({ achievements });
+        
+    } catch (error) {
+        console.error('Error getting all achievements:', error);
+        res.status(500).json({ message: 'Failed to get all achievements' });
+    }
+});
+
+
+
+// for admin to get all achievements for a course
 router.get('/get-course-achievements', requireAuth, async (req, res) => {
     try {
         const { courseId } = req.query;
