@@ -616,16 +616,12 @@ router.get('/courses', requireAuth, async (req, res) => {
 
     const courses = await db.collection('courses').aggregate([
       {
-        $match: {
-          location: {
-            $nearSphere: {
-              $geometry: {
-                type: 'Point',
-                coordinates: [lng, lat]
-              },
-              $maxDistance: maxDistance
-            }
-          }
+        $geoNear: {
+          near: { type: 'Point', coordinates: [lng, lat] },
+          key: 'location',
+          distanceField: '_locationDistanceMeters',
+          maxDistance: maxDistance,
+          spherical: true
         }
       },
       {
@@ -660,7 +656,7 @@ router.get('/courses', requireAuth, async (req, res) => {
           totalAchievements: { $add: ['$achievementsCount', '$activeDefaultAchievementsCount'] }
         }
       },
-      { $project: { _ach: 0, _activeDef: 0 } }
+      { $project: { _ach: 0, _activeDef: 0, _locationDistanceMeters: 0 } }
     ]).toArray();
 
     res.json({ courses });
