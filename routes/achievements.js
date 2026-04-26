@@ -223,7 +223,12 @@ router.get('/get-course-achievements', requireAuth, async (req, res) => {
         const achievementsCollection = db.collection('achievements');
         const achievements = await achievementsCollection.find({ courseId: new ObjectId(courseId) }).toArray();
 
-        res.status(200).json({ achievements });
+        const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
+        const defaultAchievementsForCourse = await activeDefaultCourseAchievementsCollection.findOne({ courseId: new ObjectId(courseId) });
+        const defaultAchievements = default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id));
+
+        res.status(200).json({ achievements: [...achievements, ...defaultAchievements] });
+        
     } catch (error) {
         console.error('Error getting all achievements:', error);
         res.status(500).json({ message: 'Failed to get all achievements' });
