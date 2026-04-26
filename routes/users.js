@@ -614,17 +614,54 @@ router.get('/courses', requireAuth, async (req, res) => {
     // 100km in meters
     const maxDistance = 100 * 1000;
 
-    const courses = await db.collection('courses').find({
-      "location": {
-        $nearSphere: {
-          $geometry: {
-            type: "Point",
-            coordinates: [lng, lat]
-          },
-          $maxDistance: maxDistance
+    const courses = await db.collection('courses').aggregate([
+      {
+        $match: {
+          location: {
+            $nearSphere: {
+              $geometry: {
+                type: 'Point',
+                coordinates: [lng, lat]
+              },
+              $maxDistance: maxDistance
+            }
+          }
         }
-      }
-    }).toArray();
+      },
+      {
+        $lookup: {
+          from: 'achievements',
+          localField: '_id',
+          foreignField: 'courseId',
+          as: '_ach'
+        }
+      },
+      {
+        $lookup: {
+          from: 'active-default-course-achievements',
+          localField: '_id',
+          foreignField: 'courseId',
+          as: '_activeDef'
+        }
+      },
+      {
+        $addFields: {
+          achievementsCount: { $size: '$_ach' },
+          activeDefaultAchievementsCount: {
+            $let: {
+              vars: { doc: { $arrayElemAt: ['$_activeDef', 0] } },
+              in: { $size: { $ifNull: ['$$doc.templateIds', []] } }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          totalAchievements: { $add: ['$achievementsCount', '$activeDefaultAchievementsCount'] }
+        }
+      },
+      { $project: { _ach: 0, _activeDef: 0 } }
+    ]).toArray();
 
     res.json({ courses });
 
