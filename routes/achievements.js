@@ -191,7 +191,7 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
         // after getting the achievements, we need to get the default achievements for the course
         const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
         const defaultAchievementsForCourse = await activeDefaultCourseAchievementsCollection.findOne({ courseId: new ObjectId(courseId) });
-        const defaultAchievements = default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id));
+        const defaultAchievements = defaultAchievementsForCourse ? default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id)) : default_achievements;
 
         res.status(200).json({ achievements: [...achievements, ...defaultAchievements] });
 
