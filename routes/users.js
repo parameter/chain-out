@@ -1951,10 +1951,8 @@ router.post('/scorecard/add-result', requireAuth, async (req, res) => {
         return res.status(404).json({ message: 'Scorecard not found' });
       }
       if (scorecard.status === 'completed') {
-        console.log('Cannot update result: round is already completed');
         return res.status(403).json({ message: 'Cannot update result: round is already completed', roundComplete: true });
       }
-      console.log('You are not invited to this scorecard');
       return res.status(403).json({ message: 'You are not invited to this scorecard', roundComplete: allResultsEntered });
     }
 
@@ -2159,6 +2157,11 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
     // find out if all holes are scored for all players if not in .removed or .dnf
     const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
+
+    if (scorecard.status === 'completed') {
+      return res.status(400).json({ message: 'Scorecard is already completed' });
+    }
+
     const removed = Array.isArray(scorecard.removed) ? scorecard.removed : [];
     const dnf = Array.isArray(scorecard.dnf) ? scorecard.dnf : [];
     const allHolesScored = scorecard.results.every(
@@ -2397,7 +2400,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       country: course?.country
     };
 
-    res.status(200).json(completedRoundData);
+    res.status(200).json({completedRoundData});
   } catch (e) {
     console.error('Error completing round:', e);
     res.status(500).json({ message: 'Failed to complete round' });
