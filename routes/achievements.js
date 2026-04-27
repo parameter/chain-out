@@ -194,6 +194,25 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
         console.log('defaultAchievementsForCourse', defaultAchievementsForCourse);
         const defaultAchievements = defaultAchievementsForCourse ? default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id)) : default_achievements;
 
+        // get the user achievements for the course
+        const userAchievementsCollection = db.collection('userAchievementProgress');
+        const userAchievements = await userAchievementsCollection.find({ userId: new ObjectId(req.user._id), courseId: new ObjectId(courseId) }).toArray();
+        console.log('userAchievements', userAchievements);
+
+        // add the user achievements to the default achievements
+        const userAchievementsById = new Map();
+        userAchievements.forEach(ach => {
+            userAchievementsById.set(ach.achievementId, ach);
+        });
+        
+        defaultAchievements.forEach(ach => {
+            if (userAchievementsById.has(ach.id)) {
+                ach.won = userAchievementsById.get(ach.id).won;
+                ach.completed = userAchievementsById.get(ach.id).completed;
+                ach.progress = userAchievementsById.get(ach.id).progress;
+            }
+        });
+
         res.status(200).json({ achievements: [...achievements, ...defaultAchievements] });
 
     } catch (error) {
