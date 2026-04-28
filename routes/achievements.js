@@ -200,23 +200,29 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
 
         const userAchievementsById = new Map();
         userAchievements.forEach(ach => {
-            userAchievementsById.set(ach.achievementId, ach);
+            userAchievementsById.set(ach.achievementId.toString(), ach);
         });
         
         allCourseAchievements.forEach(ach => {
-            // for default achievements, we need to use the id
-            if (userAchievementsById.has(ach.id)) {
-                ach.won = userAchievementsById.get(ach.id).won;
-                ach.completed = userAchievementsById.get(ach.id).completed;
-                ach.progress = userAchievementsById.get(ach.id).progress;
-                ach.won = userAchievementsById.get(ach.id).won;
+
+            if (ach.id) {
+                // for default achievements, we need to use the id
+                if (userAchievementsById.has(ach.id)) {
+                    ach.won = userAchievementsById.get(ach.id).won;
+                    ach.completed = userAchievementsById.get(ach.id).completed;
+                    ach.progress = userAchievementsById.get(ach.id).progress;
+                    ach.won = userAchievementsById.get(ach.id).won;
+                    return;
+                }
             }
-            // for non-default achievements, we need to use the _id
-            if (userAchievementsById.has(ach._id.toString())) {
-                ach.won = userAchievementsById.get(ach._id.toString()).won;
-                ach.completed = userAchievementsById.get(ach._id.toString()).completed;
-                ach.progress = userAchievementsById.get(ach._id.toString()).progress;
-                ach.won = userAchievementsById.get(ach._id.toString()).won;
+            if (ach._id) {
+                // for non-default achievements, we need to use the _id
+                if (userAchievementsById.has(ach._id.toString())) {
+                    ach.won = userAchievementsById.get(ach._id.toString()).won;
+                    ach.completed = userAchievementsById.get(ach._id.toString()).completed;
+                    ach.progress = userAchievementsById.get(ach._id.toString()).progress;
+                    ach.won = userAchievementsById.get(ach._id.toString()).won;
+                }
             }
         });
 
