@@ -214,10 +214,10 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
                 ach.won = userAchievementsById.get(ach.id).won;
             }
             if (userAchievementsById.has(ach._id)) {
-                ach.won = userAchievementsById.get(ach._id).won;
-                ach.completed = userAchievementsById.get(ach._id).completed;
-                ach.progress = userAchievementsById.get(ach._id).progress;
-                ach.won = userAchievementsById.get(ach._id).won;
+                ach.won = userAchievementsById.get(ach._id.toString()).won;
+                ach.completed = userAchievementsById.get(ach._id.toString()).completed;
+                ach.progress = userAchievementsById.get(ach._id.toString()).progress;
+                ach.won = userAchievementsById.get(ach._id.toString()).won;
             }
         });
 
