@@ -212,7 +212,7 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
                 ach.won = userAchievementsById.get(ach.id).won;
             }
             // for non-default achievements, we need to use the _id
-            if (userAchievementsById.has(ach._id)) {
+            if (userAchievementsById.has(ach._id.toString())) {
                 ach.won = userAchievementsById.get(ach._id.toString()).won;
                 ach.completed = userAchievementsById.get(ach._id.toString()).completed;
                 ach.progress = userAchievementsById.get(ach._id.toString()).progress;
