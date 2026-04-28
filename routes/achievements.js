@@ -198,38 +198,32 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
         const userAchievementsCollection = db.collection('userAchievementProgress');
         const userAchievements = await userAchievementsCollection.find({ userId: new ObjectId(req.user._id), courseId: new ObjectId(courseId) }).toArray();
         
-        console.log('userAchievements', userAchievements);
-
         const allCourseAchievements = [...achievements, ...defaultAchievements];
-
-        console.log('allCourseAchievements', allCourseAchievements);
 
         // add the user achievements to the default achievements
         const userAchievementsById = new Map();
         userAchievements.forEach(ach => {
             userAchievementsById.set(ach.achievementId, ach);
         });
-
         
-
-        const achievementsWithUserProgress = allCourseAchievements.map(ach => {
-            if (userAchievementsById.has(ach.id)) {
-                return { ...ach, ...userAchievementsById.get(ach.id) };
-            }
-            return ach;
-        });
-
-
-        
-        defaultAchievements.forEach(ach => {
+        allCourseAchievements.forEach(ach => {
             if (userAchievementsById.has(ach.id)) {
                 ach.won = userAchievementsById.get(ach.id).won;
                 ach.completed = userAchievementsById.get(ach.id).completed;
                 ach.progress = userAchievementsById.get(ach.id).progress;
+                ach.won = userAchievementsById.get(ach.id).won;
+            }
+            if (userAchievementsById.has(ach._id)) {
+                ach.won = userAchievementsById.get(ach._id).won;
+                ach.completed = userAchievementsById.get(ach._id).completed;
+                ach.progress = userAchievementsById.get(ach._id).progress;
+                ach.won = userAchievementsById.get(ach._id).won;
             }
         });
 
-        res.status(200).json({ achievements: achievementsWithUserProgress });
+        console.log('allCourseAchievements', allCourseAchievements);
+
+        res.status(200).json({ achievements: allCourseAchievements });
 
     } catch (error) {
         console.error('Error getting all achievements:', error);
