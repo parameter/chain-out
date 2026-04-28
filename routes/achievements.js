@@ -229,7 +229,7 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
             }
         });
 
-        res.status(200).json({ achievements:  });
+        res.status(200).json({ achievements: achievementsWithUserProgress });
 
     } catch (error) {
         console.error('Error getting all achievements:', error);
