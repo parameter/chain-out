@@ -188,31 +188,30 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
         const achievementsCollection = db.collection('achievements');
         const achievements = await achievementsCollection.find({ courseId: new ObjectId(courseId) }).toArray();
 
-        // after getting the achievements, we need to get the default achievements for the course
         const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
         const defaultAchievementsForCourse = await activeDefaultCourseAchievementsCollection.findOne({ courseId: new ObjectId(courseId) });
         console.log('defaultAchievementsForCourse', defaultAchievementsForCourse);
         const defaultAchievements = defaultAchievementsForCourse ? default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id)) : default_achievements;
 
-        // get the user achievements for the course
         const userAchievementsCollection = db.collection('userAchievementProgress');
         const userAchievements = await userAchievementsCollection.find({ userId: new ObjectId(req.user._id), courseId: new ObjectId(courseId) }).toArray();
         
         const allCourseAchievements = [...achievements, ...defaultAchievements];
 
-        // add the user achievements to the default achievements
         const userAchievementsById = new Map();
         userAchievements.forEach(ach => {
             userAchievementsById.set(ach.achievementId, ach);
         });
         
         allCourseAchievements.forEach(ach => {
+            // for default achievements, we need to use the id
             if (userAchievementsById.has(ach.id)) {
                 ach.won = userAchievementsById.get(ach.id).won;
                 ach.completed = userAchievementsById.get(ach.id).completed;
                 ach.progress = userAchievementsById.get(ach.id).progress;
                 ach.won = userAchievementsById.get(ach.id).won;
             }
+            // for non-default achievements, we need to use the _id
             if (userAchievementsById.has(ach._id)) {
                 ach.won = userAchievementsById.get(ach._id.toString()).won;
                 ach.completed = userAchievementsById.get(ach._id.toString()).completed;
