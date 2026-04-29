@@ -2401,6 +2401,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     };
 
     res.status(200).json({completedRoundData});
+    
   } catch (e) {
     console.error('Error completing round:', e);
     res.status(500).json({ message: 'Failed to complete round' });
