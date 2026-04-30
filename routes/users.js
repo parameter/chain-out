@@ -2224,15 +2224,11 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     // Create a sorted array of results by hole number
     const results = Object.values(latestByHoleAndPlayer).sort((a, b) => a.holeNumber - b.holeNumber);
 
-    console.log('results', results);
-
     const shouldSearchBadges = updatedScorecard.mode !== 'doubles';
     let earnedBadges = [];
     let earnedAchievements = [];
 
     if (shouldSearchBadges) {
-
-      console.log('Vi kollar badges');
       try {
 
         earnedAchievements = await searchForEarnedAchievements({
