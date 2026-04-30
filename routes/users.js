@@ -2211,7 +2211,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const latestByHoleAndPlayer = {};
     for (const result of rawResults) {
       const holeNum = result.holeNumber;
-      const playerId = result.playerId instanceof ObjectId ? result.playerId.toString() : String(result.playerId);
+      const playerId = result.entityId instanceof ObjectId ? result.entityId.toString() : String(result.entityId);
       const key = `${holeNum}-${playerId}`;
       
       if (
