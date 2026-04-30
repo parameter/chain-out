@@ -2103,8 +2103,6 @@ router.post('/scorecard/remove-player', requireAuth, async (req, res) => {
 
     const recipientIds = [...scorecard.invites.map(p => p.invitedUserId), scorecard.creatorId.toString()];
 
-    console.log('remove player recipientIds', recipientIds);
-
     try {
 
       await Promise.all(
@@ -2226,11 +2224,15 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     // Create a sorted array of results by hole number
     const results = Object.values(latestByHoleAndPlayer).sort((a, b) => a.holeNumber - b.holeNumber);
 
+    console.log('results', results);
+
     const shouldSearchBadges = updatedScorecard.mode !== 'doubles';
     let earnedBadges = [];
     let earnedAchievements = [];
 
     if (shouldSearchBadges) {
+
+      console.log('Vi kollar badges');
       try {
 
         earnedAchievements = await searchForEarnedAchievements({
@@ -2401,7 +2403,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     };
 
     res.status(200).json({completedRoundData});
-    
+
   } catch (e) {
     console.error('Error completing round:', e);
     res.status(500).json({ message: 'Failed to complete round' });
