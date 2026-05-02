@@ -51,7 +51,7 @@ const default_achievements = [
           "any"
         ],
         "reward": "500",
-        "difficulty": "Cosmic",
+        "difficulty": "extreme",
         "verifiedOnly": false
     },
     {
@@ -69,7 +69,7 @@ const default_achievements = [
         "description": "Score a eagle on Any par 4.",
         "selectedHoles": [],
         "reward": "800",
-        "difficulty": "Medium",
+        "difficulty": "medium",
         "verifiedOnly": false
     },
     {
@@ -86,7 +86,7 @@ const default_achievements = [
           "any"
         ],
         "reward": "1200",
-        "difficulty": "Medium",
+        "difficulty": "medium",
         "verifiedOnly": false
     }
       
