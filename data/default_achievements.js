@@ -43,7 +43,7 @@ const default_achievements = [
         },
         "streak": {
           "minimum": 3,
-          "scope": "in-a-row-same-round"
+          "scope": "same-round"
         },
         "title": "Scramble 3 times",
         "description": "Scramble 3 times during the same round.",
