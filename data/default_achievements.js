@@ -8,8 +8,8 @@ const default_achievements = [
           "minimum": 1,
           "scope": "same-round"
         },
-        "title": "Ace Any hole",
-        "description": "Make an Ace on Any hole.",
+        "title": "Ace Any Hole",
+        "description": "Make an ace on any hole.",
         "selectedHoles": [
           "any"
         ],
@@ -26,8 +26,8 @@ const default_achievements = [
           "minimum": 5,
           "scope": "in-a-row-same-round"
         },
-        "title": "Birdie 5 holes in a row",
-        "description": "Score 5 birdies in a row during the same round.",
+        "title": "Yatzy!",
+        "description": "Score 5 birdies in a row during a round.",
         "selectedHoles": [
           "any"
         ],
@@ -45,7 +45,7 @@ const default_achievements = [
           "minimum": 3,
           "scope": "same-round"
         },
-        "title": "Scramble 3 times",
+        "title": "Scramble 3 Times",
         "description": "Scramble 3 times during the same round.",
         "selectedHoles": [
           "any"
@@ -65,8 +65,8 @@ const default_achievements = [
           "minimum": 1,
           "scope": "same-round"
         },
-        "title": "Eagle Any par 4",
-        "description": "Score a eagle on Any par 4.",
+        "title": "Eagle Any Par 4/5",
+        "description": "Score an eagle on any par 4 or 5.",
         "selectedHoles": [],
         "reward": "800",
         "difficulty": "medium",
@@ -77,11 +77,11 @@ const default_achievements = [
         "zone": "Bullseye",
         "condition": {},
         "streak": {
-          "minimum": 3,
+          "minimum": 5,
           "scope": "same-round"
         },
-        "title": "Eagle Any hole",
-        "description": "Hit 3 bullseyes in a row during the same round.",
+        "title": "Hit 5 Bullseyes",
+        "description": "Hit 5 bullseyes in one round",
         "selectedHoles": [
           "any"
         ],

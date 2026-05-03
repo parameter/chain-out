@@ -2158,6 +2158,8 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     // find out if all holes are scored for all players if not in .removed or .dnf
     const scorecard = await scorecardsCollection.findOne({ _id: new ObjectId(scorecardId) });
 
+    console.log('scorecard.results', scorecard.results);
+
     if (scorecard.status === 'completed') {
       return res.status(400).json({ message: 'Scorecard is already completed' });
     }
