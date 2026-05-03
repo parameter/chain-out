@@ -14,7 +14,7 @@ const default_achievements = [
           "any"
         ],
         "reward": "800",
-        "difficulty": "Hard",
+        "difficulty": "extreme",
         "verifiedOnly": false
     },
     {
@@ -32,7 +32,7 @@ const default_achievements = [
           "any"
         ],
         "reward": "500",
-        "difficulty": "hard",
+        "difficulty": "medium",
         "verifiedOnly": false
     },
     {
@@ -51,7 +51,7 @@ const default_achievements = [
           "any"
         ],
         "reward": "500",
-        "difficulty": "extreme",
+        "difficulty": "medium",
         "verifiedOnly": false
     },
     {
@@ -59,7 +59,7 @@ const default_achievements = [
         "result": "-2",
         "zone": null,
         "condition": {
-          "mustBePar": 4
+          "mustBePar": [4, 5]
         },
         "streak": {
           "minimum": 1,
@@ -69,7 +69,7 @@ const default_achievements = [
         "description": "Score an eagle on any par 4 or 5.",
         "selectedHoles": [],
         "reward": "800",
-        "difficulty": "medium",
+        "difficulty": "hard",
         "verifiedOnly": false
     },
     {
@@ -86,7 +86,7 @@ const default_achievements = [
           "any"
         ],
         "reward": "1200",
-        "difficulty": "medium",
+        "difficulty": "hard",
         "verifiedOnly": false
     }
       
