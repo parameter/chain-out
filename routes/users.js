@@ -48,10 +48,11 @@ async function sendUserNotification({ forUserId, eventName, payload, expoPush, l
 
   // the push 
   if (expoPush) {
+    console.log('Sending Expo push notification to', forUserId);
     try {
       const expoPushTokensCollection = db.collection('expoPushTokens');
       const expoPushToken = await expoPushTokensCollection.findOne({ userId: forUserId });
-      console.log('expoPushToken', expoPushToken);
+      console.log('Sending Expo push notification to', { to: expoPushToken, title: expoPush.title, body: expoPush.body });
       await sendExpoPush({ to: expoPushToken, title: expoPush.title, body: expoPush.body });
     } catch (e) {
       console.error('Error sending Expo push notification:', e);
@@ -59,6 +60,8 @@ async function sendUserNotification({ forUserId, eventName, payload, expoPush, l
   }
 
 }
+
+
 
 async function sendExpoPush({ to, title, body }) {
   if (!to) return; // no token, skip
@@ -74,10 +77,10 @@ async function sendExpoPush({ to, title, body }) {
       body: JSON.stringify({ to: to?.expoPushToken, title: title, body: body })
     });
 
-    console.log('response', response);
+    console.log('sendExpoPush response', response);
 
     const data = await response.json();
-    console.log('data', data);
+    console.log('sendExpoPush data', data);
 
     return data;
 
