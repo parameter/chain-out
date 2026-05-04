@@ -13,7 +13,6 @@ const default_achievements = [
         "selectedHoles": [
           "any"
         ],
-        "reward": "800",
         "difficulty": "extreme",
         "verifiedOnly": false
     },
@@ -31,7 +30,6 @@ const default_achievements = [
         "selectedHoles": [
           "any"
         ],
-        "reward": "500",
         "difficulty": "medium",
         "verifiedOnly": false
     },
@@ -50,7 +48,6 @@ const default_achievements = [
         "selectedHoles": [
           "any"
         ],
-        "reward": "500",
         "difficulty": "medium",
         "verifiedOnly": false
     },
@@ -68,7 +65,6 @@ const default_achievements = [
         "title": "Eagle Any Par 4/5",
         "description": "Score an eagle on any par 4 or 5.",
         "selectedHoles": [],
-        "reward": "800",
         "difficulty": "hard",
         "verifiedOnly": false
     },
@@ -85,7 +81,6 @@ const default_achievements = [
         "selectedHoles": [
           "any"
         ],
-        "reward": "1200",
         "difficulty": "hard",
         "verifiedOnly": false
     }
