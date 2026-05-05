@@ -51,7 +51,7 @@ async function sendUserNotification({ forUserId, eventName, payload, expoPush, l
     console.log('Sending Expo push notification to', forUserId);
     try {
       const expoPushTokensCollection = db.collection('expoPushTokens');
-      const expoPushToken = await expoPushTokensCollection.findOne({ userId: forUserId });
+      const expoPushToken = await expoPushTokensCollection.findOne({ userId: new ObjectId(forUserId) });
       console.log('expoPushToken', expoPushToken);
       console.log('Sending Expo push notification to', { to: expoPushToken.expoPushToken, title: expoPush.title, body: expoPush.body });
       await sendExpoPush({ to: expoPushToken, title: expoPush.title, body: expoPush.body });
