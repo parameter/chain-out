@@ -2630,6 +2630,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
     const badgeProgressCollection = db.collection('userBadgeProgress');
+    const achievementProgressCollection = db.collection('userAchievementProgress');
     const coursesCollection = db.collection('courses');
     const userXPTotalsCollection = db.collection('userXPTotals');
 
@@ -2686,7 +2687,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     lastWeekAgo.setDate(lastWeekAgo.getDate() - 7);
 
     // Single aggregation for all scorecard stats + hole-level and round-level stats
-    const [scorecardStats, badgeStats, holeStatsResult, puttingArraysResult, acesResult, roundSummariesResult, xpDoc, fairwayLast6MonthsResult, fairwayLastYearResult, fairwayLastMonthResult, fairwayLastWeekResult] = await Promise.all([
+    const [scorecardStats, badgeStats, achievementsCountResult, holeStatsResult, puttingArraysResult, acesResult, roundSummariesResult, xpDoc, fairwayLast6MonthsResult, fairwayLastYearResult, fairwayLastMonthResult, fairwayLastWeekResult] = await Promise.all([
       scorecardsCollection.aggregate([
         { $match: scorecardMatch },
         {
@@ -2769,15 +2770,6 @@ router.get('/stats/general', requireAuth, async (req, res) => {
               },
               { $count: 'count' }
             ],
-            achievements: [
-              {
-                $match: {
-                  currentTier: { $gte: 0 },
-                  courseId: { $exists: true, $ne: null }
-                }
-              },
-              { $count: 'count' }
-            ],
             badgesByTier: [
               {
                 $match: {
@@ -2794,6 +2786,16 @@ router.get('/stats/general', requireAuth, async (req, res) => {
             ]
           }
         }
+      ]).toArray(),
+
+      achievementProgressCollection.aggregate([
+        {
+          $match: {
+            userId: userId,
+            completed: true
+          }
+        },
+        { $count: 'count' }
       ]).toArray(),
 
       // Hole-level stats for the user (bullseye, C1, C2, OB, fairway, scramble, throw-in, aces, putting)
@@ -3233,7 +3235,7 @@ router.get('/stats/general', requireAuth, async (req, res) => {
     // Extract badge stats
     const badgeData = badgeStats[0] || {};
     const totalBadgesCount = badgeData.totalBadges?.[0]?.count || 0;
-    const achievementsCount = badgeData.achievements?.[0]?.count || 0;
+    const achievementsCount = achievementsCountResult?.[0]?.count || 0;
     
     // Build tier counts from aggregation result
     const tierCounts = {
