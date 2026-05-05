@@ -226,6 +226,8 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
             }
         });
 
+        console.log('ACHIEVEMENT_DIFFICULTY_XP_MAP', ACHIEVEMENT_DIFFICULTY_XP_MAP);
+
         allCourseAchievements.forEach(ach => {
             ach.XpReward = ACHIEVEMENT_DIFFICULTY_XP_MAP[ach.difficulty];
         });
