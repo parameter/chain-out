@@ -8,6 +8,7 @@ const path = require('path');
 const requireAuth = passport.authenticate('jwt', { session: false });
 const router = express.Router();
 const default_achievements = require('../data/default_achievements');
+const ACHIEVEMENT_DIFFICULTY_XP_MAP = require('../data/achievement_difficulty_xp_map');
 
 
 
@@ -190,7 +191,6 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
 
         const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
         const defaultAchievementsForCourse = await activeDefaultCourseAchievementsCollection.findOne({ courseId: new ObjectId(courseId) });
-        console.log('defaultAchievementsForCourse', defaultAchievementsForCourse);
         const defaultAchievements = defaultAchievementsForCourse ? default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id)) : default_achievements;
 
         const userAchievementsCollection = db.collection('userAchievementProgress');
@@ -226,7 +226,9 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
             }
         });
 
-        console.log('allCourseAchievements', allCourseAchievements);
+        allCourseAchievements.forEach(ach => {
+            ach.XpReward = ACHIEVEMENT_DIFFICULTY_XP_MAP[ach.difficulty];
+        });
 
         res.status(200).json({ achievements: allCourseAchievements });
 
