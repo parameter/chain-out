@@ -106,6 +106,46 @@
       border-color: rgba(248, 113, 113, 0.4);
       color: var(--danger);
     }
+    .rounds {
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .rounds-header {
+      padding: 10px 12px;
+      background: #0f1729;
+      color: var(--muted);
+      font-size: 13px;
+      border-bottom: 1px solid var(--line);
+    }
+    .round-item {
+      display: grid;
+      grid-template-columns: 150px 1fr auto;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #1d2b47;
+      font-size: 13px;
+      align-items: center;
+    }
+    .round-item:last-child { border-bottom: none; }
+    .round-date {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .round-course {
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .round-score {
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .score-under { color: #22c55e; }
+    .score-even { color: #eab308; }
+    .score-over { color: #fb7185; }
   </style>
 </head>
 <body>
@@ -133,24 +173,93 @@
       </div>
       <div class="button-row">
         <button class="btn-generate" type="submit">Generate Scorecards</button>
+        <button class="btn-clear" type="button" id="loadRounds">Load Rounds</button>
         <button class="btn-clear" type="button" id="clearStatus">Clear Status</button>
       </div>
     </form>
 
     <div class="status" id="status">Ready.</div>
+    <section class="rounds" id="roundsSection">
+      <div class="rounds-header" id="roundsHeader">Rounds list</div>
+      <div id="roundsList"></div>
+    </section>
   </main>
 
   <script>
     const form = document.getElementById('simulator-form');
     const statusEl = document.getElementById('status');
     const clearBtn = document.getElementById('clearStatus');
+    const loadRoundsBtn = document.getElementById('loadRounds');
+    const roundsListEl = document.getElementById('roundsList');
+    const roundsHeaderEl = document.getElementById('roundsHeader');
 
     function setStatus(msg, isError) {
       statusEl.textContent = msg;
       statusEl.classList.toggle('error', !!isError);
     }
 
+    function renderRounds(rounds, userId, year) {
+      roundsHeaderEl.textContent = "Rounds list for " + userId + (year ? (" (" + year + ")") : "");
+
+      if (!Array.isArray(rounds) || rounds.length === 0) {
+        roundsListEl.innerHTML = '<div class="round-item"><span class="round-date">-</span><span class="round-course">No rounds found.</span><span class="round-score">-</span></div>';
+        return;
+      }
+
+      roundsListEl.innerHTML = rounds.map((round) => {
+        const date = new Date(round.createdAt);
+        const dateLabel = Number.isNaN(date.getTime())
+          ? "-"
+          : date.toISOString().slice(0, 10);
+        const scoreClass = round.relativeToPar < 0
+          ? "score-under"
+          : round.relativeToPar > 0
+            ? "score-over"
+            : "score-even";
+        return (
+          '<div class="round-item">' +
+            '<span class="round-date">' + dateLabel + '</span>' +
+            '<span class="round-course">' +
+              (round.courseName || "Unknown course") + ' - ' + (round.layoutName || "Unknown layout") +
+              ' (Par ' + round.totalPar + ', Strokes ' + round.totalStrokes + ')' +
+            '</span>' +
+            '<span class="round-score ' + scoreClass + '">' + round.relativeLabel + '</span>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    async function loadRounds() {
+      const userId = document.getElementById('userId').value.trim();
+      const year = Number(document.getElementById('year').value);
+
+      if (!userId) {
+        setStatus('Fill in user _id first.', true);
+        return;
+      }
+
+      setStatus('Loading rounds...', false);
+
+      try {
+        const query = new URLSearchParams({ userId, year: String(year) });
+        const response = await fetch('/admin/api/yearly-round-simulator/user-rounds?' + query.toString());
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          const message = data && data.message ? data.message : 'Failed loading rounds.';
+          setStatus(message, true);
+          return;
+        }
+
+        renderRounds(data.rounds, userId, year);
+        setStatus('Loaded ' + data.count + ' rounds.', false);
+      } catch (error) {
+        setStatus('Request failed: ' + error.message, true);
+      }
+    }
+
     clearBtn.addEventListener('click', () => setStatus('Ready.', false));
+    loadRoundsBtn.addEventListener('click', loadRounds);
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -185,6 +294,7 @@
           "First scorecard _id: " + (data.firstScorecardId || 'n/a'),
           false
         );
+        await loadRounds();
       } catch (error) {
         setStatus('Request failed: ' + error.message, true);
       }

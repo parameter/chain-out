@@ -5,6 +5,7 @@ const { ObjectId } = require('mongodb');
 const path = require('path');
 const fs = require('fs').promises;
 const fsSync = require('fs');
+const { searchForEarnedAchievements, searchForEarnedBadges } = require('../lib/badges');
 
 const router = express.Router();
 
@@ -1064,19 +1065,167 @@ router.post('/api/yearly-round-simulator/generate', async (req, res) => {
         docs.sort((a, b) => a.createdAt - b.createdAt);
         const insertResult = await scorecardsCollection.insertMany(docs);
 
+        let badgeSearchCompleted = 0;
+        const insertedIds = Object.values(insertResult.insertedIds || {});
+
+        for (let i = 0; i < insertedIds.length; i += 1) {
+            const scorecardId = insertedIds[i];
+            const createdScorecard = docs[i];
+
+            try {
+                const results = Array.isArray(createdScorecard.results)
+                    ? [...createdScorecard.results].sort((a, b) => a.holeNumber - b.holeNumber)
+                    : [];
+
+                const scorecardWithId = { ...createdScorecard, _id: scorecardId };
+
+                const earnedAchievements = await searchForEarnedAchievements({
+                    scorecardId: scorecardWithId._id,
+                    results,
+                    courseId: scorecardWithId.courseId,
+                    layout: scorecardWithId.layout,
+                    scorecard: scorecardWithId
+                });
+
+                let earnedBadges = await searchForEarnedBadges({
+                    scorecardId: scorecardWithId._id,
+                    results,
+                    courseId: scorecardWithId.courseId,
+                    layout: scorecardWithId.layout,
+                    scorecard: scorecardWithId
+                });
+
+                if (!Array.isArray(earnedBadges)) {
+                    earnedBadges = [];
+                }
+
+                await scorecardsCollection.updateOne(
+                    { _id: scorecardWithId._id },
+                    {
+                        $set: {
+                            earnedBadges,
+                            earnedAchievements: Array.isArray(earnedAchievements) ? earnedAchievements : []
+                        }
+                    }
+                );
+
+                badgeSearchCompleted += 1;
+            } catch (badgeError) {
+                console.error('Error searching badges/achievements for simulated scorecard:', {
+                    scorecardId,
+                    error: badgeError
+                });
+            }
+        }
+
         res.json({
             success: true,
             insertedCount: insertResult.insertedCount,
             year: targetYear,
             userId,
             layoutsConsidered: playableLayouts.length,
-            firstScorecardId: insertResult.insertedIds[0] || null
+            firstScorecardId: insertedIds[0] || null,
+            badgeSearchCompleted
         });
     } catch (error) {
         console.error('Error generating yearly simulated scorecards:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to generate simulated scorecards',
+            error: error.message
+        });
+    }
+});
+
+router.get('/api/yearly-round-simulator/user-rounds', async (req, res) => {
+    try {
+        const { userId, year } = req.query;
+
+        if (!userId || !ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: 'Valid userId is required' });
+        }
+
+        const parsedYear = year != null ? Number(year) : null;
+        if (parsedYear != null && (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100)) {
+            return res.status(400).json({ success: false, message: 'year must be between 2000 and 2100' });
+        }
+
+        const db = getDatabase();
+        const scorecardsCollection = db.collection('scorecards');
+        const userObjectId = new ObjectId(userId);
+
+        const filter = {
+            creatorId: userObjectId,
+            mode: 'singles'
+        };
+
+        if (parsedYear != null) {
+            filter.createdAt = {
+                $gte: new Date(Date.UTC(parsedYear, 0, 1, 0, 0, 0, 0)),
+                $lte: new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999))
+            };
+        }
+
+        const scorecards = await scorecardsCollection.find(
+            filter,
+            {
+                projection: {
+                    _id: 1,
+                    createdAt: 1,
+                    courseId: 1,
+                    layout: 1,
+                    results: 1,
+                    playersTotalScores: 1
+                }
+            }
+        ).sort({ createdAt: 1 }).toArray();
+
+        const rounds = scorecards.map((card) => {
+            const holes = Array.isArray(card?.layout?.latestVersion?.holes) ? card.layout.latestVersion.holes : [];
+            const totalPar = holes.reduce((sum, hole) => sum + (Number(hole.par) || 3), 0);
+            const resultEntry = Array.isArray(card.playersTotalScores)
+                ? card.playersTotalScores.find((entry) => String(entry.entityId) === String(userObjectId))
+                : null;
+
+            let totalStrokes = Number(resultEntry?.strokes);
+            if (!Number.isFinite(totalStrokes)) {
+                totalStrokes = (Array.isArray(card.results) ? card.results : [])
+                    .filter((result) => String(result.entityId) === String(userObjectId))
+                    .reduce((sum, result) => sum + (Number(result.score) || 0), 0);
+            }
+
+            const relativeToPar = totalStrokes - totalPar;
+            const relativeLabel = relativeToPar === 0
+                ? 'E'
+                : relativeToPar > 0
+                    ? `+${relativeToPar}`
+                    : `${relativeToPar}`;
+
+            return {
+                _id: card._id,
+                createdAt: card.createdAt,
+                courseId: card.courseId,
+                courseName: card?.layout?.course?.name || 'Unknown course',
+                layoutName: card?.layout?.name || 'Unknown layout',
+                totalPar,
+                totalStrokes,
+                relativeToPar,
+                relativeLabel
+            };
+        });
+
+        res.json({
+            success: true,
+            userId,
+            year: parsedYear,
+            count: rounds.length,
+            rounds
+        });
+    } catch (error) {
+        console.error('Error listing user rounds for yearly simulator:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to list user rounds',
             error: error.message
         });
     }
