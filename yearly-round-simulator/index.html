@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yearly Round Simulator</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #141f35;
+      --line: #263759;
+      --text: #e7eefc;
+      --muted: #9eb0cf;
+      --primary: #4fd1c5;
+      --primary-dark: #2fa99e;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: linear-gradient(180deg, #0b1220 0%, #111b2f 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 18px;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    label {
+      font-size: 14px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      background: #0f1729;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 11px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 209, 197, 0.2);
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 11px 16px;
+      font-weight: 600;
+    }
+    .btn-generate {
+      background: var(--primary);
+      color: #041210;
+    }
+    .btn-generate:hover { background: var(--primary-dark); }
+    .btn-clear {
+      background: #1a2944;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .status {
+      margin-top: 18px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #10192c;
+      min-height: 44px;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .status.error {
+      border-color: rgba(248, 113, 113, 0.4);
+      color: var(--danger);
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Yearly Round Simulator</h1>
+    <p>
+      Generate randomized completed scorecards for a specific user and year.
+      Each generated 18-hole round has 8-10 holes at par and the remaining holes randomized between -2 and +4 versus par.
+    </p>
+
+    <form id="simulator-form">
+      <div class="grid">
+        <div>
+          <label for="userId">User _id</label>
+          <input id="userId" name="userId" type="text" placeholder="68de2fc34881f99410003b91" required>
+        </div>
+        <div>
+          <label for="year">Year</label>
+          <input id="year" name="year" type="number" min="2000" max="2100" value="2026" required>
+        </div>
+        <div>
+          <label for="numberOfScorecards">Number of scorecards</label>
+          <input id="numberOfScorecards" name="numberOfScorecards" type="number" min="1" max="400" value="40" required>
+        </div>
+      </div>
+      <div class="button-row">
+        <button class="btn-generate" type="submit">Generate Scorecards</button>
+        <button class="btn-clear" type="button" id="clearStatus">Clear Status</button>
+      </div>
+    </form>
+
+    <div class="status" id="status">Ready.</div>
+  </main>
+
+  <script>
+    const form = document.getElementById('simulator-form');
+    const statusEl = document.getElementById('status');
+    const clearBtn = document.getElementById('clearStatus');
+
+    function setStatus(msg, isError) {
+      statusEl.textContent = msg;
+      statusEl.classList.toggle('error', !!isError);
+    }
+
+    clearBtn.addEventListener('click', () => setStatus('Ready.', false));
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setStatus('Generating scorecards...', false);
+
+      const payload = {
+        userId: document.getElementById('userId').value.trim(),
+        year: Number(document.getElementById('year').value),
+        numberOfScorecards: Number(document.getElementById('numberOfScorecards').value)
+      };
+
+      try {
+        const response = await fetch('/admin/api/yearly-round-simulator/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          const message = data && data.message ? data.message : 'Generation failed.';
+          setStatus(message, true);
+          return;
+        }
+
+        setStatus(
+          "Done.\n" +
+          "Inserted: " + data.insertedCount + "\n" +
+          "User: " + data.userId + "\n" +
+          "Year: " + data.year + "\n" +
+          "Available 18-hole layouts: " + data.layoutsConsidered + "\n" +
+          "First scorecard _id: " + (data.firstScorecardId || 'n/a'),
+          false
+        );
+      } catch (error) {
+        setStatus('Request failed: ' + error.message, true);
+      }
+    });
+  </script>
+</body>
+</html>

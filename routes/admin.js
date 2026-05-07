@@ -10,6 +10,73 @@ const router = express.Router();
 
 // Path to the badges JSON file
 const BADGES_FILE_PATH = path.join(__dirname, '../data/badges.json');
+const YEARLY_ROUND_SIMULATOR_HTML_PATH = path.join(__dirname, '../yearly-round-simulator', 'index.html');
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pickRandom(arr) {
+    if (!Array.isArray(arr) || arr.length === 0) {
+        return null;
+    }
+    return arr[getRandomInt(0, arr.length - 1)];
+}
+
+function shuffleArray(arr) {
+    const copied = [...arr];
+    for (let i = copied.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copied[i], copied[j]] = [copied[j], copied[i]];
+    }
+    return copied;
+}
+
+function createRandomDateInYear(year) {
+    const start = new Date(Date.UTC(year, 0, 1, 7, 0, 0, 0)).getTime();
+    const end = new Date(Date.UTC(year, 11, 31, 20, 59, 59, 999)).getTime();
+    const randomTs = getRandomInt(start, end);
+    return new Date(randomTs);
+}
+
+function generateHoleScores(holes) {
+    const deltas = [-2, -1, 1, 2, 3, 4];
+    const parHoleCount = getRandomInt(8, 10);
+    const shuffledHoles = shuffleArray(holes);
+    const parHoleNumbers = new Set(shuffledHoles.slice(0, parHoleCount).map(h => h.number));
+
+    return holes.map((hole) => {
+        const par = Number(hole.par) || 3;
+        if (parHoleNumbers.has(hole.number)) {
+            return par;
+        }
+
+        const delta = pickRandom(deltas);
+        return Math.max(1, par + delta);
+    });
+}
+
+function buildScorecardResultRows({ userObjectId, holes, scores, roundTimestamp }) {
+    return holes.map((hole, idx) => {
+        const timestamp = new Date(roundTimestamp.getTime() + (idx + 1) * 45000);
+        return {
+            entityId: userObjectId,
+            holeNumber: hole.number,
+            score: scores[idx],
+            putt: Math.random() < 0.65 ? 'inside' : 'outside',
+            obCount: Math.random() < 0.2 ? 1 : 0,
+            specifics: {
+                c1: false,
+                c2: false,
+                bullseye: false,
+                scramble: false,
+                throwIn: false,
+                fairway: false
+            },
+            timestamp
+        };
+    });
+}
 
 // Helper function to read badges from database
 async function readBadgesFromDatabase() {
@@ -893,6 +960,126 @@ router.get('/badges', (req, res) => {
 </body>
 </html>
    `);
+});
+
+router.get('/yearly-round-simulator', (req, res) => {
+    res.sendFile(YEARLY_ROUND_SIMULATOR_HTML_PATH);
+});
+
+router.post('/api/yearly-round-simulator/generate', async (req, res) => {
+    try {
+        const { userId, numberOfScorecards = 40, year = new Date().getUTCFullYear() } = req.body;
+
+        if (!userId || !ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: 'Valid userId is required' });
+        }
+
+        const roundsToCreate = Number(numberOfScorecards);
+        const targetYear = Number(year);
+
+        if (!Number.isInteger(roundsToCreate) || roundsToCreate < 1 || roundsToCreate > 400) {
+            return res.status(400).json({
+                success: false,
+                message: 'numberOfScorecards must be an integer between 1 and 400'
+            });
+        }
+
+        if (!Number.isInteger(targetYear) || targetYear < 2000 || targetYear > 2100) {
+            return res.status(400).json({
+                success: false,
+                message: 'year must be an integer between 2000 and 2100'
+            });
+        }
+
+        const db = getDatabase();
+        const coursesCollection = db.collection('courses');
+        const scorecardsCollection = db.collection('scorecards');
+        const userObjectId = new ObjectId(userId);
+
+        const courses = await coursesCollection.find(
+            { layouts: { $exists: true, $ne: [] } },
+            { projection: { _id: 1, layouts: 1, name: 1 } }
+        ).toArray();
+
+        const playableLayouts = [];
+        for (const course of courses) {
+            const layouts = Array.isArray(course.layouts) ? course.layouts : [];
+            for (const layout of layouts) {
+                const holes = layout?.latestVersion?.holes;
+                if (!Array.isArray(holes) || holes.length !== 18) {
+                    continue;
+                }
+
+                playableLayouts.push({
+                    courseId: course._id,
+                    layout
+                });
+            }
+        }
+
+        if (playableLayouts.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No 18-hole layouts found in courses collection'
+            });
+        }
+
+        const docs = [];
+        for (let i = 0; i < roundsToCreate; i += 1) {
+            const selected = pickRandom(playableLayouts);
+            const holes = selected.layout.latestVersion.holes;
+            const createdAt = createRandomDateInYear(targetYear);
+            const scores = generateHoleScores(holes);
+            const results = buildScorecardResultRows({
+                userObjectId,
+                holes,
+                scores,
+                roundTimestamp: createdAt
+            });
+            const totalStrokes = scores.reduce((sum, s) => sum + s, 0);
+            const totalPar = holes.reduce((sum, h) => sum + (Number(h.par) || 3), 0);
+
+            docs.push({
+                creatorId: userObjectId,
+                courseId: selected.courseId,
+                layout: selected.layout,
+                results,
+                invites: [],
+                guestPlayers: [],
+                mode: 'singles',
+                teams: null,
+                createdAt,
+                updatedAt: createdAt,
+                status: 'completed',
+                isDiceMode: false,
+                playersTotalScores: [{
+                    entityId: userObjectId,
+                    strokes: totalStrokes,
+                    score: totalStrokes - totalPar
+                }],
+                verified: false
+            });
+        }
+
+        docs.sort((a, b) => a.createdAt - b.createdAt);
+        const insertResult = await scorecardsCollection.insertMany(docs);
+
+        res.json({
+            success: true,
+            insertedCount: insertResult.insertedCount,
+            year: targetYear,
+            userId,
+            layoutsConsidered: playableLayouts.length,
+            firstScorecardId: insertResult.insertedIds[0] || null
+        });
+    } catch (error) {
+        console.error('Error generating yearly simulated scorecards:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate simulated scorecards',
+            error: error.message
+        });
+    }
 });
 
 // GET /api/badges - Get all badges
