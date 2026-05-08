@@ -103,6 +103,12 @@ const createIndexes = async () => {
     // Create 2dsphere index on location for jobs collection (for $geoNear queries)
     await db.collection('courses').createIndex({ location: "2dsphere" });
 
+    // Enforce one progress document per user+badge pair.
+    await db.collection('userBadgeProgress').createIndex(
+      { userId: 1, badgeId: 1 },
+      { unique: true }
+    );
+
     console.log('Database indexes created');
   } catch (error) {
     console.error('Error creating indexes:', error);
