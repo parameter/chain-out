@@ -1,0 +1,544 @@
+{
+  "results": [
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 1,
+      "par": 3,
+      "score": 2,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": true, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:23:51.865Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 2,
+      "par": 3,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:24:23.262Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 3,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:24:33.954Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 4,
+      "par": 4,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:24:41.019Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 5,
+      "par": 4,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": true, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:24:54.971Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 6,
+      "par": 3,
+      "score": 2,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:25:04.864Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 7,
+      "par": 3,
+      "score": 2,
+      "putt": "outside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:25:13.859Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 8,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:25:16.509Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 9,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:25:22.431Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 10,
+      "par": 3,
+      "score": 3,
+      "putt": "-",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:25:30.632Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 11,
+      "par": 3,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:25:41.974Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 12,
+      "par": 4,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:25:54.747Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 13,
+      "par": 3,
+      "score": 2,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:26:04.041Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 14,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:26:10.401Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 15,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:26:33.146Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 16,
+      "par": 3,
+      "score": 2,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:27:19.926Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 17,
+      "par": 3,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:27:32.508Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 18,
+      "par": 4,
+      "score": 4,
+      "putt": "-",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": true, "fairway": true },
+      "timestamp": { "$date": "2026-05-08T07:28:09.695Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 1,
+      "par": 3,
+      "score": 2,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": true, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:17:44.163Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 2,
+      "par": 3,
+      "score": 4,
+      "putt": "-",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:18:00.227Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 3,
+      "par": 3,
+      "score": 5,
+      "putt": "-",
+      "obCount": 1,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:18:20.374Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 4,
+      "par": 4,
+      "score": 4,
+      "putt": "outside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:18:35.938Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 5,
+      "par": 4,
+      "score": 5,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:18:50.862Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 6,
+      "par": 3,
+      "score": 4,
+      "putt": "-",
+      "obCount": 1,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:19:11.128Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 7,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:19:28.242Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 8,
+      "par": 3,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:19:41.953Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 9,
+      "par": 3,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 1,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:20:04.862Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 10,
+      "par": 3,
+      "score": 4,
+      "putt": "-",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:20:16.586Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 11,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:20:31.692Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 12,
+      "par": 4,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:20:50.748Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 13,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:20:58.079Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 14,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:21:02.989Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 15,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:21:21.159Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 16,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:21:30.894Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 17,
+      "par": 3,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:21:47.207Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 18,
+      "par": 4,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": true, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:21:58.503Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 1,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:12:55.523Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 2,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:13:08.544Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 3,
+      "par": 3,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 1,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:13:18.668Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 4,
+      "par": 4,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:13:31.643Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 5,
+      "par": 4,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:13:45.512Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 6,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 1,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:14:11.963Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 7,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:14:24.661Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 8,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:14:34.175Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 9,
+      "par": 3,
+      "score": 3,
+      "putt": "-",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:14:58.544Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 10,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:15:11.128Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 11,
+      "par": 3,
+      "score": 4,
+      "putt": "-",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:15:29.478Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 12,
+      "par": 4,
+      "score": 4,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:15:57.084Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 13,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": true, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:16:08.811Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 14,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:16:13.993Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 15,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:16:21.403Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 16,
+      "par": 3,
+      "score": 3,
+      "putt": "-",
+      "obCount": 0,
+      "specifics": { "c1": true, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:16:29.246Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 17,
+      "par": 3,
+      "score": 3,
+      "putt": "inside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": false, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:16:38.000Z" }
+    },
+    {
+      "entityId": { "$oid": "68f11c5203f4320935cf8be0" },
+      "holeNumber": 18,
+      "par": 4,
+      "score": 3,
+      "putt": "outside",
+      "obCount": 0,
+      "specifics": { "c1": false, "c2": true, "bullseye": false, "scramble": false, "throwIn": false, "fairway": false },
+      "timestamp": { "$date": "2026-05-08T07:16:58.203Z" }
+    }
+  ]
+}

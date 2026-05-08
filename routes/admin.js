@@ -12,6 +12,52 @@ const router = express.Router();
 // Path to the badges JSON file
 const BADGES_FILE_PATH = path.join(__dirname, '../data/badges.json');
 const YEARLY_ROUND_SIMULATOR_HTML_PATH = path.join(__dirname, '../yearly-round-simulator', 'index.html');
+const SPECIFICS_VALUES_PATH = path.join(__dirname, 'specifics-values.json');
+
+// Real-world result samples grouped by par, used to populate putt/obCount/specifics
+// in simulated scorecards instead of generating those fields randomly.
+const SPECIFICS_BY_PAR = (() => {
+    const grouped = new Map();
+    try {
+        const raw = fsSync.readFileSync(SPECIFICS_VALUES_PATH, 'utf8');
+        const parsed = JSON.parse(raw);
+        const results = Array.isArray(parsed?.results) ? parsed.results : [];
+        for (const result of results) {
+            const par = Number(result?.par);
+            if (!Number.isFinite(par)) {
+                continue;
+            }
+            if (!grouped.has(par)) {
+                grouped.set(par, []);
+            }
+            grouped.get(par).push({
+                putt: result.putt,
+                obCount: result.obCount,
+                specifics: { ...result.specifics }
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load specifics-values.json for scorecard simulation:', error);
+    }
+    return grouped;
+})();
+
+const SPECIFICS_CURSORS = new Map();
+
+function nextSpecificsForPar(par) {
+    const samples = SPECIFICS_BY_PAR.get(par);
+    if (!samples || samples.length === 0) {
+        return null;
+    }
+    const cursor = SPECIFICS_CURSORS.get(par) ?? 0;
+    const sample = samples[cursor % samples.length];
+    SPECIFICS_CURSORS.set(par, cursor + 1);
+    return {
+        putt: sample.putt,
+        obCount: sample.obCount,
+        specifics: { ...sample.specifics }
+    };
+}
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -22,6 +68,24 @@ function pickRandom(arr) {
         return null;
     }
     return arr[getRandomInt(0, arr.length - 1)];
+}
+
+function pickWeighted(weightedItems) {
+    if (!Array.isArray(weightedItems) || weightedItems.length === 0) {
+        return null;
+    }
+    const totalWeight = weightedItems.reduce((sum, item) => sum + (item.weight || 0), 0);
+    if (totalWeight <= 0) {
+        return weightedItems[0].value;
+    }
+    let roll = Math.random() * totalWeight;
+    for (const item of weightedItems) {
+        roll -= (item.weight || 0);
+        if (roll < 0) {
+            return item.value;
+        }
+    }
+    return weightedItems[weightedItems.length - 1].value;
 }
 
 function shuffleArray(arr) {
@@ -40,8 +104,18 @@ function createRandomDateInYear(year) {
     return new Date(randomTs);
 }
 
+// Weighted deltas applied to holes that aren't forced to par.
+// Weights skew toward over-par scoring and make ace/eagle (-2) very rare.
+const SCORE_DELTA_WEIGHTS = [
+    { value: -2, weight: 1 },   // ace on par-3, eagle on par-4
+    { value: -1, weight: 30 },  // birdie
+    { value: 1, weight: 90 },   // bogey
+    { value: 2, weight: 50 },   // double bogey
+    { value: 3, weight: 20 },   // triple bogey
+    { value: 4, weight: 9 }     // quad bogey
+];
+
 function generateHoleScores(holes) {
-    const deltas = [-2, -1, 1, 2, 3, 4];
     const parHoleCount = getRandomInt(8, 10);
     const shuffledHoles = shuffleArray(holes);
     const parHoleNumbers = new Set(shuffledHoles.slice(0, parHoleCount).map(h => h.number));
@@ -52,7 +126,7 @@ function generateHoleScores(holes) {
             return par;
         }
 
-        const delta = pickRandom(deltas);
+        const delta = pickWeighted(SCORE_DELTA_WEIGHTS);
         return Math.max(1, par + delta);
     });
 }
@@ -60,20 +134,33 @@ function generateHoleScores(holes) {
 function buildScorecardResultRows({ userObjectId, holes, scores, roundTimestamp }) {
     return holes.map((hole, idx) => {
         const timestamp = new Date(roundTimestamp.getTime() + (idx + 1) * 45000);
-        return {
-            entityId: userObjectId,
-            holeNumber: hole.number,
-            score: scores[idx],
-            putt: Math.random() < 0.65 ? 'inside' : 'outside',
-            obCount: Math.random() < 0.2 ? 1 : 0,
-            specifics: {
+        const par = Number(hole.par) || 3;
+        const sample = nextSpecificsForPar(par);
+
+        const putt = sample
+            ? sample.putt
+            : (Math.random() < 0.65 ? 'inside' : 'outside');
+        const obCount = sample
+            ? sample.obCount
+            : (Math.random() < 0.2 ? 1 : 0);
+        const specifics = sample
+            ? sample.specifics
+            : {
                 c1: false,
                 c2: false,
                 bullseye: false,
                 scramble: false,
                 throwIn: false,
                 fairway: false
-            },
+            };
+
+        return {
+            entityId: userObjectId,
+            holeNumber: hole.number,
+            score: scores[idx],
+            putt,
+            obCount,
+            specifics,
             timestamp
         };
     });
