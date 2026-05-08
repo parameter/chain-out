@@ -110,9 +110,9 @@ const SCORE_DELTA_WEIGHTS = [
     { value: -2, weight: 1 },   // ace on par-3, eagle on par-4
     { value: -1, weight: 30 },  // birdie
     { value: 1, weight: 90 },   // bogey
-    { value: 2, weight: 50 },   // double bogey
-    { value: 3, weight: 20 },   // triple bogey
-    { value: 4, weight: 9 }     // quad bogey
+    { value: 2, weight: 30 },   // double bogey
+    { value: 3, weight: 10 },   // triple bogey
+    { value: 4, weight: 2 }     // quad bogey
 ];
 
 function generateHoleScores(holes) {
