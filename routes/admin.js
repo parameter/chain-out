@@ -104,28 +104,21 @@ function createRandomDateInYear(year) {
     return new Date(randomTs);
 }
 
-// Weighted deltas applied to holes that aren't forced to par.
+// Weighted deltas applied to holes relative to par.
 // Weights skew toward over-par scoring and make ace/eagle (-2) very rare.
 const SCORE_DELTA_WEIGHTS = [
     { value: -2, weight: 1 },   // ace on par-3, eagle on par-4
     { value: -1, weight: 30 },  // birdie
-    { value: 1, weight: 90 },   // bogey
-    { value: 2, weight: 30 },   // double bogey
-    { value: 3, weight: 10 },   // triple bogey
+    { value: 0, weight: 100 },  // par
+    { value: 1, weight: 50 },   // bogey
+    { value: 2, weight: 10 },   // double bogey
+    { value: 3, weight: 5 },   // triple bogey
     { value: 4, weight: 2 }     // quad bogey
 ];
 
 function generateHoleScores(holes) {
-    const parHoleCount = getRandomInt(8, 10);
-    const shuffledHoles = shuffleArray(holes);
-    const parHoleNumbers = new Set(shuffledHoles.slice(0, parHoleCount).map(h => h.number));
-
     return holes.map((hole) => {
         const par = Number(hole.par) || 3;
-        if (parHoleNumbers.has(hole.number)) {
-            return par;
-        }
-
         const delta = pickWeighted(SCORE_DELTA_WEIGHTS);
         return Math.max(1, par + delta);
     });
