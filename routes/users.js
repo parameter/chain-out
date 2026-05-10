@@ -2247,7 +2247,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
           scorecard: updatedScorecard
         });
 
-        earnedBadges = await searchForEarnedBadges({
+        await searchForEarnedBadges({
           scorecardId: updatedScorecard._id,
           results: results,
           courseId: updatedScorecard.courseId,
@@ -2255,7 +2255,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
           scorecard: updatedScorecard
         });
 
-        const badgesEarnedFromCorecard = await fetchEarnedBadgesForScorecard({
+        earnedBadges = await fetchEarnedBadgesForScorecard({
           scorecardId: updatedScorecard._id,
           results: results,
           courseId: updatedScorecard.courseId,
@@ -2269,7 +2269,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
         }
       } catch (badgeError) {
         // Log error but don't fail the entire request - badge search is non-critical
-        console.error('❌ [add-result] Error in searchForEarnedBadges:', badgeError);
+        console.error('❌ [add-result] Error in searchForEarnedBadges searchForEarnedAchievements or fetchEarnedBadgesForScorecard:', badgeError);
         console.error('   Error stack:', badgeError.stack);
         console.error('   Scorecard ID:', scorecardId);
         console.error('   Results count:', results.length);
