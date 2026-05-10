@@ -4,7 +4,7 @@ const { getDatabase } = require('../config/database');
 const { ObjectId } = require('mongodb');
 const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
-const { searchForEarnedAchievements, searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges } = require('../lib/badges');
+const { searchForEarnedAchievements, searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges, fetchEarnedBadgesForScorecard } = require('../lib/badges');
 
 
 const router = express.Router();
@@ -2248,6 +2248,14 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
         });
 
         earnedBadges = await searchForEarnedBadges({
+          scorecardId: updatedScorecard._id,
+          results: results,
+          courseId: updatedScorecard.courseId,
+          layout: updatedScorecard.layout,
+          scorecard: updatedScorecard
+        });
+
+        const badgesEarnedFromCorecard = await fetchEarnedBadgesForScorecard({
           scorecardId: updatedScorecard._id,
           results: results,
           courseId: updatedScorecard.courseId,
