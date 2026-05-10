@@ -5,7 +5,7 @@ const { ObjectId } = require('mongodb');
 const path = require('path');
 const fs = require('fs').promises;
 const fsSync = require('fs');
-const { searchForEarnedAchievements, searchForEarnedBadges } = require('../lib/badges');
+const { searchForEarnedAchievements, searchForEarnedBadges, getUserAllBadges } = require('../lib/badges');
 
 const router = express.Router();
 
@@ -1294,12 +1294,55 @@ router.get('/api/yearly-round-simulator/user-rounds', async (req, res) => {
             };
         });
 
+        const userBadgesDoc = await getUserAllBadges(userObjectId);
+        const userBadges = Array.isArray(userBadgesDoc) ? userBadgesDoc : [];
+
+        const badgesEarned = userBadges
+            .filter((b) => typeof b.currentTier === 'number' && b.currentTier >= 0)
+            .map((b) => {
+                const tierNames = Array.isArray(b.tierNames) ? b.tierNames : [];
+                const tierLabel =
+                    tierNames.length > 0 && b.currentTier >= 0 && b.currentTier < tierNames.length
+                        ? tierNames[b.currentTier]
+                        : b.currentTier >= 0
+                            ? `Tier ${b.currentTier}`
+                            : '';
+                return {
+                    badgeId: b.badgeId,
+                    badgeName: b.badgeName || b.badgeId,
+                    currentTier: b.currentTier,
+                    tierLabel,
+                    totalProgress: b.totalProgress,
+                    isUnique: b.isUnique === true,
+                    description: b.description || null
+                };
+            })
+            .sort((a, b) => String(a.badgeName).localeCompare(String(b.badgeName)));
+
+        const earnedIds = new Set(badgesEarned.map((b) => b.badgeId));
+        const allDoneDefs = await db.collection('badgeDefinitions').find(
+            { done: true },
+            { projection: { id: 1, name: 1, description: 1 } }
+        ).toArray();
+
+        const badgesNotEarned = allDoneDefs
+            .filter((def) => def && def.id != null && !earnedIds.has(def.id))
+            .map((def) => ({
+                id: def.id,
+                name: def.name || def.id,
+                description: def.description || null
+            }))
+            .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
         res.json({
             success: true,
             userId,
             year: parsedYear,
             count: rounds.length,
-            rounds
+            rounds,
+            badgesEarned,
+            badgesNotEarnedCount: badgesNotEarned.length,
+            badgesNotEarned
         });
     } catch (error) {
         console.error('Error listing user rounds for yearly simulator:', error);

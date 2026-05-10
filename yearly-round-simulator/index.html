@@ -146,6 +146,61 @@
     .score-under { color: #22c55e; }
     .score-even { color: #eab308; }
     .score-over { color: #fb7185; }
+    .badge-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0 8px;
+    }
+    .badge-tools label.checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+    }
+    .badge-tools input[type="checkbox"] {
+      width: auto;
+      accent-color: var(--primary);
+    }
+    .badges-summary {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .badge-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1d2b47;
+      font-size: 13px;
+    }
+    .badge-item:last-child { border-bottom: none; }
+    .badge-title {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .badge-meta {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 12px;
+    }
+    .badges-unearned-panel {
+      margin-top: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 4px;
+    }
+    .badges-unearned-panel > .rounds-header {
+      border-radius: 0;
+      border: none;
+      background: transparent;
+      padding-left: 0;
+    }
+    .badges-unearned-panel .badge-item:first-of-type {
+      border-top: 1px solid var(--line);
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -183,6 +238,22 @@
       <div class="rounds-header" id="roundsHeader">Rounds list</div>
       <div id="roundsList"></div>
     </section>
+
+    <section class="rounds" id="badgesSection" aria-label="Earned badges">
+      <div class="rounds-header">Badges earned (lifetime progress)</div>
+      <p class="badges-summary" id="badgesEarnedSummary">Load rounds to refresh badge lists.</p>
+      <div id="badgesEarnedList"></div>
+      <div class="badge-tools">
+        <label class="checkbox">
+          <input type="checkbox" id="showBadgesNotEarned">
+          <span>Show badges not earned</span>
+        </label>
+      </div>
+      <div class="badges-unearned-panel" id="badgesSectionUnearned" hidden>
+        <div class="rounds-header">Badges not yet earned</div>
+        <div id="badgesNotEarnedList"></div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -192,6 +263,85 @@
     const loadRoundsBtn = document.getElementById('loadRounds');
     const roundsListEl = document.getElementById('roundsList');
     const roundsHeaderEl = document.getElementById('roundsHeader');
+    const badgesEarnedSummaryEl = document.getElementById('badgesEarnedSummary');
+    const badgesEarnedListEl = document.getElementById('badgesEarnedList');
+    const badgesNotEarnedListEl = document.getElementById('badgesNotEarnedList');
+    const badgesSectionUnearned = document.getElementById('badgesSectionUnearned');
+    const showBadgesNotEarnedEl = document.getElementById('showBadgesNotEarned');
+
+    let lastBadgesNotEarned = [];
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderBadgesSummary(earned, notEarnedCount) {
+      badgesEarnedSummaryEl.textContent =
+        earned.length +
+        ' earned' +
+        (typeof notEarnedCount === 'number' ? '; ' + notEarnedCount + ' active definitions remaining' : '') +
+        '.';
+    }
+
+    function renderBadgesLists(earned, notEarned) {
+      lastBadgesNotEarned = Array.isArray(notEarned) ? notEarned : [];
+
+      if (!Array.isArray(earned) || earned.length === 0) {
+        badgesEarnedListEl.innerHTML =
+          '<div class="badge-item"><span class="badge-meta">No badges with tier progress yet (lifetime).</span></div>';
+      } else {
+        badgesEarnedListEl.innerHTML = earned
+          .map((b) => {
+            const tierPart = b.tierLabel ? ' — ' + escapeHtml(b.tierLabel) : '';
+            const desc = b.description ? '<div class="badge-meta">' + escapeHtml(b.description) + '</div>' : '';
+            return (
+              '<div class="badge-item">' +
+                '<div class="badge-title">' +
+                  escapeHtml(b.badgeName) +
+                  tierPart +
+                '</div>' +
+                '<div class="badge-meta">id: ' + escapeHtml(b.badgeId) + '</div>' +
+                desc +
+              '</div>'
+            );
+          })
+          .join('');
+      }
+
+      refreshNotEarnedListVisibility();
+      renderBadgesSummary(earned, lastBadgesNotEarned.length);
+    }
+
+    function refreshNotEarnedListVisibility() {
+      const show = showBadgesNotEarnedEl.checked;
+      badgesSectionUnearned.hidden = !show;
+      if (!show) return;
+
+      if (lastBadgesNotEarned.length === 0) {
+        badgesNotEarnedListEl.innerHTML =
+          '<div class="badge-item"><span class="badge-meta">None — all active badges are represented in earned tiers, or definitions are empty.</span></div>';
+        return;
+      }
+
+      badgesNotEarnedListEl.innerHTML = lastBadgesNotEarned
+        .map((b) => {
+          const desc = b.description ? '<div class="badge-meta">' + escapeHtml(b.description) + '</div>' : '';
+          return (
+            '<div class="badge-item">' +
+              '<div class="badge-title">' + escapeHtml(b.name) + '</div>' +
+              '<div class="badge-meta">id: ' + escapeHtml(b.id) + '</div>' +
+              desc +
+            '</div>'
+          );
+        })
+        .join('');
+    }
+
+    showBadgesNotEarnedEl.addEventListener('change', refreshNotEarnedListVisibility);
 
     function setStatus(msg, isError) {
       statusEl.textContent = msg;
@@ -252,6 +402,7 @@
         }
 
         renderRounds(data.rounds, userId, year);
+        renderBadgesLists(data.badgesEarned || [], data.badgesNotEarned || []);
         setStatus('Loaded ' + data.count + ' rounds.', false);
       } catch (error) {
         setStatus('Request failed: ' + error.message, true);
