@@ -2244,12 +2244,12 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
           layout: updatedScorecard.layout,
           scorecard: updatedScorecard
         };
-        [earnedAchievements] = await Promise.all([
+        await Promise.all([
           searchForEarnedAchievements(badgeSearchArgs),
           searchForEarnedBadges(badgeSearchArgs)
         ]);
 
-        earnedBadges = await fetchEarnedBadgesAndAchievementsForScorecard(badgeSearchArgs);
+        [earnedBadges, earnedAchievements] = await fetchEarnedBadgesAndAchievementsForScorecard(badgeSearchArgs);
 
         // Verify that searchForEarnedBadges completed successfully
         if (!Array.isArray(earnedBadges)) {
