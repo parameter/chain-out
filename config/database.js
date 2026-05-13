@@ -109,6 +109,14 @@ const createIndexes = async () => {
       { unique: true }
     );
 
+    // Course revisions: list history per course, newest first, and enforce
+    // unique revision numbers per course.
+    await db.collection('course-revisions').createIndex(
+      { courseId: 1, revisionNumber: -1 },
+      { unique: true }
+    );
+    await db.collection('course-revisions').createIndex({ courseId: 1, changedAt: -1 });
+
     console.log('Database indexes created');
   } catch (error) {
     console.error('Error creating indexes:', error);

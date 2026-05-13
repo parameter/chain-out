@@ -78,36 +78,222 @@ router.get('/courses', requireAuth, async (req, res) => {
 
 */
 
+const saveCourseRevision = async (db, currentCourse, req, { source = 'update-course', note } = {}) => {
+  const revisionsCollection = db.collection('course-revisions');
+  const lastRev = await revisionsCollection
+    .find({ courseId: currentCourse._id })
+    .sort({ revisionNumber: -1 })
+    .limit(1)
+    .project({ revisionNumber: 1 })
+    .next();
+
+  const revision = {
+    courseId: currentCourse._id,
+    revisionNumber: (lastRev?.revisionNumber ?? 0) + 1,
+    snapshot: currentCourse,
+    changedBy: req.user._id,
+    changedByEmail: req.user.email || null,
+    changedAt: new Date(),
+    source
+  };
+  if (note) revision.note = String(note).slice(0, 500);
+
+  const result = await revisionsCollection.insertOne(revision);
+  return { ...revision, _id: result.insertedId };
+};
+
+const isCourseAdmin = async (db, courseId, userId) => {
+  const courseAdminsCollection = db.collection('course-admins');
+  const courseAdmin = await courseAdminsCollection.findOne({ courseId, userId });
+  return Boolean(courseAdmin);
+};
+
 router.post('/update-course', requireAuth, async (req, res) => {
   try {
-    const { _id } = req.body;
-
-    console.log('_id', _id);
-    console.log('req.body', req.body);
+    const { _id, __note } = req.body;
 
     if (!_id) {
       return res.status(400).json({ message: 'Course id is required' });
     }
+    if (!ObjectId.isValid(_id)) {
+      return res.status(400).json({ message: 'Invalid course id' });
+    }
 
-    // check if current user is the owner of the course in course-admins
+    const courseId = new ObjectId(_id);
     const db = getDatabase();
-    const courseAdminsCollection = db.collection('course-admins');
-    const courseAdmin = await courseAdminsCollection.findOne({ courseId: new ObjectId(_id), userId: req.user._id });
-    if (!courseAdmin) {
+
+    if (!(await isCourseAdmin(db, courseId, req.user._id))) {
       return res.status(403).json({ message: 'You are not authorized to update this course' });
     }
 
-    if (req.body._id) {
-      delete req.body._id;
+    const coursesCollection = db.collection('courses');
+    const currentCourse = await coursesCollection.findOne({ _id: courseId });
+    if (!currentCourse) {
+      return res.status(404).json({ message: 'Course not found' });
     }
 
-    const coursesCollection = db.collection('courses');
-    const result = await coursesCollection.updateOne({ _id: new ObjectId(_id) }, { $set: req.body });
+    const update = { ...req.body };
+    delete update._id;
+    delete update.__note;
 
-    res.json({ success: true, message: 'Course updated successfully', result: result.modifiedCount });
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ message: 'No fields to update' });
+    }
+
+    const revision = await saveCourseRevision(db, currentCourse, req, {
+      source: 'update-course',
+      note: __note
+    });
+
+    const result = await coursesCollection.updateOne(
+      { _id: courseId },
+      { $set: { ...update, updatedAt: new Date(), updatedBy: req.user._id } }
+    );
+
+    res.json({
+      success: true,
+      message: 'Course updated successfully',
+      result: result.modifiedCount,
+      revisionId: revision._id,
+      revisionNumber: revision.revisionNumber
+    });
   } catch (e) {
     console.error('Error saving course:', e);
     res.status(500).json({ message: 'Failed to save course' });
+  }
+});
+
+
+
+router.get('/course-revisions', requireAuth, async (req, res) => {
+  try {
+    const { courseId, limit, skip } = req.query;
+
+    if (!courseId) {
+      return res.status(400).json({ message: 'Course id is required' });
+    }
+    if (!ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: 'Invalid course id' });
+    }
+
+    const courseObjectId = new ObjectId(courseId);
+    const db = getDatabase();
+
+    if (!(await isCourseAdmin(db, courseObjectId, req.user._id)) && req.user.admin !== 'super-admin') {
+      return res.status(403).json({ message: 'You are not authorized to view revisions for this course' });
+    }
+
+    const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+    const parsedSkip = Math.max(parseInt(skip, 10) || 0, 0);
+
+    const revisionsCollection = db.collection('course-revisions');
+    const revisions = await revisionsCollection
+      .find({ courseId: courseObjectId })
+      .project({ snapshot: 0 })
+      .sort({ revisionNumber: -1 })
+      .skip(parsedSkip)
+      .limit(parsedLimit)
+      .toArray();
+
+    const total = await revisionsCollection.countDocuments({ courseId: courseObjectId });
+
+    res.json({ revisions, total });
+  } catch (e) {
+    console.error('Error fetching course revisions:', e);
+    res.status(500).json({ message: 'Failed to fetch course revisions' });
+  }
+});
+
+
+
+router.get('/course-revision', requireAuth, async (req, res) => {
+  try {
+    const { revisionId } = req.query;
+
+    if (!revisionId) {
+      return res.status(400).json({ message: 'Revision id is required' });
+    }
+    if (!ObjectId.isValid(revisionId)) {
+      return res.status(400).json({ message: 'Invalid revision id' });
+    }
+
+    const db = getDatabase();
+    const revisionsCollection = db.collection('course-revisions');
+    const revision = await revisionsCollection.findOne({ _id: new ObjectId(revisionId) });
+
+    if (!revision) {
+      return res.status(404).json({ message: 'Revision not found' });
+    }
+
+    if (!(await isCourseAdmin(db, revision.courseId, req.user._id)) && req.user.admin !== 'super-admin') {
+      return res.status(403).json({ message: 'You are not authorized to view this revision' });
+    }
+
+    res.json({ revision });
+  } catch (e) {
+    console.error('Error fetching course revision:', e);
+    res.status(500).json({ message: 'Failed to fetch course revision' });
+  }
+});
+
+
+
+router.post('/restore-course-revision', requireAuth, async (req, res) => {
+  try {
+    const { revisionId, note } = req.body;
+
+    if (!revisionId) {
+      return res.status(400).json({ message: 'Revision id is required' });
+    }
+    if (!ObjectId.isValid(revisionId)) {
+      return res.status(400).json({ message: 'Invalid revision id' });
+    }
+
+    const db = getDatabase();
+    const revisionsCollection = db.collection('course-revisions');
+    const revision = await revisionsCollection.findOne({ _id: new ObjectId(revisionId) });
+
+    if (!revision) {
+      return res.status(404).json({ message: 'Revision not found' });
+    }
+
+    if (!(await isCourseAdmin(db, revision.courseId, req.user._id))) {
+      return res.status(403).json({ message: 'You are not authorized to restore this course' });
+    }
+
+    const coursesCollection = db.collection('courses');
+    const currentCourse = await coursesCollection.findOne({ _id: revision.courseId });
+    if (!currentCourse) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const backupRevision = await saveCourseRevision(db, currentCourse, req, {
+      source: 'pre-restore',
+      note: note ? `Pre-restore backup. ${note}` : `Pre-restore backup before restoring revision #${revision.revisionNumber}`
+    });
+
+    const restored = { ...revision.snapshot };
+    delete restored._id;
+    restored.updatedAt = new Date();
+    restored.updatedBy = req.user._id;
+    restored.restoredFromRevisionId = revision._id;
+    restored.restoredFromRevisionNumber = revision.revisionNumber;
+
+    const result = await coursesCollection.replaceOne(
+      { _id: revision.courseId },
+      { _id: revision.courseId, ...restored }
+    );
+
+    res.json({
+      success: true,
+      message: `Restored course to revision #${revision.revisionNumber}`,
+      result: result.modifiedCount,
+      backupRevisionId: backupRevision._id,
+      backupRevisionNumber: backupRevision.revisionNumber
+    });
+  } catch (e) {
+    console.error('Error restoring course revision:', e);
+    res.status(500).json({ message: 'Failed to restore course revision' });
   }
 });
 
@@ -263,6 +449,7 @@ router.get('/my-courses', requireAuth, async (req, res) => {
 
   }
 });
+
 
 
 module.exports = router;
