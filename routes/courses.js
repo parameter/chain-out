@@ -78,7 +78,7 @@ router.get('/courses', requireAuth, async (req, res) => {
 
 */
 
-const saveCourseRevision = async (db, currentCourse, req, { source = 'update-course', note } = {}) => {
+const saveCourseRevision = async (db, currentCourse, req, { source = 'update-course', revisionReason } = {}) => {
   const revisionsCollection = db.collection('course-revisions');
   const lastRev = await revisionsCollection
     .find({ courseId: currentCourse._id })
@@ -96,7 +96,7 @@ const saveCourseRevision = async (db, currentCourse, req, { source = 'update-cou
     changedAt: new Date(),
     source
   };
-  if (note) revision.note = String(note).slice(0, 500);
+  if (revisionReason) revision.revisionReason = String(revisionReason).slice(0, 500);
 
   const result = await revisionsCollection.insertOne(revision);
   return { ...revision, _id: result.insertedId };
@@ -110,7 +110,7 @@ const isCourseAdmin = async (db, courseId, userId) => {
 
 router.post('/update-course', requireAuth, async (req, res) => {
   try {
-    const { _id, __note } = req.body;
+    const { _id, revisionReason } = req.body;
 
     if (!_id) {
       return res.status(400).json({ message: 'Course id is required' });
@@ -134,7 +134,7 @@ router.post('/update-course', requireAuth, async (req, res) => {
 
     const update = { ...req.body };
     delete update._id;
-    delete update.__note;
+    delete update.revisionReason;
 
     if (Object.keys(update).length === 0) {
       return res.status(400).json({ message: 'No fields to update' });
@@ -142,7 +142,7 @@ router.post('/update-course', requireAuth, async (req, res) => {
 
     const revision = await saveCourseRevision(db, currentCourse, req, {
       source: 'update-course',
-      note: __note
+      revisionReason
     });
 
     const result = await coursesCollection.updateOne(
@@ -240,7 +240,7 @@ router.get('/course-revision', requireAuth, async (req, res) => {
 
 router.post('/restore-course-revision', requireAuth, async (req, res) => {
   try {
-    const { revisionId, note } = req.body;
+    const { revisionId, revisionReason } = req.body;
 
     if (!revisionId) {
       return res.status(400).json({ message: 'Revision id is required' });
@@ -269,7 +269,9 @@ router.post('/restore-course-revision', requireAuth, async (req, res) => {
 
     const backupRevision = await saveCourseRevision(db, currentCourse, req, {
       source: 'pre-restore',
-      note: note ? `Pre-restore backup. ${note}` : `Pre-restore backup before restoring revision #${revision.revisionNumber}`
+      revisionReason: revisionReason
+        ? `Pre-restore backup. ${revisionReason}`
+        : `Pre-restore backup before restoring revision #${revision.revisionNumber}`
     });
 
     const restored = { ...revision.snapshot };
