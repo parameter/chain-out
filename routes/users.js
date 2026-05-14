@@ -2233,6 +2233,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     const shouldSearchBadges = updatedScorecard.mode !== 'doubles';
     let earnedBadges = [];
     let earnedAchievements = [];
+    let playersXpBreakdown = [];
 
     if (shouldSearchBadges) {
       try {
@@ -2244,10 +2245,14 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
           layout: updatedScorecard.layout,
           scorecard: updatedScorecard
         };
-        await Promise.all([
+        const [, badgeSearchOutcome] = await Promise.all([
           searchForEarnedAchievements(badgeSearchArgs),
           searchForEarnedBadges(badgeSearchArgs)
         ]);
+
+        playersXpBreakdown = Array.isArray(badgeSearchOutcome?.playersXpBreakdown)
+          ? badgeSearchOutcome.playersXpBreakdown
+          : [];
 
         [earnedBadges, earnedAchievements] = await fetchEarnedBadgesAndAchievementsForScorecard(badgeSearchArgs);
 
@@ -2263,6 +2268,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
         console.error('   Results count:', results.length);
         // Continue with empty earnedBadges array so the request can complete
         earnedBadges = [];
+        playersXpBreakdown = [];
       }
     } else {
       console.log('⏭️ [complete-round] Skipping badge search for doubles mode');
@@ -2280,8 +2286,10 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
     if (shouldSearchBadges) {
       scorecardSetUpdates.earnedBadges = earnedBadges;
       scorecardSetUpdates.earnedAchievements = earnedAchievements;
+      scorecardSetUpdates.playersXpBreakdown = playersXpBreakdown;
       updatedScorecard.earnedBadges = earnedBadges;
       updatedScorecard.earnedAchievements = earnedAchievements;
+      updatedScorecard.playersXpBreakdown = playersXpBreakdown;
     }
     if (Object.keys(scorecardSetUpdates).length > 0) {
       await scorecardsCollection.updateOne(

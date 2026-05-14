@@ -107,7 +107,7 @@ async function testFlockOfBirdiesBadge() {
 
     // Call the badge search function
     console.log('🔍 Searching for earned badges...');
-    const earnedBadges = await searchForEarnedBadges({
+    const { perPlayerEarned: earnedBadges, playersXpBreakdown } = await searchForEarnedBadges({
       scorecardId,
       results,
       courseId,
@@ -117,6 +117,8 @@ async function testFlockOfBirdiesBadge() {
 
     console.log('\n📋 Results:');
     console.log(JSON.stringify(earnedBadges, null, 2));
+    console.log('\n📊 playersXpBreakdown:');
+    console.log(JSON.stringify(playersXpBreakdown, null, 2));
 
     // Check the badge progress in database
     const { getDatabase } = require('./config/database');

@@ -1167,7 +1167,7 @@ router.post('/api/yearly-round-simulator/generate', async (req, res) => {
                     scorecard: scorecardWithId
                 });
 
-                let earnedBadges = await searchForEarnedBadges({
+                const badgeSearchOutcome = await searchForEarnedBadges({
                     scorecardId: scorecardWithId._id,
                     results,
                     courseId: scorecardWithId.courseId,
@@ -1175,16 +1175,21 @@ router.post('/api/yearly-round-simulator/generate', async (req, res) => {
                     scorecard: scorecardWithId
                 });
 
-                if (!Array.isArray(earnedBadges)) {
-                    earnedBadges = [];
-                }
+                const earnedBadges = Array.isArray(badgeSearchOutcome?.perPlayerEarned)
+                    ? badgeSearchOutcome.perPlayerEarned
+                    : [];
+
+                const playersXpBreakdown = Array.isArray(badgeSearchOutcome?.playersXpBreakdown)
+                    ? badgeSearchOutcome.playersXpBreakdown
+                    : [];
 
                 await scorecardsCollection.updateOne(
                     { _id: scorecardWithId._id },
                     {
                         $set: {
                             earnedBadges,
-                            earnedAchievements: Array.isArray(earnedAchievements) ? earnedAchievements : []
+                            earnedAchievements: Array.isArray(earnedAchievements) ? earnedAchievements : [],
+                            playersXpBreakdown
                         }
                     }
                 );

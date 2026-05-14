@@ -108,7 +108,7 @@ async function testTurkeyHunterBadge() {
     console.log('');
 
     console.log('🔍 Calling searchForEarnedBadges...');
-    const earnedBadges = await searchForEarnedBadges({
+    const { perPlayerEarned: earnedBadges, playersXpBreakdown } = await searchForEarnedBadges({
       scorecardId,
       results,
       courseId,
@@ -118,6 +118,8 @@ async function testTurkeyHunterBadge() {
 
     console.log('\n📋 searchForEarnedBadges returned:');
     console.log(JSON.stringify(earnedBadges, null, 2));
+    console.log('\n📊 playersXpBreakdown:');
+    console.log(JSON.stringify(playersXpBreakdown, null, 2));
 
     // Read back badge progress for this player and turkey_hunter
     const progressCollection = db.collection('userBadgeProgress');
