@@ -45,13 +45,21 @@ router.post('/set-default-achievements', requireAuth, async (req, res) => {
 
 router.post('/create-new-achievement', requireAuth, async (req, res) => {
     try {
-        const { achievement } = req.body;
+        const { achievement, layoutId } = req.body;
 
         console.log('achievement', achievement);
         console.log('req.user._id', req.user._id);
 
         if (!achievement) {
             return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        if (layoutId !== undefined) {
+            if (layoutId === null || layoutId === '') {
+                achievement.layoutId = null;
+            } else {
+                achievement.layoutId = typeof layoutId === 'string' ? layoutId.trim() : layoutId;
+            }
         }
 
         const db = getDatabase();
