@@ -199,7 +199,10 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
 
         const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
         const defaultAchievementsForCourse = await activeDefaultCourseAchievementsCollection.findOne({ courseId: new ObjectId(courseId) });
-        const defaultAchievements = defaultAchievementsForCourse ? default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id)) : default_achievements;
+        const templateIds = defaultAchievementsForCourse?.templateIds;
+        const defaultAchievements = defaultAchievementsForCourse
+            ? default_achievements.filter((ach) => Array.isArray(templateIds) && templateIds.includes(ach.id))
+            : default_achievements;
 
         const userAchievementsCollection = db.collection('userAchievementProgress');
         const userAchievements = await userAchievementsCollection.find({ userId: new ObjectId(req.user._id), courseId: new ObjectId(courseId) }).toArray();
@@ -270,7 +273,8 @@ router.get('/get-course-achievements', requireAuth, async (req, res) => {
 
         const activeDefaultCourseAchievementsCollection = db.collection('active-default-course-achievements');
         const defaultAchievementsForCourse = await activeDefaultCourseAchievementsCollection.findOne({ courseId: new ObjectId(courseId) });
-        const defaultAchievements = default_achievements.filter(ach => defaultAchievementsForCourse.templateIds.includes(ach.id));
+        const templateIds = defaultAchievementsForCourse?.templateIds ?? [];
+        const defaultAchievements = default_achievements.filter((ach) => templateIds.includes(ach.id));
 
         res.status(200).json({ achievements: [...achievements, ...defaultAchievements] });
         
