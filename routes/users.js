@@ -1081,7 +1081,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
         fromUser: req.user._id,
         type: 'new-fore',
         message: message || 'Fore!',
-        foreId: result.insertedId
+        foreId: result.insertedId,
+        to: userId
       }
     });
 
