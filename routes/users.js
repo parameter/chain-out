@@ -1437,8 +1437,7 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
 
 router.get('/scorecards', requireAuth, async (req, res) => {
   try {
-    const { page = 0 } = req.query;
-    const limit = 50;
+    const { page = 0, limit = 50 } = req.query;
     const pageNum = Math.max(0, parseInt(String(page), 10) || 0);
     const skip = pageNum * limit;
 
