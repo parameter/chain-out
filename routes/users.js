@@ -1437,9 +1437,10 @@ router.post('/scorecard/answer-invite', requireAuth, async (req, res) => {
 
 router.get('/scorecards', requireAuth, async (req, res) => {
   try {
-    const { page = 0, limit = 50 } = req.query;
+    const { page = 0, limit: limitRaw = 50 } = req.query;
     const pageNum = Math.max(0, parseInt(String(page), 10) || 0);
-    const skip = pageNum * limit;
+    const limitNum = Math.min(Math.max(parseInt(String(limitRaw), 10) || 50, 1), 200);
+    const skip = pageNum * limitNum;
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
@@ -1468,7 +1469,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
       { $match: matchFilter },
       { $sort: { updatedAt: -1, createdAt: -1 } },
       { $skip: skip },
-      { $limit: limit },
+      { $limit: limitNum },
       {
         $lookup: {
           from: 'courses',
@@ -1667,7 +1668,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     ]).toArray()
     ]);
 
-    res.status(200).json({ scorecards, totalScorecards, page: pageNum, limit });
+    res.status(200).json({ scorecards, totalScorecards, page: pageNum, limit: limitNum });
 
   } catch (e) {
     console.error('Error fetching active scorecards:', e);
