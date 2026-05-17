@@ -1086,6 +1086,29 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       }
     });
 
+        // TEST 
+        await sendUserNotification({
+          forUserId: userId,
+          eventName: "new-fore",
+          expoPush: {
+            title: `Fore!`,
+            body: `Fore!`,
+          },
+          payload: {
+            message: 'Fore!',
+            from: userId ,
+            to: req.user._id.toString()
+          },
+          localNotification: {
+            fromUser: req.user._id,
+            type: 'new-fore',
+            message: message || 'Fore!',
+            foreId: result.insertedId,
+            from: userId,
+            to: req.user._id.toString()
+          }
+        });
+
     res.status(201).json({ message: 'Fore sent', fore: { ...foreDoc, _id: result.insertedId } });
 
   } catch (e) {
