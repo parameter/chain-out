@@ -1041,9 +1041,13 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'userId is required' });
     }
 
+    /*
+
     if (userId === String(req.user._id)) {
       return res.status(400).json({ message: 'Cannot send a fore to yourself' });
     }
+
+    */
 
     const db = getDatabase();
     const foresCollection = db.collection('fores');
@@ -1085,29 +1089,6 @@ router.post('/say-fore', requireAuth, async (req, res) => {
         to: userId
       }
     });
-
-        // TEST 
-        await sendUserNotification({
-          forUserId: userId,
-          eventName: "new-fore",
-          expoPush: {
-            title: `Fore!`,
-            body: `Fore!`,
-          },
-          payload: {
-            message: 'Fore!',
-            from: userId ,
-            to: req.user._id.toString()
-          },
-          localNotification: {
-            fromUser: req.user._id,
-            type: 'new-fore',
-            message: message || 'Fore!',
-            foreId: result.insertedId,
-            from: userId,
-            to: req.user._id.toString()
-          }
-        });
 
     res.status(201).json({ message: 'Fore sent', fore: { ...foreDoc, _id: result.insertedId } });
 
