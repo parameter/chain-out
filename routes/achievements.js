@@ -286,4 +286,106 @@ router.get('/get-course-achievements', requireAuth, async (req, res) => {
 
 
 
+router.post('/update-achievement', requireAuth, async (req, res) => {
+    try {
+        const { achievement, layoutId } = req.body;
+
+        if (!achievement || !achievement._id) {
+            return res.status(400).json({ message: 'Achievement id is required' });
+        }
+        if (!ObjectId.isValid(achievement._id)) {
+            return res.status(400).json({ message: 'Invalid achievement id' });
+        }
+
+        if (layoutId !== undefined) {
+            if (layoutId === null || layoutId === '') {
+                achievement.layoutId = null;
+            } else {
+                achievement.layoutId = typeof layoutId === 'string' ? layoutId.trim() : layoutId;
+            }
+        }
+
+        const db = getDatabase();
+        const achievementsCollection = db.collection('achievements');
+        const achievementId = new ObjectId(achievement._id);
+
+        const existingAchievement = await achievementsCollection.findOne({ _id: achievementId });
+        if (!existingAchievement) {
+            return res.status(404).json({ message: 'Achievement not found' });
+        }
+
+        const courseIdObject = existingAchievement.courseId;
+
+        const courseAdminsCollection = db.collection('course-admins');
+        const courseAdmin = await courseAdminsCollection.findOne({
+            userId: new ObjectId(req.user._id),
+            courseId: courseIdObject
+        });
+        if (req.user.admin !== 'super-admin' && !courseAdmin) {
+            return res.status(403).json({ message: 'You are not authorized to update achievements for this course' });
+        }
+
+        const update = { ...achievement };
+        delete update._id;
+        delete update.createdAt;
+        delete update.createdBy;
+        delete update.courseId;
+
+        const mergedAchievement = { ...existingAchievement, ...update };
+
+        const normalizeAchievementForComparison = (ach) => {
+            const achi_copy = { ...ach };
+            delete achi_copy._id;
+            delete achi_copy.id;
+            delete achi_copy.courseId;
+            delete achi_copy.description;
+            delete achi_copy.title;
+            delete achi_copy.reward;
+            delete achi_copy.imageName;
+            delete achi_copy.createdAt;
+            delete achi_copy.createdBy;
+            delete achi_copy.updatedAt;
+            delete achi_copy.updatedBy;
+            return achi_copy;
+        };
+
+        const updatedForComparison = normalizeAchievementForComparison(mergedAchievement);
+
+        const otherAchievements = await achievementsCollection
+            .find({ courseId: courseIdObject, _id: { $ne: achievementId } })
+            .toArray();
+
+        const hasDuplicate = [...otherAchievements, ...default_achievements].some((achi) => {
+            return _.isEqual(updatedForComparison, normalizeAchievementForComparison(achi));
+        });
+
+        if (hasDuplicate) {
+            return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
+        }
+
+        const result = await achievementsCollection.updateOne(
+            { _id: achievementId },
+            {
+                $set: {
+                    ...update,
+                    updatedAt: new Date(),
+                    updatedBy: new ObjectId(req.user._id)
+                }
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: 'Achievement not found' });
+        }
+
+        res.status(200).json({ message: 'Achievement updated successfully', modifiedCount: result.modifiedCount });
+
+    } catch (error) {
+        console.error('Error updating achievement:', error);
+        res.status(500).json({ message: 'Failed to update achievement' });
+    }
+});
+
+
+
 module.exports = router;
