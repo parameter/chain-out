@@ -6,6 +6,12 @@ const { body, validationResult, query } = require('express-validator');
 const { getDatabase } = require('../config/database');
 const crypto = require('crypto');
 const { generateVerificationToken, sendVerificationEmail, sendPasswordResetEmail } = require('../lib/emailVerification');
+const {
+  resolveAudience,
+  jwtVerifyOptions,
+  jwtSignOptions,
+  tokenAudienceFromDecoded,
+} = require('../config/jwt');
 
 const router = express.Router();
 
@@ -93,16 +99,18 @@ router.post('/login', (req, res, next) => {
       return res.status(401).json({ message: info?.message || 'Invalid credentials' });
     }
 
+    const audience = resolveAudience(req);
+
     const token = jwt.sign(
       { sub: user._id, userType: user.userType },
       process.env.JWT_SECRET || "access-secret",
-      { expiresIn: process.env.JWT_EXPIRES_IN || "10s" }
+      jwtSignOptions(audience, process.env.JWT_EXPIRES_IN || "1d")
     );
 
     const refreshToken = jwt.sign(
       { sub: user._id, userType: user.userType },
       process.env.JWT_REFRESH_SECRET || "refresh-secret",
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "14d" }
+      jwtSignOptions(audience, process.env.JWT_REFRESH_EXPIRES_IN || "14d")
     );
 
     return res.json({
@@ -137,21 +145,22 @@ router.post("/refresh-token", (req, res) => {
     // Verify refresh token (use refresh secret)
     const decoded = jwt.verify(
       refreshToken,
-      process.env.JWT_REFRESH_SECRET || "refresh-secret"
+      process.env.JWT_REFRESH_SECRET || "refresh-secret",
+      jwtVerifyOptions()
     );
 
-    // Issue NEW access token (short-lived)
+    const audience = tokenAudienceFromDecoded(decoded);
+
     const token = jwt.sign(
       { sub: decoded.sub, userType: decoded.userType },
       process.env.JWT_SECRET || "access-secret",
-      { expiresIn: process.env.JWT_EXPIRES_IN || "10s" }
+      jwtSignOptions(audience, process.env.JWT_EXPIRES_IN || "1d")
     );
 
-    // Optional: rotate refresh token
     const newRefreshToken = jwt.sign(
       { sub: decoded.sub, userType: decoded.userType },
       process.env.JWT_REFRESH_SECRET || "refresh-secret",
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" }
+      jwtSignOptions(audience, process.env.JWT_REFRESH_EXPIRES_IN || "7d")
     );
 
     return res.json({ token, refreshToken: newRefreshToken });

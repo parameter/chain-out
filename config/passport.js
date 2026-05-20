@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const { getDatabase } = require('./database');
 const { ObjectId } = require('mongodb');
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
+const { JWT_ISSUER, JWT_ALLOWED_AUDIENCES } = require('./jwt');
 
 const initializePassport = () => {
   passport.use(new LocalStrategy({
@@ -42,7 +43,9 @@ const initializePassport = () => {
     {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: process.env.JWT_SECRET || 'your-jwt-secret-change-this',
-      algorithms: ['HS256']
+      algorithms: ['HS256'],
+      issuer: JWT_ISSUER,
+      audience: JWT_ALLOWED_AUDIENCES,
     },
     async (payload, done) => {
       try {
