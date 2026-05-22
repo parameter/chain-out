@@ -213,6 +213,8 @@ router.post('/settings', requireAuth, async (req, res) => {
       { projection: { _id: 0, userId: 0 } },
       { upsert: true, returnDocument: 'after' }
     );
+
+    console.log('updated userSettings', userSettings);
     
     res.json(userSettings);
   } catch (err) {
