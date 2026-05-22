@@ -30,8 +30,6 @@ router.post('/set-default-achievements', requireAuth, async (req, res) => {
             { $set: { courseId: new ObjectId(courseId), templateIds: templateIds, createdAt: new Date(), createdBy: new ObjectId(req.user._id) } },
             { upsert: true, returnDocument: 'after' }
         );
-
-        console.log('result', result);
         
         res.status(200).json({ message: 'Default achievements set successfully' });
     
@@ -237,9 +235,13 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
             }
         });
 
+        console.log('allCourseAchievements 1', allCourseAchievements);
+
         allCourseAchievements.forEach(ach => {
             ach.XpReward = ACHIEVEMENT_DIFFICULTY_XP_MAP[ach.difficulty];
         });
+
+        console.log('allCourseAchievements 2', allCourseAchievements);
 
         res.status(200).json({ achievements: allCourseAchievements });
 
