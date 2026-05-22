@@ -207,16 +207,15 @@ router.post('/settings', requireAuth, async (req, res) => {
     const slots = normalizeBraggingSlots(braggingSlots);
     slots[idx] = badgeId;
 
-    console.log('req.user._id', req.user._id);
-
     const userSettings = await userSettingsCollection.findOneAndUpdate(
-      { userId: new ObjectId(req.user._id) },
+      { userId: req.user._id },
       { $set: { braggingSlots: slots } },
-      { projection: { _id: 0, userId: 0 } },
-      { upsert: true, returnDocument: 'after' }
+      {
+        projection: { _id: 0, userId: 0 },
+        upsert: true,
+        returnDocument: 'after'
+      }
     );
-
-    console.log('updated userSettings', userSettings);
     
     res.json(userSettings);
   } catch (err) {
