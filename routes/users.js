@@ -1185,7 +1185,7 @@ const normalizeGuestPlayers = (guestPlayers) => {
 // should only create new scorecard if no active scorecard exists for the current user and course
 router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
   try {
-    const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams, isDiceMode } = req.body;
+    const { courseId, layoutId, invitedUserIds, guestPlayers, mode, teams, isDiceMode, showAdvancedStats } = req.body;
 
     const normalizedInvitedUserIds = (() => {
       if (Array.isArray(invitedUserIds)) {
@@ -1287,7 +1287,8 @@ router.post('/scorecard/invite-users', requireAuth, async (req, res) => {
         createdAt: now,
         updatedAt: now,
         status: 'active',
-        isDiceMode: isDiceMode
+        isDiceMode: isDiceMode,
+        showAdvancedStats: showAdvancedStats
       };
       const result = await scorecardsCollection.insertOne(newScorecard);
       scorecard = { ...newScorecard, _id: result.insertedId };

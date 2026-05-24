@@ -235,13 +235,9 @@ router.get('/course-achievements', requireAuth, async (req, res) => {
             }
         });
 
-        console.log('allCourseAchievements 1', allCourseAchievements);
-
         allCourseAchievements.forEach(ach => {
             ach.XpReward = ACHIEVEMENT_DIFFICULTY_XP_MAP[ach.difficulty];
         });
-
-        console.log('allCourseAchievements 2', allCourseAchievements);
 
         res.status(200).json({ achievements: allCourseAchievements });
 
