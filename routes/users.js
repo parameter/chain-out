@@ -2468,6 +2468,23 @@ const earnedBeforePremiumCutoff = (badge, premiumCutoff) => {
   );
 };
 
+const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
+  if (!Array.isArray(badge.tierProgress)) return badge;
+
+  let tierProgress = badge.tierProgress;
+  if (premiumCutoff) {
+    tierProgress = tierProgress.filter((tier) =>
+      isOnOrBeforeCutoff(tier.achievedDate, premiumCutoff)
+    );
+  }
+  if (typeof tierCutoff === 'number') {
+    tierProgress = tierProgress.filter(
+      (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
+    );
+  }
+  return { ...badge, tierProgress };
+};
+
 const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
   const premiumCutoff = lastDayOfPremium ? new Date(lastDayOfPremium) : null;
   const applyTierCutoff = typeof tierCutoff === 'number';
@@ -2475,7 +2492,12 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
   if (!premiumCutoff && !applyTierCutoff) return badges;
 
   return badges
+    .map((badge) => trimTierProgress(badge, premiumCutoff, tierCutoff))
     .filter((badge) => {
+      if (Array.isArray(badge.tierProgress)) {
+        return badge.tierProgress.length > 0;
+      }
+
       const earnedBefore = premiumCutoff
         ? earnedBeforePremiumCutoff(badge, premiumCutoff)
         : false;
@@ -2488,23 +2510,6 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
       }
 
       return !premiumCutoff || earnedBefore;
-    })
-    .map((badge) => {
-      if (!Array.isArray(badge.tierProgress)) {
-        return badge;
-      }
-      let tierProgress = badge.tierProgress;
-      if (premiumCutoff) {
-        tierProgress = tierProgress.filter((tier) =>
-          isOnOrBeforeCutoff(tier.achievedDate, premiumCutoff)
-        );
-      }
-      if (applyTierCutoff) {
-        tierProgress = tierProgress.filter(
-          (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
-        );
-      }
-      return { ...badge, tierProgress };
     });
 };
 
