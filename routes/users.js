@@ -2482,7 +2482,17 @@ const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
       (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
     );
   }
-  return { ...badge, tierProgress };
+
+  const lastTier =
+    tierProgress.length > 0
+      ? tierProgress[tierProgress.length - 1].tierIndex
+      : badge.currentTier;
+
+  return {
+    ...badge,
+    tierProgress,
+    currentTier: lastTier,
+  };
 };
 
 const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
