@@ -2431,7 +2431,7 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
 
 
-const filterByPremium = (badges_raw, lastDayOfPremium) => {
+const filterFreemium = (badges_raw, lastDayOfPremium) => {
   if (!lastDayOfPremium) return badges_raw;
 
   const premiumCutoff = new Date(lastDayOfPremium);
@@ -2466,9 +2466,16 @@ const filterByPremium = (badges_raw, lastDayOfPremium) => {
 
 router.get('/badges', requireAuth, async (req, res) => {
   const badges_raw = await getUserAllBadges(req.user);
-  console.log('badges_raw', badges_raw.length);
-  const badges = filterByPremium(badges_raw, req.user.lastDayOfPremium);
-  console.log('badges', badges);
+
+  const userIsFreemium = req.user.isPremium !== true;
+  
+  var badges = null;
+  if (userIsFreemium) {
+    badges = filterFreemium(badges_raw, req.user.lastDayOfPremium);
+  } else {
+    badges = badges_raw;
+  }
+  
   res.json({ badges });
 });
 
