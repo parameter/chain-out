@@ -2431,8 +2431,42 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
 
 
+const filterByPremium = (badges_raw, lastDayOfPremium) => {
+  if (!lastDayOfPremium) return badges_raw;
+
+  const premiumCutoff = new Date(lastDayOfPremium);
+
+  return badges_raw
+    .map((badge) => {
+      const tierProgress = badge.tierProgress;
+      if (!Array.isArray(tierProgress) || tierProgress.length === 0) {
+        return badge;
+      }
+      return {
+        ...badge,
+        tierProgress: tierProgress.filter(
+          (tier) => tier.achievedDate && new Date(tier.achievedDate) >= premiumCutoff
+        )
+      };
+    })
+    .filter((badge) => {
+      const tierProgress = badge.tierProgress;
+      if (Array.isArray(tierProgress) && tierProgress.length > 0) {
+        return true;
+      }
+      if (typeof badge.currentTier === 'number' && badge.currentTier >= 0) {
+        return false;
+      }
+      const achievedDate = badge.dateEarned || badge.lastUpdated;
+      return achievedDate && new Date(achievedDate) >= premiumCutoff;
+    });
+};
+
+
+
 router.get('/badges', requireAuth, async (req, res) => {
-  const badges = await getUserAllBadges(req.user._id);
+  const badges_raw = await getUserAllBadges(req.user);
+  const badges = filterByPremium(badges_raw, req.user.lastDayOfPremium);
   res.json({ badges });
 });
 
