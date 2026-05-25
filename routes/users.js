@@ -2453,50 +2453,52 @@ const getBadgeTierIndex = (badge) => {
   return null;
 };
 
-const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
-  const applyDateCutoff = !!lastDayOfPremium;
-  const applyTierCutoff = typeof tierCutoff === 'number';
-  if (!applyDateCutoff && !applyTierCutoff) return badges;
+const isOnOrBeforeCutoff = (date, cutoff) =>
+  date != null && new Date(date) <= cutoff;
 
-  const premiumCutoff = applyDateCutoff ? new Date(lastDayOfPremium) : null;
+const earnedBeforePremiumCutoff = (badge, premiumCutoff) => {
+  if (isOnOrBeforeCutoff(badge.dateEarned || badge.lastUpdated, premiumCutoff)) {
+    return true;
+  }
+  return (
+    Array.isArray(badge.tierProgress) &&
+    badge.tierProgress.some((tier) =>
+      isOnOrBeforeCutoff(tier.achievedDate, premiumCutoff)
+    )
+  );
+};
+
+const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
+  const premiumCutoff = lastDayOfPremium ? new Date(lastDayOfPremium) : null;
+  const applyTierCutoff = typeof tierCutoff === 'number';
+
+  if (!premiumCutoff && !applyTierCutoff) return badges;
 
   return badges
-    .map((badge) => {
-      const tierProgress = badge.tierProgress;
-      if (!Array.isArray(tierProgress) || tierProgress.length === 0) {
-        return badge;
-      }
-      if (!premiumCutoff) {
-        return badge;
-      }
-      return {
-        ...badge,
-        tierProgress: tierProgress.filter(
-          (tier) => tier.achievedDate && new Date(tier.achievedDate) <= premiumCutoff
-        )
-      };
-    })
     .filter((badge) => {
+      const earnedBefore = premiumCutoff
+        ? earnedBeforePremiumCutoff(badge, premiumCutoff)
+        : false;
+
       if (applyTierCutoff) {
         const tierIndex = getBadgeTierIndex(badge);
-        if (tierIndex !== null && tierIndex > tierCutoff) {
+        if (tierIndex !== null && tierIndex > tierCutoff && !earnedBefore) {
           return false;
         }
       }
 
-      if (!applyDateCutoff) {
-        return true;
+      return !premiumCutoff || earnedBefore;
+    })
+    .map((badge) => {
+      if (!premiumCutoff || !Array.isArray(badge.tierProgress)) {
+        return badge;
       }
-
-      const tierProgress = badge.tierProgress;
-      if (Array.isArray(tierProgress) && tierProgress.length > 0) {
-        return true;
-      }
-      if (typeof badge.currentTier === 'number' && badge.currentTier >= 0) {
-        return false;
-      }
-      const achievedDate = badge.dateEarned || badge.lastUpdated;
-      return achievedDate && new Date(achievedDate) <= premiumCutoff;
+      return {
+        ...badge,
+        tierProgress: badge.tierProgress.filter((tier) =>
+          isOnOrBeforeCutoff(tier.achievedDate, premiumCutoff)
+        )
+      };
     });
 };
 
@@ -2512,7 +2514,7 @@ router.get('/badges', requireAuth, async (req, res) => {
     badges = filterFreemium({
       badges: badges_raw,
       lastDayOfPremium: req.user.lastDayOfPremium,
-      tierCutoff: 2 
+      tierCutoff: 1 
     });
   } else {
     badges = badges_raw;
