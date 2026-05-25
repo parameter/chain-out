@@ -2431,15 +2431,42 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
 
 
-const filterFreemium = ({ badges, lastDayOfPremium }) => {
-  if (!lastDayOfPremium) return badges;
+const BADGE_TIERS = [
+  'bronze',
+  'silver',
+  'gold',
+  'platinum',
+  'diamond',
+  'emerald',
+  'ruby',
+  'cosmic'
+];
 
-  const premiumCutoff = new Date(lastDayOfPremium);
+const getBadgeTierIndex = (badge) => {
+  if (badge.tier != null && badge.tier !== '') {
+    const idx = BADGE_TIERS.indexOf(String(badge.tier).toLowerCase());
+    return idx >= 0 ? idx : null;
+  }
+  if (typeof badge.currentTier === 'number' && badge.currentTier >= 0) {
+    return badge.currentTier;
+  }
+  return null;
+};
+
+const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
+  const applyDateCutoff = !!lastDayOfPremium;
+  const applyTierCutoff = typeof tierCutoff === 'number';
+  if (!applyDateCutoff && !applyTierCutoff) return badges;
+
+  const premiumCutoff = applyDateCutoff ? new Date(lastDayOfPremium) : null;
 
   return badges
     .map((badge) => {
       const tierProgress = badge.tierProgress;
       if (!Array.isArray(tierProgress) || tierProgress.length === 0) {
+        return badge;
+      }
+      if (!premiumCutoff) {
         return badge;
       }
       return {
@@ -2450,6 +2477,17 @@ const filterFreemium = ({ badges, lastDayOfPremium }) => {
       };
     })
     .filter((badge) => {
+      if (applyTierCutoff) {
+        const tierIndex = getBadgeTierIndex(badge);
+        if (tierIndex !== null && tierIndex > tierCutoff) {
+          return false;
+        }
+      }
+
+      if (!applyDateCutoff) {
+        return true;
+      }
+
       const tierProgress = badge.tierProgress;
       if (Array.isArray(tierProgress) && tierProgress.length > 0) {
         return true;
