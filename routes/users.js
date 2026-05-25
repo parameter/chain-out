@@ -2445,7 +2445,7 @@ const filterByPremium = (badges_raw, lastDayOfPremium) => {
       return {
         ...badge,
         tierProgress: tierProgress.filter(
-          (tier) => tier.achievedDate && new Date(tier.achievedDate) >= premiumCutoff
+          (tier) => tier.achievedDate && new Date(tier.achievedDate) <= premiumCutoff
         )
       };
     })
@@ -2458,7 +2458,7 @@ const filterByPremium = (badges_raw, lastDayOfPremium) => {
         return false;
       }
       const achievedDate = badge.dateEarned || badge.lastUpdated;
-      return achievedDate && new Date(achievedDate) >= premiumCutoff;
+      return achievedDate && new Date(achievedDate) <= premiumCutoff;
     });
 };
 
