@@ -2466,7 +2466,9 @@ const filterByPremium = (badges_raw, lastDayOfPremium) => {
 
 router.get('/badges', requireAuth, async (req, res) => {
   const badges_raw = await getUserAllBadges(req.user);
+  console.log('badges_raw', badges_raw.length);
   const badges = filterByPremium(badges_raw, req.user.lastDayOfPremium);
+  console.log('badges', badges.length);
   res.json({ badges });
 });
 
