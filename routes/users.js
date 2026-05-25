@@ -2490,15 +2490,21 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
       return !premiumCutoff || earnedBefore;
     })
     .map((badge) => {
-      if (!premiumCutoff || !Array.isArray(badge.tierProgress)) {
+      if (!Array.isArray(badge.tierProgress)) {
         return badge;
       }
-      return {
-        ...badge,
-        tierProgress: badge.tierProgress.filter((tier) =>
+      let tierProgress = badge.tierProgress;
+      if (premiumCutoff) {
+        tierProgress = tierProgress.filter((tier) =>
           isOnOrBeforeCutoff(tier.achievedDate, premiumCutoff)
-        )
-      };
+        );
+      }
+      if (applyTierCutoff) {
+        tierProgress = tierProgress.filter(
+          (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
+        );
+      }
+      return { ...badge, tierProgress };
     });
 };
 
