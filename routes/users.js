@@ -2431,12 +2431,12 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
 
 
-const filterFreemium = (badges_raw, lastDayOfPremium) => {
-  if (!lastDayOfPremium) return badges_raw;
+const filterFreemium = ({ badges, lastDayOfPremium }) => {
+  if (!lastDayOfPremium) return badges;
 
   const premiumCutoff = new Date(lastDayOfPremium);
 
-  return badges_raw
+  return badges
     .map((badge) => {
       const tierProgress = badge.tierProgress;
       if (!Array.isArray(tierProgress) || tierProgress.length === 0) {
@@ -2471,7 +2471,11 @@ router.get('/badges', requireAuth, async (req, res) => {
   
   var badges = null;
   if (userIsFreemium) {
-    badges = filterFreemium(badges_raw, req.user.lastDayOfPremium);
+    badges = filterFreemium({
+      badges: badges_raw,
+      lastDayOfPremium: req.user.lastDayOfPremium,
+      tierCutoff: 2 
+    });
   } else {
     badges = badges_raw;
   }
