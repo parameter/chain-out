@@ -2530,6 +2530,8 @@ router.get('/badges', requireAuth, async (req, res) => {
   } else {
     badges = badges_raw;
   }
+
+  console.log('final badges', badges);
   
   res.json({ badges });
 });
