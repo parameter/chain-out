@@ -2526,7 +2526,7 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
 
       console.log('badge.badgeId 4', badge.badgeId);
 
-      return !premiumCutoff || earnedBefore;
+      return true;
     });
 };
 
