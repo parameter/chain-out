@@ -2499,7 +2499,7 @@ const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
           progress: cappedProgress,
         },
       ];
-      badge = { ...badge, totalProgress: cappedProgress };
+      badge = { ...badge, totalProgress: cappedProgress, capped: true };
     } else {
       tierProgress = tierProgress.filter(
         (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
