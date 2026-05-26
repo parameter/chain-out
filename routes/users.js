@@ -2508,16 +2508,23 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
         return badge.tierProgress.length > 0;
       }
 
+      console.log('badge.badgeId 1', badge.badgeId);
+
       const earnedBefore = premiumCutoff
         ? earnedBeforePremiumCutoff(badge, premiumCutoff)
         : false;
 
+      console.log('badge.badgeId 2', badge.badgeId);
+
       if (applyTierCutoff) {
         const tierIndex = getBadgeTierIndex(badge);
         if (tierIndex !== null && tierIndex > tierCutoff && !earnedBefore) {
+          console.log('badge.badgeId 3', badge.badgeId);
           return false;
         }
       }
+
+      console.log('badge.badgeId 4', badge.badgeId);
 
       return !premiumCutoff || earnedBefore;
     });
