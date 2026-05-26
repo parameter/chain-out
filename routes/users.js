@@ -2491,13 +2491,15 @@ const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
       Array.isArray(thresholds) &&
       thresholds[tierCutoff] != null
     ) {
+      const cappedProgress = thresholds[tierCutoff];
       tierProgress = [
         {
           ...singleEntry,
           tierIndex: tierCutoff,
-          progress: thresholds[tierCutoff],
+          progress: cappedProgress,
         },
       ];
+      badge = { ...badge, totalProgress: cappedProgress };
     } else {
       tierProgress = tierProgress.filter(
         (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
