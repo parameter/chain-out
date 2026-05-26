@@ -2505,7 +2505,7 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
     .map((badge) => trimTierProgress(badge, premiumCutoff, tierCutoff))
     .filter((badge) => {
       if (Array.isArray(badge.tierProgress)) {
-        // return badge.tierProgress.length > 0;
+        return true;
       }
 
       console.log('badge.badgeId 1', badge.badgeId);
