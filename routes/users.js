@@ -2486,13 +2486,21 @@ const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
   const lastTier =
     tierProgress.length > 0
       ? tierProgress[tierProgress.length - 1].tierIndex
-      : badge.currentTier;
+      : -1;
 
-  return {
+  const trimmed = {
     ...badge,
     tierProgress,
     currentTier: lastTier,
   };
+
+  if (typeof tierCutoff === 'number' && Array.isArray(badge.trackedThresholds)) {
+    trimmed.trackedThresholds = badge.trackedThresholds.filter(
+      (threshold) => typeof threshold !== 'number' || threshold <= tierCutoff
+    );
+  }
+
+  return trimmed;
 };
 
 const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
@@ -2504,24 +2512,20 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
   return badges
     .map((badge) => trimTierProgress(badge, premiumCutoff, tierCutoff))
     .filter((badge) => {
-
-      console.log('badge.badgeId 1', badge.badgeId);
+      if (Array.isArray(badge.tierProgress)) {
+        return true;
+      }
 
       const earnedBefore = premiumCutoff
         ? earnedBeforePremiumCutoff(badge, premiumCutoff)
         : false;
 
-      console.log('badge.badgeId 2', badge.badgeId);
-
       if (applyTierCutoff) {
         const tierIndex = getBadgeTierIndex(badge);
         if (tierIndex !== null && tierIndex > tierCutoff && !earnedBefore) {
-          console.log('badge.badgeId 3', badge.badgeId);
           return false;
         }
       }
-
-      console.log('badge.badgeId 4', badge.badgeId);
 
       return !premiumCutoff || earnedBefore;
     });
