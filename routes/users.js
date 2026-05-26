@@ -2486,7 +2486,7 @@ const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
   const lastTier =
     tierProgress.length > 0
       ? tierProgress[tierProgress.length - 1].tierIndex
-      : -1;
+      : tierCutoff;
 
   const trimmed = {
     ...badge,
