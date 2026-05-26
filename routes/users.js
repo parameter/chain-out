@@ -2468,55 +2468,40 @@ const earnedBeforePremiumCutoff = (badge, premiumCutoff) => {
   );
 };
 
-const buildFreemiumSoleTierProgress = (badge, soleEntry, tierCutoff) => {
-  const thresholds = badge.tierThresholds;
-  if (!Array.isArray(thresholds) || tierCutoff < 0 || tierCutoff >= thresholds.length) {
-    return null;
-  }
-
-  const progress = thresholds[tierCutoff];
-  const entry = {
-    ...soleEntry,
-    tierIndex: tierCutoff,
-    progress,
-    achieved: (badge.totalProgress ?? 0) >= progress,
-  };
-
-  if (Array.isArray(badge.tierPoints) && tierCutoff < badge.tierPoints.length) {
-    entry.xp = badge.tierPoints[tierCutoff];
-  }
-
-  return entry;
-};
-
 const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
   if (!Array.isArray(badge.tierProgress)) return badge;
 
-  const originalTierProgress = badge.tierProgress;
-  let tierProgress = originalTierProgress;
+  let tierProgress = badge.tierProgress;
   if (premiumCutoff) {
     tierProgress = tierProgress.filter((tier) =>
       isOnOrBeforeCutoff(tier.achievedDate, premiumCutoff)
     );
   }
   if (typeof tierCutoff === 'number') {
-    tierProgress = tierProgress.filter(
-      (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
-    );
-  }
+    const thresholds = badge.tierThresholds;
+    const singleEntry =
+      tierProgress.length === 1 ? tierProgress[0] : null;
+    const singleAboveCutoff =
+      singleEntry &&
+      typeof singleEntry.tierIndex === 'number' &&
+      singleEntry.tierIndex > tierCutoff;
 
-  if (
-    originalTierProgress.length === 1 &&
-    tierProgress.length === 0 &&
-    typeof tierCutoff === 'number'
-  ) {
-    const capped = buildFreemiumSoleTierProgress(
-      badge,
-      originalTierProgress[0],
-      tierCutoff
-    );
-    if (capped) {
-      tierProgress = [capped];
+    if (
+      singleAboveCutoff &&
+      Array.isArray(thresholds) &&
+      thresholds[tierCutoff] != null
+    ) {
+      tierProgress = [
+        {
+          ...singleEntry,
+          tierIndex: tierCutoff,
+          progress: thresholds[tierCutoff],
+        },
+      ];
+    } else {
+      tierProgress = tierProgress.filter(
+        (tier) => typeof tier.tierIndex !== 'number' || tier.tierIndex <= tierCutoff
+      );
     }
   }
 
@@ -2532,12 +2517,9 @@ const trimTierProgress = (badge, premiumCutoff, tierCutoff) => {
   };
 
   if (typeof tierCutoff === 'number' && Array.isArray(badge.trackedThresholds)) {
-    trimmed.trackedThresholds =
-      originalTierProgress.length === 1 && tierProgress.length === 1
-        ? [tierCutoff]
-        : badge.trackedThresholds.filter(
-            (threshold) => typeof threshold !== 'number' || threshold <= tierCutoff
-          );
+    trimmed.trackedThresholds = badge.trackedThresholds.filter(
+      (threshold) => typeof threshold !== 'number' || threshold <= tierCutoff
+    );
   }
 
   return trimmed;
