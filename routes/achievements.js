@@ -32,7 +32,29 @@ const normalizeAchievementForComparison = (achievement) => {
   return copy;
 };
 
-const findDuplicateAchievement = (achievement, candidates, { excludeId } = {}) => {
+const getAchievementCandidateLabel = (candidate) =>
+  candidate?.title || candidate?.id || (candidate?._id != null ? String(candidate._id) : 'unknown');
+
+const getAchievementComparisonDiffs = (left, right, fieldPath = '') => {
+  if (_.isEqual(left, right)) return [];
+
+  const isObject = (value) =>
+    value != null && typeof value === 'object' && !Array.isArray(value);
+
+  if (!isObject(left) || !isObject(right)) {
+    return [{ field: fieldPath || '(root)', source: left, candidate: right }];
+  }
+
+  const diffs = [];
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  for (const key of keys) {
+    const path = fieldPath ? `${fieldPath}.${key}` : key;
+    diffs.push(...getAchievementComparisonDiffs(left[key], right[key], path));
+  }
+  return diffs;
+};
+
+const findDuplicateAchievement = (achievement, candidates, { excludeId, logDiffs = false } = {}) => {
   const normalized = normalizeAchievementForComparison(achievement);
   const excludeIdStr = excludeId != null ? String(excludeId) : null;
 
@@ -41,8 +63,17 @@ const findDuplicateAchievement = (achievement, candidates, { excludeId } = {}) =
       const candidateId = candidate._id != null ? String(candidate._id) : null;
       if (candidateId === excludeIdStr) continue;
     }
-    if (_.isEqual(normalized, normalizeAchievementForComparison(candidate))) {
+
+    const candidateNormalized = normalizeAchievementForComparison(candidate);
+    if (_.isEqual(normalized, candidateNormalized)) {
       return candidate;
+    }
+
+    if (logDiffs) {
+      const diffs = getAchievementComparisonDiffs(normalized, candidateNormalized);
+      if (diffs.length > 0) {
+        console.log('[achievement-duplicate-check] not a match vs', getAchievementCandidateLabel(candidate), diffs);
+      }
     }
   }
 
@@ -123,7 +154,8 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         const theMatchingAchievement = findDuplicateAchievement(
             achievement,
-            [...existingAchievements, ...defaultAchievementsForCourse]
+            [...existingAchievements, ...defaultAchievementsForCourse],
+            { logDiffs: true }
         );
         const refuseToCreateAchievement = theMatchingAchievement != null;
 
@@ -337,11 +369,10 @@ router.post('/update-achievement', requireAuth, async (req, res) => {
             .find({ courseId: courseIdObject, _id: { $ne: achievementId } })
             .toArray();
 
-        console.log('mergedAchievement', mergedAchievement);
-
         const duplicateAchievement = findDuplicateAchievement(
             mergedAchievement,
-            [...otherAchievements, ...default_achievements]
+            [...otherAchievements, ...default_achievements],
+            { excludeId: achievementId, logDiffs: true }
         );
 
         if (duplicateAchievement) {
