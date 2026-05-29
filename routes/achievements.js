@@ -339,8 +339,7 @@ router.post('/update-achievement', requireAuth, async (req, res) => {
 
         const duplicateAchievement = findDuplicateAchievement(
             mergedAchievement,
-            [...otherAchievements, ...default_achievements],
-            { excludeId: achievementId }
+            [...otherAchievements, ...default_achievements]
         );
 
         if (duplicateAchievement) {
