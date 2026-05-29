@@ -337,6 +337,8 @@ router.post('/update-achievement', requireAuth, async (req, res) => {
             .find({ courseId: courseIdObject, _id: { $ne: achievementId } })
             .toArray();
 
+        console.log('mergedAchievement', mergedAchievement);
+
         const duplicateAchievement = findDuplicateAchievement(
             mergedAchievement,
             [...otherAchievements, ...default_achievements]
