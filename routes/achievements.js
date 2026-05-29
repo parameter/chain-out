@@ -388,7 +388,7 @@ router.post('/update-achievement', requireAuth, async (req, res) => {
 // delete-achievement
 router.post('/delete-achievement', requireAuth, async (req, res) => {
     try {
-        const { achievementId } = req.body;
+        const { achievementId, courseId } = req.body;
         if (!achievementId) {
             return res.status(400).json({ message: 'Achievement id is required' });
         }
@@ -401,13 +401,13 @@ router.post('/delete-achievement', requireAuth, async (req, res) => {
             return res.status(404).json({ message: 'Achievement not found' });
         }
 
-        const result = await achievementsCollection.deleteOne({ _id: achievementIdObject });
+        const result = await achievementsCollection.deleteOne({ _id: achievementIdObject, courseId: courseId });
         if (result.deletedCount === 0) {
             return res.status(404).json({ message: 'Achievement not found' });
         }
 
         res.status(200).json({ message: 'Achievement deleted successfully' });
-        
+
     } catch (error) {
         console.error('Error deleting achievement:', error);
         res.status(500).json({ message: 'Failed to delete achievement' });
