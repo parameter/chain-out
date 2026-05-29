@@ -401,7 +401,7 @@ router.post('/delete-achievement', requireAuth, async (req, res) => {
             return res.status(404).json({ message: 'Achievement not found' });
         }
 
-        const result = await achievementsCollection.deleteOne({ _id: achievementIdObject, courseId: courseId });
+        const result = await achievementsCollection.deleteOne({ _id: achievementIdObject, courseId: new ObjectId(courseId) });
         if (result.deletedCount === 0) {
             return res.status(404).json({ message: 'Achievement not found' });
         }
