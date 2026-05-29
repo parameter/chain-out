@@ -10,7 +10,44 @@ const router = express.Router();
 const default_achievements = require('../data/default_achievements');
 const ACHIEVEMENT_DIFFICULTY_XP_MAP = require('../data/achievement_difficulty_xp_map');
 
+const ACHIEVEMENT_COMPARISON_OMIT_KEYS = [
+  '_id',
+  'id',
+  'courseId',
+  'description',
+  'title',
+  'reward',
+  'imageName',
+  'createdAt',
+  'createdBy',
+  'updatedAt',
+  'updatedBy',
+];
 
+const normalizeAchievementForComparison = (achievement) => {
+  const copy = { ...achievement };
+  for (const key of ACHIEVEMENT_COMPARISON_OMIT_KEYS) {
+    delete copy[key];
+  }
+  return copy;
+};
+
+const findDuplicateAchievement = (achievement, candidates, { excludeId } = {}) => {
+  const normalized = normalizeAchievementForComparison(achievement);
+  const excludeIdStr = excludeId != null ? String(excludeId) : null;
+
+  for (const candidate of candidates) {
+    if (excludeIdStr) {
+      const candidateId = candidate._id != null ? String(candidate._id) : null;
+      if (candidateId === excludeIdStr) continue;
+    }
+    if (_.isEqual(normalized, normalizeAchievementForComparison(candidate))) {
+      return candidate;
+    }
+  }
+
+  return null;
+};
 
 router.post('/set-default-achievements', requireAuth, async (req, res) => {
     try {
@@ -82,48 +119,13 @@ router.post('/create-new-achievement', requireAuth, async (req, res) => {
 
         const existingAchievements = await achievementsCollection.find({ courseId: courseIdObject }).toArray();
 
-        const new_achievement_for_comparison = {...achievement};
-
-        delete new_achievement_for_comparison._id;
-        delete new_achievement_for_comparison.courseId;
-        delete new_achievement_for_comparison.description;
-        delete new_achievement_for_comparison.title;
-        delete new_achievement_for_comparison.reward;
-        delete new_achievement_for_comparison.createdAt;
-        delete new_achievement_for_comparison.imageName;
-        delete new_achievement_for_comparison.createdBy;
-        delete new_achievement_for_comparison.updatedAt;
-        delete new_achievement_for_comparison.updatedBy;
-
-        const normalizeAchievementForComparison = (ach) => {
-            const achi_copy = { ...ach };
-            delete achi_copy._id;
-            delete achi_copy.id;
-            delete achi_copy.courseId;
-            delete achi_copy.description;
-            delete achi_copy.title;
-            delete achi_copy.reward;
-            delete achi_copy.imageName;
-            delete achi_copy.createdAt;
-            delete achi_copy.createdBy;
-            delete achi_copy.updatedAt;
-            delete achi_copy.updatedBy;
-            return achi_copy;
-        };
-
-        let refuseToCreateAchievement = false;
         let matchedDefaultTemplateId = null;
 
-        let theMatchingAchievement = null;
-
-        [...existingAchievements, ...defaultAchievementsForCourse].forEach((achi, index) => {
-            const achi_copy = normalizeAchievementForComparison(achi);
-            const areAchievementsSame = _.isEqual(new_achievement_for_comparison, achi_copy);
-            if (areAchievementsSame) {
-                refuseToCreateAchievement = true;
-                theMatchingAchievement = achi;
-            }
-        });
+        const theMatchingAchievement = findDuplicateAchievement(
+            achievement,
+            [...existingAchievements, ...defaultAchievementsForCourse]
+        );
+        const refuseToCreateAchievement = theMatchingAchievement != null;
 
         // if the matching achievement is a default achievement, we need to activate it in active-default-course-achievements
         if (theMatchingAchievement && theMatchingAchievement.id.startsWith('default-')) {
@@ -331,33 +333,17 @@ router.post('/update-achievement', requireAuth, async (req, res) => {
 
         const mergedAchievement = { ...existingAchievement, ...update };
 
-        const normalizeAchievementForComparison = (ach) => {
-            const achi_copy = { ...ach };
-            delete achi_copy._id;
-            delete achi_copy.id;
-            delete achi_copy.courseId;
-            delete achi_copy.description;
-            delete achi_copy.title;
-            delete achi_copy.reward;
-            delete achi_copy.imageName;
-            delete achi_copy.createdAt;
-            delete achi_copy.createdBy;
-            delete achi_copy.updatedAt;
-            delete achi_copy.updatedBy;
-            return achi_copy;
-        };
-
-        const updatedForComparison = normalizeAchievementForComparison(mergedAchievement);
-
         const otherAchievements = await achievementsCollection
             .find({ courseId: courseIdObject, _id: { $ne: achievementId } })
             .toArray();
 
-        const hasDuplicate = [...otherAchievements, ...default_achievements].some((achi) => {
-            return _.isEqual(updatedForComparison, normalizeAchievementForComparison(achi));
-        });
+        const duplicateAchievement = findDuplicateAchievement(
+            mergedAchievement,
+            [...otherAchievements, ...default_achievements],
+            { excludeId: achievementId }
+        );
 
-        if (hasDuplicate) {
+        if (duplicateAchievement) {
             return res.status(400).json({ message: 'Achievement with the same attributes already exists for this course' });
         }
 
