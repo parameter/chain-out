@@ -1676,7 +1676,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     // measure time to do this
     const startTime = new Date();
     if (req.user.isPremium !== true) {
-      scorecards = scorecards.map((scorecard) => ({
+      var freemiumScorecards = scorecards.map((scorecard) => ({
         ...scorecard,
         earnedBadges: filterFreemium({
           badges: Array.isArray(scorecard.earnedBadges) ? scorecard.earnedBadges : [],
@@ -1688,7 +1688,9 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     const endTime = new Date();
     console.log('time to filter freemium', endTime - startTime);
 
-    res.status(200).json({ scorecards, totalScorecards, page: pageNum, limit: limitNum });
+    const sendTheseScorecards = req.user.isPremium !== true ? freemiumScorecards : scorecards;
+
+    res.status(200).json({ scorecards: sendTheseScorecards, totalScorecards, page: pageNum, limit: limitNum });
 
   } catch (e) {
     console.error('Error fetching active scorecards:', e);
