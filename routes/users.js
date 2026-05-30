@@ -1681,6 +1681,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
 });
 
 
+
 router.get('/scorecard', requireAuth, async (req, res) => {
   const { scorecardId } = req.query;
   if (!scorecardId) {
@@ -1733,13 +1734,28 @@ router.get('/scorecard', requireAuth, async (req, res) => {
     return { _id: userId };
   });
 
-  const expandedScorecard = {
+  let expandedScorecard = {
     ...scorecard,
     participants,
   };
 
+  if (req.user.isPremium !== true && Array.isArray(expandedScorecard.earnedBadges)) {
+    expandedScorecard = {
+      ...expandedScorecard,
+      earnedBadges: expandedScorecard.earnedBadges.map((entry) => ({
+        ...entry,
+        badges: filterFreemium({
+          badges: Array.isArray(entry.badges) ? entry.badges : [],
+          lastDayOfPremium: req.user.lastDayOfPremium,
+          tierCutoff: 1,
+        }),
+      })),
+    };
+  }
+
   res.status(200).json({ scorecard: expandedScorecard });
 });
+
 
 
 router.get('/scorecard/get-by-id', requireAuth, async (req, res) => {
