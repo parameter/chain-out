@@ -1739,6 +1739,8 @@ router.get('/scorecard', requireAuth, async (req, res) => {
     participants,
   };
 
+  console.log('req.user.isPremium', req.user.isPremium, Array.isArray(expandedScorecard.earnedBadges));
+
   if (req.user.isPremium !== true && Array.isArray(expandedScorecard.earnedBadges)) {
 
     console.log('filterFreemium expandedScorecard.earnedBadges', expandedScorecard.earnedBadges);
