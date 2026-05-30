@@ -1672,6 +1672,22 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     ]).toArray()
     ]);
 
+    // filter freemium filter here 
+    // measure time to do this
+    const startTime = new Date();
+    if (req.user.isPremium !== true && Array.isArray(scorecards.earnedBadges)) {
+      scorecards = scorecards.map((scorecard) => ({
+        ...scorecard,
+        earnedBadges: filterFreemium({
+          badges: Array.isArray(scorecard.earnedBadges) ? scorecard.earnedBadges : [],
+          lastDayOfPremium: req.user.lastDayOfPremium,
+          tierCutoff: 1,
+        }),
+      }));
+    }
+    const endTime = new Date();
+    console.log('time to filter freemium', endTime - startTime);
+
     res.status(200).json({ scorecards, totalScorecards, page: pageNum, limit: limitNum });
 
   } catch (e) {
@@ -1739,11 +1755,7 @@ router.get('/scorecard', requireAuth, async (req, res) => {
     participants,
   };
 
-  console.log('req.user.isPremium', req.user.isPremium, Array.isArray(expandedScorecard.earnedBadges));
-
   if (req.user.isPremium !== true && Array.isArray(expandedScorecard.earnedBadges)) {
-
-    console.log('filterFreemium expandedScorecard.earnedBadges', expandedScorecard.earnedBadges);
 
     expandedScorecard = {
       ...expandedScorecard,
