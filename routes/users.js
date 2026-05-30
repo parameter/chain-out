@@ -1675,7 +1675,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
     // filter freemium filter here 
     // measure time to do this
     const startTime = new Date();
-    if (req.user.isPremium !== true && Array.isArray(scorecards.earnedBadges)) {
+    if (req.user.isPremium !== true) {
       scorecards = scorecards.map((scorecard) => ({
         ...scorecard,
         earnedBadges: filterFreemium({
