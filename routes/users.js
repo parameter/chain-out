@@ -1772,6 +1772,8 @@ router.get('/scorecard', requireAuth, async (req, res) => {
     };
   }
 
+  console.log('expandedScorecard', expandedScorecard);
+
   res.status(200).json({ scorecard: expandedScorecard });
 });
 
