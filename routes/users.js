@@ -1768,6 +1768,9 @@ router.get('/scorecard', requireAuth, async (req, res) => {
           lastDayOfPremium: req.user.lastDayOfPremium,
           tierCutoff: 1,
         }),
+        playersXpBreakdown: Array.isArray(expandedScorecard.playersXpBreakdown) ? expandedScorecard.playersXpBreakdown.filter((entry) => {
+          return entry.entityId.toString() !== req.user._id.toString();
+        }) : null
       })),
     };
   }
