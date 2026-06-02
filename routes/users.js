@@ -1761,8 +1761,6 @@ router.get('/scorecard', requireAuth, async (req, res) => {
 
   if (req.user.isPremium !== true && Array.isArray(expandedScorecard.earnedBadges)) {
 
-    console.log('filtering on freemium');
-
     expandedScorecard = {
       ...expandedScorecard,
       earnedBadges: expandedScorecard.earnedBadges.map((entry) => ({
@@ -1778,8 +1776,6 @@ router.get('/scorecard', requireAuth, async (req, res) => {
       })),
     };
   }
-
-  console.log('expandedScorecard', expandedScorecard.earnedBadges);
 
   res.status(200).json({ scorecard: expandedScorecard });
 });
@@ -2575,11 +2571,12 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
   const premiumCutoff = lastDayOfPremium ? new Date(lastDayOfPremium) : null;
   const applyTierCutoff = typeof tierCutoff === 'number';
 
-  if (!premiumCutoff && !applyTierCutoff) return badges;
+  if (!premiumCutoff && !applyTierCutoff) return badges; 
 
-  return badges
+  const _badges = badges
     .map((badge) => trimTierProgress(badge, premiumCutoff, tierCutoff))
     .filter((badge) => {
+
       if (Array.isArray(badge.tierProgress)) {
         return true;
       }
@@ -2596,7 +2593,11 @@ const filterFreemium = ({ badges, lastDayOfPremium, tierCutoff }) => {
       }
 
       return !premiumCutoff || earnedBefore;
-    });
+  });
+
+  console.log('filterFreemium badges', _badges);
+
+  return _badges;
 };
 
 
