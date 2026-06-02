@@ -2668,6 +2668,17 @@ router.get('/user', requireAuth, async (req, res) => {
 
 
 
+router.get('/current-user', requireAuth, async (req, res) => {
+  try {
+    res.json({ user: req.user });
+  } catch (e) {
+    console.error('Error fetching user:', e);
+    res.status(500).json({ message: 'Failed to fetch user' });
+  }
+});
+
+
+
 router.post('/find-users', requireAuth, async (req, res) => {
   const { string } = req.body;
 
