@@ -117,16 +117,7 @@ router.post('/login', (req, res, next) => {
       message: "Login successful",
       token,
       refreshToken,
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        username: user.username,
-        fname: user.fname,
-        sname: user.sname,
-        admin: user.admin,
-        userType: user.userType
-      }
+      user: user
     });
 
   })(req, res, next);
