@@ -141,7 +141,48 @@ router.get('/', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
     const eventsCollection = db.collection('events');
-    const events = await eventsCollection.find({ createdBy: req.user._id }).toArray();
+    const createdBy = new ObjectId(req.user._id);
+
+    const events = await eventsCollection
+      .aggregate([
+        { $match: { createdBy } },
+        {
+          $lookup: {
+            from: 'event_signups',
+            let: { eventId: '$_id' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$eventId', '$$eventId'] } } },
+              {
+                $lookup: {
+                  from: 'users',
+                  localField: 'userId',
+                  foreignField: '_id',
+                  as: 'user',
+                },
+              },
+              { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+              {
+                $project: {
+                  _id: 1,
+                  userId: 1,
+                  signedUpAt: 1,
+                  user: {
+                    _id: '$user._id',
+                    username: '$user.username',
+                    email: '$user.email',
+                    profileImage: '$user.profileImage',
+                    fname: '$user.fname',
+                    sname: '$user.sname',
+                  },
+                },
+              },
+            ],
+            as: 'signups',
+          },
+        },
+      ])
+      .toArray();
+
     res.json({ events });
   } catch (error) {
     console.error('Error fetching events:', error);
