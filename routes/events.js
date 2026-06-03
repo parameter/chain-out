@@ -43,7 +43,40 @@ const parseCoordinates = (coordinates) => {
   };
 };
 
-
+const eventSignupsWithUsersLookup = {
+  $lookup: {
+    from: 'event_signups',
+    let: { eventId: '$_id' },
+    pipeline: [
+      { $match: { $expr: { $eq: ['$eventId', '$$eventId'] } } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          userId: 1,
+          signedUpAt: 1,
+          user: {
+            _id: '$user._id',
+            username: '$user.username',
+            email: '$user.email',
+            profileImage: '$user.profileImage',
+            fname: '$user.fname',
+            sname: '$user.sname',
+          },
+        },
+      },
+    ],
+    as: 'signups',
+  },
+};
 
 router.post('/create', requireAuth, async (req, res) => {
   try {
@@ -144,43 +177,7 @@ router.get('/', requireAuth, async (req, res) => {
     const createdBy = new ObjectId(req.user._id);
 
     const events = await eventsCollection
-      .aggregate([
-        { $match: { createdBy } },
-        {
-          $lookup: {
-            from: 'event_signups',
-            let: { eventId: '$_id' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$eventId', '$$eventId'] } } },
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'userId',
-                  foreignField: '_id',
-                  as: 'user',
-                },
-              },
-              { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-              {
-                $project: {
-                  _id: 1,
-                  userId: 1,
-                  signedUpAt: 1,
-                  user: {
-                    _id: '$user._id',
-                    username: '$user.username',
-                    email: '$user.email',
-                    profileImage: '$user.profileImage',
-                    fname: '$user.fname',
-                    sname: '$user.sname',
-                  },
-                },
-              },
-            ],
-            as: 'signups',
-          },
-        },
-      ])
+      .aggregate([{ $match: { createdBy } }, eventSignupsWithUsersLookup])
       .toArray();
 
     res.json({ events });
@@ -193,23 +190,30 @@ router.get('/', requireAuth, async (req, res) => {
 
 
 router.get('/:eventId', requireAuth, async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const db = getDatabase();
-      const eventsCollection = db.collection('events');
-      const event = await eventsCollection.findOne({ _id: new ObjectId(eventId) });
-      // attach signups to event from event_signups
-      const signupsCollection = db.collection('event_signups');
-      const signups = await signupsCollection.find({ eventId: new ObjectId(eventId) }).toArray();
-      event.signups = signups;  
-      if (!event) {
-        return res.status(404).json({ message: 'Event not found' });
-      }
-      res.json({ event });
-    } catch (error) {
-      console.error('Error fetching event:', error);
-      res.status(500).json({ message: 'Failed to fetch event' });
+  try {
+    const { eventId } = req.params;
+
+    if (!ObjectId.isValid(eventId)) {
+      return res.status(400).json({ message: 'Invalid event id' });
     }
+
+    const db = getDatabase();
+    const eventsCollection = db.collection('events');
+    const eventObjectId = new ObjectId(eventId);
+
+    const [event] = await eventsCollection
+      .aggregate([{ $match: { _id: eventObjectId } }, eventSignupsWithUsersLookup])
+      .toArray();
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    res.json({ event });
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    res.status(500).json({ message: 'Failed to fetch event' });
+  }
 });
 
 
