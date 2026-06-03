@@ -137,4 +137,18 @@ router.post('/:eventId/signup', requireAuth, async (req, res) => {
 
 
 
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const db = getDatabase();
+    const eventsCollection = db.collection('events');
+    const events = await eventsCollection.find({ createdBy: req.user._id }).toArray();
+    res.json({ events });
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ message: 'Failed to fetch events' });
+  }
+});
+
+
+
 module.exports = router;
