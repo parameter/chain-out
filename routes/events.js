@@ -151,4 +151,22 @@ router.get('/', requireAuth, async (req, res) => {
 
 
 
+router.get('/:eventId', requireAuth, async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const db = getDatabase();
+      const eventsCollection = db.collection('events');
+      const event = await eventsCollection.findOne({ _id: new ObjectId(eventId) });
+      if (!event) {
+        return res.status(404).json({ message: 'Event not found' });
+      }
+      res.json({ event });
+    } catch (error) {
+      console.error('Error fetching event:', error);
+      res.status(500).json({ message: 'Failed to fetch event' });
+    }
+});
+
+
+
 module.exports = router;
