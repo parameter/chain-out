@@ -30,7 +30,7 @@ const initializeDatabase = async () => {
 };
 
 const createCollections = async () => {
-  const collections = ['users', 'time_entries'];
+  const collections = ['users', 'time_entries', 'events', 'event_signups'];
   
   for (const collectionName of collections) {
     try {
@@ -106,6 +106,12 @@ const createIndexes = async () => {
     // Enforce one progress document per user+badge pair.
     await db.collection('userBadgeProgress').createIndex(
       { userId: 1, badgeId: 1 },
+      { unique: true }
+    );
+
+    await db.collection('events').createIndex({ location: '2dsphere' });
+    await db.collection('event_signups').createIndex(
+      { eventId: 1, userId: 1 },
       { unique: true }
     );
 
