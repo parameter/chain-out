@@ -157,6 +157,10 @@ router.get('/:eventId', requireAuth, async (req, res) => {
       const db = getDatabase();
       const eventsCollection = db.collection('events');
       const event = await eventsCollection.findOne({ _id: new ObjectId(eventId) });
+      // attach signups to event from event_signups
+      const signupsCollection = db.collection('event_signups');
+      const signups = await signupsCollection.find({ eventId: new ObjectId(eventId) }).toArray();
+      event.signups = signups;  
       if (!event) {
         return res.status(404).json({ message: 'Event not found' });
       }
