@@ -43,7 +43,9 @@ const parseCoordinates = (coordinates) => {
   };
 };
 
-router.post('/', requireAuth, async (req, res) => {
+
+
+router.post('/create', requireAuth, async (req, res) => {
   try {
     const { name, desc, description, coordinates } = req.body;
     const eventDescription = desc ?? description;
@@ -85,6 +87,8 @@ router.post('/', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to create event' });
   }
 });
+
+
 
 router.post('/:eventId/signup', requireAuth, async (req, res) => {
   try {
@@ -130,5 +134,7 @@ router.post('/:eventId/signup', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to sign up for event' });
   }
 });
+
+
 
 module.exports = router;
