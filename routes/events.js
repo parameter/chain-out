@@ -115,7 +115,7 @@ router.post('/create', requireAuth, async (req, res) => {
       createdAt: now,
       updatedAt: now,
       startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      endDate: endDate ? new Date(endDate) : null,
     };
 
     const result = await eventsCollection.insertOne(event);
