@@ -78,9 +78,11 @@ const eventSignupsWithUsersLookup = {
   },
 };
 
+
+
 router.post('/create', requireAuth, async (req, res) => {
   try {
-    const { name, desc, description, coordinates } = req.body;
+    const { name, desc, description, coordinates, startDate, endDate } = req.body;
     const eventDescription = desc ?? description;
 
     if (!name || !String(name).trim()) {
@@ -109,6 +111,8 @@ router.post('/create', requireAuth, async (req, res) => {
       createdBy: req.user._id,
       createdAt: now,
       updatedAt: now,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
     };
 
     const result = await eventsCollection.insertOne(event);
