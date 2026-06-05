@@ -5,7 +5,7 @@ const { ObjectId } = require('mongodb');
 const path = require('path');
 const { getPresignedPutUrl, getPresignedGetUrl } = require('../utils/s3');
 const { searchForEarnedAchievements, searchForEarnedBadges, checkTierAchievement, getUserBadgeTierAchievements, getUserAllBadges, fetchEarnedBadgesAndAchievementsForScorecard } = require('../lib/badges');
-
+const { checkProfanity } = require('glin-profanity');
 
 const router = express.Router();
 
@@ -1034,9 +1034,14 @@ router.get('/friends', requireAuth, async (req, res) => {
 
 router.post('/say-fore', requireAuth, async (req, res) => {
 
-  console.log('say-fore', req.body);
+  // use glin-profanity to check if the message contains any profane words
   try {
     const { userId, message } = req.body;
+
+    const profane = await checkProfanity(message);
+    if (profane) {
+      return res.status(400).json({ message: 'Message contains profane words' });
+    }
 
     console.log('userId', userId);
 
