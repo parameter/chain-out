@@ -1098,6 +1098,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
         message: note_text,
         link: `(tabs)/profile/${userId}`,
         from: req.user._id.toString(),
+        fromUsername: req.user.username,
         to: userId
       },
       localNotification: {
