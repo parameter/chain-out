@@ -1053,8 +1053,6 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Message contains profane words' });
     }
 
-    console.log('userId', userId);
-
     if (!userId) {
       return res.status(400).json({ message: 'userId is required' });
     }
@@ -1086,6 +1084,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     if (!result || !result.insertedId) {
       return res.status(500).json({ message: 'Failed to send fore' });
     }
+
+    const note_text = req.user.username + ' skrev...';
     
     await sendUserNotification({
       forUserId: userId,
@@ -1095,7 +1095,8 @@ router.post('/say-fore', requireAuth, async (req, res) => {
         body: `Fore!`,
       },
       payload: {
-        message: 'Fore!',
+        message: note_text,
+        link: `(tabs)/profile/${userId}`,
         from: req.user._id.toString(),
         to: userId
       },
