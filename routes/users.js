@@ -1038,8 +1038,16 @@ router.post('/say-fore', requireAuth, async (req, res) => {
   try {
     const { userId, message } = req.body;
 
-    const profane = await checkProfanity(message);
-    if (profane) {
+    const profaneResult = checkProfanity(message, {
+      allLanguages: true,
+      detectLeetspeak: true,
+      leetspeakLevel: 'moderate',
+      normalizeUnicode: true,
+      cacheResults: true,
+      maxCacheSize: 1000,
+    });
+
+    if (profaneResult) {
       return res.status(400).json({ message: 'Message contains profane words' });
     }
 
