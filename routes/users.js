@@ -1047,7 +1047,9 @@ router.post('/say-fore', requireAuth, async (req, res) => {
       maxCacheSize: 1000,
     });
 
-    if (profaneResult) {
+    console.log('profaneResult', profaneResult);
+
+    if (profaneResult.containsProfanity) {
       return res.status(400).json({ message: 'Message contains profane words' });
     }
 
