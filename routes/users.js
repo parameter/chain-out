@@ -1086,6 +1086,14 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     }
 
     const note_text = req.user.username + ' skrev...';
+
+    console.log("payload", {
+      message: note_text,
+      link: `(tabs)/profile/${userId}`,
+      from: req.user._id.toString(),
+      fromUsername: req.user.username,
+      to: userId
+    });
     
     await sendUserNotification({
       forUserId: userId,
