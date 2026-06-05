@@ -1114,6 +1114,7 @@ router.post('/say-fore', requireAuth, async (req, res) => {
         type: 'new-fore',
         message: message || 'Fore!',
         foreId: result.insertedId,
+        fromUsername: req.user.username,
         to: userId
       }
     });
