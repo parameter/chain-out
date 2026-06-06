@@ -1038,6 +1038,11 @@ router.post('/say-fore', requireAuth, async (req, res) => {
   try {
     const { userId, message } = req.body;
 
+    // check so message is shorter thatn 300 characters 
+    if (message.length > 300) {
+      return res.status(400).json({ message: 'Message is too long' });
+    }
+
     const profaneResult = checkProfanity(message, {
       allLanguages: true,
       detectLeetspeak: true,
@@ -1164,15 +1169,9 @@ router.post('/mark-fores-as-seen', requireAuth, async (req, res) => {
 
 
 
-router.get('/friends/fore-thread', requireAuth, async (req, res) => {
+router.get('/friends/fore-threads', requireAuth, async (req, res) => {
   try {
-    const { userId } = req.query;
-    
-    if (!userId) {
-      return res.status(400).json({ message: 'userId query parameter is required' });
-    }
 
-    const userIDObjectId = new ObjectId(userId);
     const currentUserIDObjectId = new ObjectId(req.user._id);
     
     const db = getDatabase();
@@ -1180,9 +1179,10 @@ router.get('/friends/fore-thread', requireAuth, async (req, res) => {
     
     const result = await foresCollection.find({
       $or: [
-        { from: currentUserIDObjectId, to: userIDObjectId },
-        { from: userIDObjectId, to: currentUserIDObjectId }
-      ]
+        { from: currentUserIDObjectId },
+        { to: currentUserIDObjectId }
+      ],
+      createdAt: { $gte: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) } // 2 days ago
     }).sort({ createdAt: -1 }).toArray();
 
     res.json({ fores: result });
