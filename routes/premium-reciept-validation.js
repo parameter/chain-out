@@ -3,7 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 
 const appleReceiptVerify = require('apple-receipt-verify');
-const google = require('googleapis');
+const { google } = require('googleapis');
 
 const requireAuth = passport.authenticate('jwt', { session: false });
 
@@ -94,4 +94,4 @@ router.post('/verify-receipt', requireAuth, async (req, res) => {
     }
 });
   
-export default router;
+module.exports = router;
