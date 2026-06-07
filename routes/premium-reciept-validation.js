@@ -24,7 +24,7 @@ const androidPublisher = google.androidpublisher({ version: 'v3', auth });
 
 
 // 3. THE MAIN VERIFICATION ROUTE
-router.post('/verify-purchase', requireAuth, async (req, res) => {
+router.post('/verify-receipt', requireAuth, async (req, res) => {
     const { receipt, platform, userId, productId, purchaseToken } = req.body;
   
     if (!platform || !userId) {
