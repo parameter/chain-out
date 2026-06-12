@@ -2497,6 +2497,33 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
 
 
+router.post('/scorecard/cancel', requireAuth, async (req, res) => {
+    const { scorecardId } = req.body;
+
+    const db = getDatabase();
+    const scorecardsCollection = db.collection('scorecards');
+
+    const cancelCardResult = scorecardsCollection.updateOne(
+      {
+        // Condition 1: status is not 'completed'
+        status: { $ne: 'completed' },
+        
+        // Condition 2: userId matches either the creatorId OR is in the invites array
+        $or: [
+          { "scorecard.creatorId": new ObjectId(req.user._id) },
+          { "scorecard.invites.invitedUserId": new ObjectId(req.user._id) }
+        ]
+      },
+      {
+        // The update operation
+        $set: { status: 'cancelled' }
+      }
+    );
+    
+    res.status().jsonp({ result: cancelCardResult.modifiedCount });
+})
+
+
 const BADGE_TIERS = [
   'bronze',
   'silver',
