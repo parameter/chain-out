@@ -1707,7 +1707,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
         earnedBadges: filterFreemium({
           badges: Array.isArray(scorecard.earnedBadges) ? scorecard.earnedBadges : [],
           lastDayOfPremium: req.user.lastDayOfPremium,
-          tierCutoff: 1,
+          tierCutoff: 4,
         }),
       }));
     }
