@@ -2349,8 +2349,12 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
       console.log('⏭️ [complete-round] Skipping badge search for doubles mode');
     }
 
-    // true if card had two players that completed the round, not in dnf
-    let cardVerified = false;
+    // true if card had two players that completed the round, not in dnf 
+    // also true when round is double and there are more than one team 
+    var cardVerified = false;
+    if (updatedScorecard.mode === 'doubles' && updatedScorecard.teams.length > 1) {
+      cardVerified = true;
+    }
     if ((updatedScorecard.invites.length + 1) - (updatedScorecard.ndf?.length ?? 0) >= 2) {
       cardVerified = true;
     }
