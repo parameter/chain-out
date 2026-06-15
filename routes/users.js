@@ -2498,28 +2498,38 @@ router.post('/scorecard/complete-round', requireAuth, async (req, res) => {
 
 
 router.post('/scorecard/cancel', requireAuth, async (req, res) => {
+  try {
     const { scorecardId } = req.body;
+
+    if (!scorecardId) {
+      return res.status(400).json({ message: 'scorecardId is required' });
+    }
 
     const db = getDatabase();
     const scorecardsCollection = db.collection('scorecards');
 
-    const cancelCardResult = scorecardsCollection.updateOne(
+    const cancelCardResult = await scorecardsCollection.updateOne(
       {
         _id: new ObjectId(scorecardId),
         status: { $ne: 'completed' },
         $or: [
-          { "scorecard.creatorId": new ObjectId(req.user._id) },
-          { "scorecard.invites.invitedUserId": new ObjectId(req.user._id) }
+          { creatorId: req.user._id },
+          { invites: { $elemMatch: { invitedUserId: req.user._id } } }
         ]
       },
-      {
-        // The update operation
-        $set: { status: 'cancelled' }
-      }
+      { $set: { status: 'cancelled' } }
     );
-    
-    res.status().jsonp({ result: cancelCardResult.modifiedCount });
-})
+
+    if (cancelCardResult.matchedCount === 0) {
+      return res.status(404).json({ message: 'Scorecard not found or cannot be cancelled' });
+    }
+
+    res.status(200).json({ result: cancelCardResult.modifiedCount });
+  } catch (e) {
+    console.error('Error cancelling scorecard:', e);
+    res.status(500).json({ message: 'Failed to cancel scorecard' });
+  }
+});
 
 
 const BADGE_TIERS = [
