@@ -2517,7 +2517,7 @@ router.post('/scorecard/cancel', requireAuth, async (req, res) => {
           { invites: { $elemMatch: { invitedUserId: req.user._id } } }
         ]
       },
-      { $set: { status: 'cancelled' } }
+      { $set: { status: 'archived' } }
     );
 
     if (cancelCardResult.matchedCount === 0) {
