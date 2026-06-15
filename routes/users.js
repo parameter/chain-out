@@ -354,7 +354,8 @@ router.get('/course-leaderboard', requireAuth, async (req, res) => {
             username: '$_lbUserFirst.username',
             fname: '$_lbUserFirst.fname',
             sname: '$_lbUserFirst.sname',
-            profileImage: '$_lbUserFirst.profileImage'
+            profileImage: '$_lbUserFirst.profileImage',
+            isPremium: '$_lbUserFirst.isPremium'
           }
         },
         { $project: { _lbUser: 0, _lbUserFirst: 0, _lastPlayed: 0, entityKey: 0 } },
@@ -473,14 +474,13 @@ router.get('/xp-leaderboard', requireAuth, async (req, res) => {
           username: '$userData.username',
           fname: '$userData.fname',
           sname: '$userData.sname',	
-          profileImage: '$userData.profileImage'
+          profileImage: '$userData.profileImage',
+          isPremium: '$userData.isPremium'
         }
       }
     ];
 
     const leaderboard = await userXPTotalsCollection.aggregate(pipeline).toArray();
-
-    console.log('leaderboard', leaderboard);
 
     res.json({
       leaderboard,
