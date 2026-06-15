@@ -2505,10 +2505,8 @@ router.post('/scorecard/cancel', requireAuth, async (req, res) => {
 
     const cancelCardResult = scorecardsCollection.updateOne(
       {
-        // Condition 1: status is not 'completed'
+        _id: new ObjectId(scorecardId),
         status: { $ne: 'completed' },
-        
-        // Condition 2: userId matches either the creatorId OR is in the invites array
         $or: [
           { "scorecard.creatorId": new ObjectId(req.user._id) },
           { "scorecard.invites.invitedUserId": new ObjectId(req.user._id) }
