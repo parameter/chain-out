@@ -1707,7 +1707,7 @@ router.get('/scorecards', requireAuth, async (req, res) => {
         earnedBadges: filterFreemium({
           badges: Array.isArray(scorecard.earnedBadges) ? scorecard.earnedBadges : [],
           lastDayOfPremium: req.user.lastDayOfPremium,
-          tierCutoff: 4,
+          tierCutoff: 3
         }),
       }));
     }
@@ -1794,7 +1794,7 @@ router.get('/scorecard', requireAuth, async (req, res) => {
         badges: filterFreemium({
           badges: Array.isArray(entry.badges) ? entry.badges : [],
           lastDayOfPremium: req.user.lastDayOfPremium,
-          tierCutoff: 4,
+          tierCutoff: 3
         }),
         playersXpBreakdown: Array.isArray(expandedScorecard.playersXpBreakdown) ? expandedScorecard.playersXpBreakdown.filter((entry) => {
           return entry.entityId.toString() !== req.user._id.toString();
@@ -2677,7 +2677,7 @@ router.get('/badges', requireAuth, async (req, res) => {
     badges = filterFreemium({
       badges: badges_raw,
       lastDayOfPremium: req.user.lastDayOfPremium,
-      tierCutoff: 4 
+      tierCutoff: 3
     });
   } else {
     badges = badges_raw;
