@@ -1794,7 +1794,7 @@ router.get('/scorecard', requireAuth, async (req, res) => {
         badges: filterFreemium({
           badges: Array.isArray(entry.badges) ? entry.badges : [],
           lastDayOfPremium: req.user.lastDayOfPremium,
-          tierCutoff: 1,
+          tierCutoff: 4,
         }),
         playersXpBreakdown: Array.isArray(expandedScorecard.playersXpBreakdown) ? expandedScorecard.playersXpBreakdown.filter((entry) => {
           return entry.entityId.toString() !== req.user._id.toString();
@@ -2677,7 +2677,7 @@ router.get('/badges', requireAuth, async (req, res) => {
     badges = filterFreemium({
       badges: badges_raw,
       lastDayOfPremium: req.user.lastDayOfPremium,
-      tierCutoff: 1 
+      tierCutoff: 4 
     });
   } else {
     badges = badges_raw;
