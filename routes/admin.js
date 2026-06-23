@@ -1962,6 +1962,9 @@ router.get('/courses-admin-debug', (req, res) => {
 
 router.post('/idyo/form-post', async (req, res) => {
 
+    console.log('idyo/form-post');
+    console.log(req.body);
+
   const { formData } = req.body;
 
   const db = getDatabase();
