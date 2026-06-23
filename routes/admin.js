@@ -1958,5 +1958,21 @@ router.get('/courses-admin-debug', (req, res) => {
   });
 });
 
+
+
+router.post('/api/idyo/form-post', async (req, res) => {
+
+  const { formData } = req.body;
+
+  const db = getDatabase();
+  const idyoFormsCollection = db.collection('idyo-forms');
+
+  const result = await idyoFormsCollection.insertOne(formData);
+
+  res.json({ success: true, message: 'Form data received', insertedId: result.insertedId });
+});
+
+
+
 module.exports = router;
 
