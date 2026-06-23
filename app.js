@@ -41,6 +41,7 @@ app.use(morgan('combined'));
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost',
   'https://chainout-course-admin.vercel.app',
   'https://www.idyo.ai',
   'https://idyo.ai'
