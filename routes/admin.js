@@ -1965,14 +1965,16 @@ router.post('/idyo/form-post', async (req, res) => {
     console.log('idyo/form-post');
     console.log(req.body);
 
-  const { formData } = req.body;
+  const { company_name, email, name, position } = req.body;
 
   const db = getDatabase();
   const idyoFormsCollection = db.collection('idyo-forms');
 
-  const result = await idyoFormsCollection.insertOne(formData);
+  const result = await idyoFormsCollection.insertOne({ company_name, email, name, position });
 
-  res.json({ success: true, message: 'Form data received', insertedId: result.insertedId });
+  console.log('result', result);
+
+  res.json({ success: true, message: 'Form data received' });
 });
 
 
