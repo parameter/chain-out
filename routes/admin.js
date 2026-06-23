@@ -1960,7 +1960,7 @@ router.get('/courses-admin-debug', (req, res) => {
 
 
 
-router.post('/api/idyo/form-post', async (req, res) => {
+router.post('/idyo/form-post', async (req, res) => {
 
   const { formData } = req.body;
 
