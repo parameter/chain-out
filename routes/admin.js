@@ -1970,18 +1970,24 @@ router.post('/idyo/form-post', async (req, res) => {
   }
 
   const result = await validate(email);
+
+  console.log('result', result);
+
   if (!result.valid) {
     return res.status(400).json({ success: false, message: '' });
   }
 
   // check strings to be less thatn 42 characters 
   if (company_name.length > 42) {
+    console.log('company_name is too long');
     return res.status(400).json({ success: false, message: '' });
   }
   if (name.length > 42) {
+    console.log('name is too long');
     return res.status(400).json({ success: false, message: '' });
   }
   if (position.length > 42) {
+    console.log('position is too long');
     return res.status(400).json({ success: false, message: '' });
   }
 
