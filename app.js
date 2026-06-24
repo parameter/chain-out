@@ -39,9 +39,10 @@ app.use(morgan('combined'));
 
 // Define an array of allowed URLs (can be set via env or hardcoded)
 const allowedOrigins = [
+  /*
   'http://localhost:5173',
   'http://localhost:3000',
-  'http://localhost',
+  'http://localhost', */
   'https://chainout-course-admin.vercel.app',
   'https://www.idyo.ai',
   'https://idyo.ai'

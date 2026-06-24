@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const { searchForEarnedAchievements, searchForEarnedBadges, getUserAllBadges } = require('../lib/badges');
+const { validate } = require('deep-email-validator');
 
 const router = express.Router();
 
@@ -1961,18 +1962,39 @@ router.get('/courses-admin-debug', (req, res) => {
 
 
 router.post('/idyo/form-post', async (req, res) => {
-
-    console.log('idyo/form-post');
-    console.log(req.body);
-
   const { company_name, email, name, position } = req.body;
+
+  // validate the data
+  if (!company_name || !email || !name || !position) {
+    return res.status(400).json({ success: false, message: '' });
+  }
+
+  const result = await validate(email);
+  if (!result.valid) {
+    return res.status(400).json({ success: false, message: '' });
+  }
+
+  // check strings to be less thatn 42 characters 
+  if (company_name.length > 42) {
+    return res.status(400).json({ success: false, message: '' });
+  }
+  if (name.length > 42) {
+    return res.status(400).json({ success: false, message: '' });
+  }
+  if (position.length > 42) {
+    return res.status(400).json({ success: false, message: '' });
+  }
 
   const db = getDatabase();
   const idyoFormsCollection = db.collection('idyo-forms');
 
-  const result = await idyoFormsCollection.insertOne({ company_name, email, name, position });
+  // insert one if doc with same email does not exist
+  const existingDoc = await idyoFormsCollection.findOne({ email });
+  if (existingDoc) {
+    return res.status(400).json({ success: false, message: '' });
+  }
 
-  console.log('result', result);
+  await idyoFormsCollection.insertOne({ company_name, email, name, position });
 
   res.json({ success: true, message: 'Form data received' });
 });
