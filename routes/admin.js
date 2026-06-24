@@ -1961,6 +1961,41 @@ router.get('/courses-admin-debug', (req, res) => {
 
 
 
+
+
+
+
+const dns = require('dns').promises;
+
+async function hasMxRecords(domain) {
+  try {
+    const records = await dns.resolveMx(domain);
+    return records && records.length > 0;
+  } catch (err) {
+    return false;
+  }
+}
+
+async function validateEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!regex.test(email)) return { valid: false, reason: "Invalid format" };
+
+  const domain = email.split("@")[1];
+  const hasMx = await hasMxRecords(domain);
+
+  if (!hasMx) return { valid: false, reason: "Domain has no mail server" };
+
+  return { valid: true };
+}
+
+// Usage
+
+// { valid: false, reason: "Domain has no mail server" }
+
+
+
+
+
 router.post('/idyo/form-post', async (req, res) => {
   const { company_name, email, name, position } = req.body;
 
@@ -1969,11 +2004,11 @@ router.post('/idyo/form-post', async (req, res) => {
     return res.status(400).json({ success: false, message: '' });
   }
 
-  const result = await validate(email);
+  const emailvalResult = await validateEmail(email);
 
-  console.log('result', result);
+  console.log('emailvalResult', emailvalResult);
 
-  if (!result.valid) {
+  if (!emailvalResult.valid) {
     return res.status(400).json({ success: false, message: '' });
   }
 
