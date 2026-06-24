@@ -2006,24 +2006,22 @@ router.post('/idyo/form-post', async (req, res) => {
 
   const emailvalResult = await validateEmail(email);
 
-  console.log('emailvalResult', emailvalResult);
-
   if (!emailvalResult.valid) {
-    return res.status(400).json({ success: false, message: '' });
+    return res.json({ success: true, message: 'Form data received' });
   }
 
   // check strings to be less thatn 42 characters 
   if (company_name.length > 42) {
     console.log('company_name is too long');
-    return res.status(400).json({ success: false, message: '' });
+    return res.json({ success: true, message: 'Form data received' });
   }
   if (name.length > 42) {
     console.log('name is too long');
-    return res.status(400).json({ success: false, message: '' });
+    return res.json({ success: true, message: 'Form data received' });
   }
   if (position.length > 42) {
     console.log('position is too long');
-    return res.status(400).json({ success: false, message: '' });
+    return res.json({ success: true, message: 'Form data received' });
   }
 
   const db = getDatabase();
