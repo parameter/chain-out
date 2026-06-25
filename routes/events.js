@@ -121,10 +121,15 @@ router.post('/create', requireAuth, async (req, res) => {
     const eventsCollection = db.collection('events');
     const now = new Date();
 
+    const [lat, lng] = location.split(',');
+
     const event = {
       name: String(name).trim(),
       desc: String(eventDescription).trim(),
-      location: location,
+      location: {
+        type: 'Point',
+        coordinates: [parseFloat(lng), parseFloat(lat)]
+      },
       createdBy: req.user._id,
       maximumPlayers: maximumPlayers,
       courseId: courseId,
