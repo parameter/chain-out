@@ -74,19 +74,33 @@ const eventSignupsWithUsersLookup = {
         },
       },
     ],
-    as: 'signups',
+    as: 'participants',
   },
 };
+
+const creatorLookup = [
+  {
+    $lookup: {
+      from: 'users',
+      localField: 'createdBy',
+      foreignField: '_id',
+      as: 'creator',
+    },
+  },
+  {
+    $unwind: {
+      path: '$creator',
+      preserveNullAndEmptyArrays: true,
+    },
+  },
+];
 
 
 
 router.post('/create', requireAuth, async (req, res) => {
   try {
-    const { name, desc, description, coordinates, startDate, endDate } = req.body;
-    const eventDescription = desc ?? description;
-
-    console.log('startDate', startDate);
-    console.log('endDate', endDate);
+    const { name, desc, courseId, courseName, coordinates, desc, maximumPlayers, startDate, endDate } = req.body;
+    const eventDescription = desc;
 
     if (!name || !String(name).trim()) {
       return res.status(400).json({ message: 'Event name is required' });
@@ -112,6 +126,9 @@ router.post('/create', requireAuth, async (req, res) => {
       geolocation: geo.geolocation,
       location: geo.location,
       createdBy: req.user._id,
+      maximumPlayers: maximumPlayers,
+      courseId: courseId,
+      courseName: courseName,
       createdAt: now,
       updatedAt: now,
       startDate: new Date(startDate),
@@ -184,7 +201,7 @@ router.get('/', requireAuth, async (req, res) => {
     const createdBy = new ObjectId(req.user._id);
 
     const events = await eventsCollection
-      .aggregate([{ $match: { createdBy } }, eventSignupsWithUsersLookup])
+      .aggregate([{ $match: { createdBy } }, eventSignupsWithUsersLookup, ...creatorLookup])
       .toArray();
 
     res.json({ events });
@@ -209,7 +226,7 @@ router.get('/:eventId', requireAuth, async (req, res) => {
     const eventObjectId = new ObjectId(eventId);
 
     const [event] = await eventsCollection
-      .aggregate([{ $match: { _id: eventObjectId } }, eventSignupsWithUsersLookup])
+      .aggregate([{ $match: { _id: eventObjectId } }, eventSignupsWithUsersLookup, ...creatorLookup])
       .toArray();
 
     if (!event) {
