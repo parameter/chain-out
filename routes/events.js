@@ -99,7 +99,7 @@ const creatorLookup = [
 
 router.post('/create', requireAuth, async (req, res) => {
   try {
-    const { name, desc, courseId, courseName, coordinates, desc, maximumPlayers, startDate, endDate } = req.body;
+    const { name, desc, courseId, courseName, location, desc, maximumPlayers, startDate, endDate } = req.body;
     const eventDescription = desc;
 
     if (!name || !String(name).trim()) {
@@ -109,12 +109,13 @@ router.post('/create', requireAuth, async (req, res) => {
       return res.status(400).json({ message: 'Event description is required' });
     }
 
+    /*
     const geo = parseCoordinates(coordinates);
     if (!geo) {
       return res.status(400).json({
         message: 'Valid coordinates are required (e.g. { lat, lng } or [lng, lat])',
       });
-    }
+    } */
 
     const db = getDatabase();
     const eventsCollection = db.collection('events');
@@ -123,8 +124,7 @@ router.post('/create', requireAuth, async (req, res) => {
     const event = {
       name: String(name).trim(),
       desc: String(eventDescription).trim(),
-      geolocation: geo.geolocation,
-      location: geo.location,
+      location: location,
       createdBy: req.user._id,
       maximumPlayers: maximumPlayers,
       courseId: courseId,
