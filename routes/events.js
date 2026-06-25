@@ -197,41 +197,41 @@ router.post('/:eventId/signup', requireAuth, async (req, res) => {
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { location } = req.query;
-
     console.log('location', location);
 
     const db = getDatabase();
     const eventsCollection = db.collection('events');
-    const createdBy = new ObjectId(req.user._id);
+    const createdBy = new ObjectId(req.user._id); // Note: Use this if you plan to filter by creator
 
-    // const maxDistance = 100 * 1000; to get events near a location
+    // 1. Initialize an empty pipeline array
+    const pipeline = [];
 
-    var matchStage = {};
-
+    // 2. If location exists, $geoNear MUST be the very first stage
     if (location) {
       const [lat, lng] = location.split(',');
       const maxDistance = 100 * 1000; // 100km in meters
 
-      
-      
-      matchStage.location = {
-        $nearSphere: {
-          $geometry: { 
-            type: 'Point', 
-            coordinates: [parseFloat(lng), parseFloat(lat)]
+      pipeline.push({
+        $geoNear: {
+          near: {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)] // [longitude, latitude]
           },
-          $maxDistance: maxDistance
+          distanceField: 'distance', // MongoDB requires this to output the calculated distance
+          maxDistance: maxDistance,
+          spherical: true
         }
-      };
+      });
     }
 
-    const events = await eventsCollection
-      .aggregate([
-        { $match: matchStage },
-        eventSignupsWithUsersLookup,
-        ...creatorLookup
-      ])
-      .toArray();
+    // 3. Add your lookups to the pipeline
+    pipeline.push(
+      eventSignupsWithUsersLookup,
+      ...creatorLookup
+    );
+
+    // 4. Run the aggregation
+    const events = await eventsCollection.aggregate(pipeline).toArray();
 
     res.json({ events });
 
