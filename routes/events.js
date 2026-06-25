@@ -207,8 +207,10 @@ router.get('/', requireAuth, async (req, res) => {
     if (location) {
       const [lat, lng] = location.split(',');
       const maxDistance = 100 * 1000; // 100km in meters
+
+      var matchStage = {};
       
-      var matchStage.location = {
+      matchStage.location = {
         $nearSphere: {
           $geometry: { 
             type: 'Point', 
