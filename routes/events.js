@@ -198,17 +198,21 @@ router.get('/', requireAuth, async (req, res) => {
   try {
     const { location } = req.params;
 
+    console.log('location', location);
+
     const db = getDatabase();
     const eventsCollection = db.collection('events');
     const createdBy = new ObjectId(req.user._id);
 
     // const maxDistance = 100 * 1000; to get events near a location
 
+    var matchStage = {};
+
     if (location) {
       const [lat, lng] = location.split(',');
       const maxDistance = 100 * 1000; // 100km in meters
 
-      var matchStage = {};
+      
       
       matchStage.location = {
         $nearSphere: {
