@@ -196,15 +196,39 @@ router.post('/:eventId/signup', requireAuth, async (req, res) => {
 
 router.get('/', requireAuth, async (req, res) => {
   try {
+    const { location } = req.params;
+
     const db = getDatabase();
     const eventsCollection = db.collection('events');
     const createdBy = new ObjectId(req.user._id);
 
+    // const maxDistance = 100 * 1000; to get events near a location
+
+    if (location) {
+      const [lat, lng] = location.split(',');
+      const maxDistance = 100 * 1000; // 100km in meters
+      
+      var matchStage.location = {
+        $nearSphere: {
+          $geometry: { 
+            type: 'Point', 
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          },
+          $maxDistance: maxDistance
+        }
+      };
+    }
+
     const events = await eventsCollection
-      .aggregate([{ $match: { createdBy } }, eventSignupsWithUsersLookup, ...creatorLookup])
+      .aggregate([
+        { $match: matchStage },
+        eventSignupsWithUsersLookup,
+        ...creatorLookup
+      ])
       .toArray();
 
     res.json({ events });
+
   } catch (error) {
     console.error('Error fetching events:', error);
     res.status(500).json({ message: 'Failed to fetch events' });

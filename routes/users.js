@@ -621,15 +621,6 @@ router.get('/courses', requireAuth, async (req, res) => {
     // 100km in meters
     const maxDistance = 100 * 1000;
 
-    const events = await db.collection('events').find({
-      location: {
-        $nearSphere: {
-          $geometry: { type: 'Point', coordinates: [lng, lat] },
-          $maxDistance: maxDistance
-        }
-      }
-    }).toArray();
-
     const courses = await db.collection('courses').aggregate([
       {
         $geoNear: {
