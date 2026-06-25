@@ -123,7 +123,8 @@ router.post('/create', requireAuth, async (req, res) => {
     const eventsCollection = db.collection('events');
     const now = new Date();
 
-    const [lat, lng] = location.split(',');
+    const lat = location.lat;
+    const lng = location.lng;
 
     const event = {
       name: String(name).trim(),
