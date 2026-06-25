@@ -102,6 +102,8 @@ router.post('/create', requireAuth, async (req, res) => {
     const { name, desc, courseId, courseName, location, maximumPlayers, startDate, endDate } = req.body;
     const eventDescription = desc;
 
+    console.log('location', location);
+
     if (!name || !String(name).trim()) {
       return res.status(400).json({ message: 'Event name is required' });
     }
