@@ -99,7 +99,7 @@ const creatorLookup = [
 
 router.post('/create', requireAuth, async (req, res) => {
   try {
-    const { name, desc, courseId, courseName, location, desc, maximumPlayers, startDate, endDate } = req.body;
+    const { name, desc, courseId, courseName, location, maximumPlayers, startDate, endDate } = req.body;
     const eventDescription = desc;
 
     if (!name || !String(name).trim()) {
