@@ -196,7 +196,7 @@ router.post('/:eventId/signup', requireAuth, async (req, res) => {
 
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { location } = req.params;
+    const { location } = req.query;
 
     console.log('location', location);
 
@@ -245,7 +245,7 @@ router.get('/', requireAuth, async (req, res) => {
 
 router.get('/:eventId', requireAuth, async (req, res) => {
   try {
-    const { eventId } = req.params;
+    const { eventId } = req.query;
 
     if (!ObjectId.isValid(eventId)) {
       return res.status(400).json({ message: 'Invalid event id' });
