@@ -70,6 +70,7 @@ const eventSignupsWithUsersLookup = {
             profileImage: '$user.profileImage',
             fname: '$user.fname',
             sname: '$user.sname',
+            isPremium: '$user.isPremium'
           },
         },
       },
@@ -101,7 +102,8 @@ const creatorLookup = [
           then: {
             userId: "$creator._id",
             username: "$creator.username",
-            profileImage: "$creator.profileImage"
+            profileImage: "$creator.profileImage",
+            isPremium: '$creator.isPremium'
           },
           else: null
         }
