@@ -1029,7 +1029,7 @@ router.get('/friends', requireAuth, async (req, res) => {
         {
           $match: {
             status: 'accepted',
-            $or: [{ to: currentUserId, from: req.user._id.toString() }, { from: currentUserId, to: req.user._id.toString() }],
+            $or: [{ to: currentUserId }, { from: currentUserId }],
             // Specify the field name before the $nin operator
             to: { $nin: friendBlockedUserIds },
             from: { $nin: friendBlockedUserIds }
