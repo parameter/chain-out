@@ -849,7 +849,7 @@ router.post('/cancel-friend-request', requireAuth, async (req, res) => {
 
 
 
-router.post('/remove-friend', requireAuth, async (req, res) => {
+router.post('/block-user', requireAuth, async (req, res) => {
   try {
     const { friendsUserId } = req.body;
     const db = getDatabase();
