@@ -848,6 +848,23 @@ router.post('/cancel-friend-request', requireAuth, async (req, res) => {
 });
 
 
+
+router.post('/remove-friend', requireAuth, async (req, res) => {
+  try {
+    const { friendsUserId } = req.body;
+    const db = getDatabase();
+    const friendBlocksCollection = db.collection('friend-blocks');
+    const result = await friendBlocksCollection.insertOne({ user: friendsUserId, blockedBy: req.user._id });
+    res.json({ result: result.acknowledged });
+  } catch (e) {
+    console.error('Error removing friend:', e);  
+
+    res.status(500).json({ message: 'Failed to remove friend' });
+  }
+});
+
+
+
 router.get('/pending-friend-requests', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
