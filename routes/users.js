@@ -883,9 +883,13 @@ router.post('/block-user', requireAuth, async (req, res) => {
 router.post('/report-user', requireAuth, async (req, res) => {
   try {
     const { friendUserId, reason } = req.body;
+    console.log('friendUserId', friendUserId);
+    console.log('reason', reason);
+    console.log('reportedBy', req.user._id.toString());
     const db = getDatabase();
     const reportsCollection = db.collection('friend-reports');
     const result = await reportsCollection.insertOne({ friendUserId, reason, reportedBy: req.user._id.toString(), reportedAt: new Date() });
+    console.log('result', result);
     res.json({ result: result.acknowledged });
   } catch (e) {
     console.error('Error reporting user:', e);  
