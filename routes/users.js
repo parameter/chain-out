@@ -1025,10 +1025,10 @@ router.get('/friends', requireAuth, async (req, res) => {
     
     friendBlocks.forEach((block) => {
       if (block.user !== currentUserId) {
-        friendBlockedUserIds.push(new ObjectId(block.user));
+        friendBlockedUserIds.push(block.user);
       }
       if (block.blockedBy !== currentUserId) {
-        friendBlockedUserIds.push(new ObjectId(block.blockedBy));
+        friendBlockedUserIds.push(block.blockedBy);
       }
     });
     console.log('friendBlockedUserIds', friendBlockedUserIds);
