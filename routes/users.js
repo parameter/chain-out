@@ -1039,12 +1039,15 @@ router.get('/friends', requireAuth, async (req, res) => {
           $match: {
             status: 'accepted',
             $or: [
-              { to: currentUserId }, 
-              { from: currentUserId }
-            ],
-            // Ensure NEITHER the 'to' nor 'from' fields contain a blocked ID
-            to: { $nin: friendBlockedUserIds },
-            from: { $nin: friendBlockedUserIds }
+              { 
+                "to.$oid": currentUserId, 
+                "from.$oid": { $nin: friendBlockedUserIds } 
+              },
+              { 
+                "from.$oid": currentUserId, 
+                "to.$oid": { $nin: friendBlockedUserIds } 
+              }
+            ]
           },
         },
         {
