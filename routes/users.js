@@ -854,8 +854,23 @@ router.post('/block-user', requireAuth, async (req, res) => {
     const { friendUserId } = req.body;
     const db = getDatabase();
     const friendBlocksCollection = db.collection('friend-blocks');
-    const result = await friendBlocksCollection.insertOne({ user: friendUserId, blockedBy: req.user._id });
+
+    const result = await friendBlocksCollection.updateOne(
+      { 
+        user: friendUserId, 
+        blockedBy: req.user._id.toString() 
+      },
+      { 
+        $setOnInsert: { 
+          user: friendUserId, 
+          blockedBy: req.user._id.toString() 
+        } 
+      },
+      { upsert: true }
+    );
+
     res.json({ result: result.acknowledged });
+
   } catch (e) {
     console.error('Error removing friend:', e);  
 
