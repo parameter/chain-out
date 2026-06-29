@@ -1057,7 +1057,7 @@ router.get('/friends', requireAuth, async (req, res) => {
           $addFields: {
             friendId: {
               $cond: [
-                { $eq: ['$from', currentUserId] },
+                { $eq: ['$from', currentUserObjectId] },
                 '$to',
                 '$from',
               ],
