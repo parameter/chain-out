@@ -1115,6 +1115,17 @@ router.post('/say-fore', requireAuth, async (req, res) => {
   try {
     const { userId, message } = req.body;
 
+    // check if user is blocked
+    const db = getDatabase();
+    const friendBlocksCollection = db.collection('friend-blocks');
+    const friendBlock = await friendBlocksCollection.findOne(
+      { $or: [{ user: req.user._id.toString(), blockedBy: userId.toString() }, { blockedBy: req.user._id.toString(), user: userId.toString() }] }
+    );
+    console.log('friendBlock', friendBlock);
+    if (friendBlock) {
+      return res.status(400).json({ message: 'You are blocked by this user or you have blocked this user' });
+    }
+
     // check so message is shorter thatn 300 characters 
     if (message.length > 300) {
       return res.status(400).json({ message: 'Message is too long' });
