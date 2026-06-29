@@ -1157,8 +1157,6 @@ router.post('/say-fore', requireAuth, async (req, res) => {
     }
 
     */
-
-    const db = getDatabase();
     const foresCollection = db.collection('fores');
 
     const now = new Date();
