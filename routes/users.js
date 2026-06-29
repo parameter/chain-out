@@ -884,7 +884,7 @@ router.post('/report-user', requireAuth, async (req, res) => {
   try {
     const { friendUserId, reason } = req.body;
     const db = getDatabase();
-    const reportsCollection = db.collection('user-reports');
+    const reportsCollection = db.collection('friend-reports');
     const result = await reportsCollection.insertOne({ friendUserId, reason, reportedBy: req.user._id.toString(), reportedAt: new Date() });
     res.json({ result: result.acknowledged });
   } catch (e) {
