@@ -880,6 +880,20 @@ router.post('/block-user', requireAuth, async (req, res) => {
 
 
 
+router.post('/report-user', requireAuth, async (req, res) => {
+  try {
+    const { friendUserId, reason } = req.body;
+    const db = getDatabase();
+    const reportsCollection = db.collection('reports');
+    const result = await reportsCollection.insertOne({ friendUserId, reason, reportedBy: req.user._id.toString(), reportedAt: new Date() });
+    res.json({ result: result.acknowledged });
+  } catch (e) {
+    console.error('Error reporting user:', e);  
+    res.status(500).json({ message: 'Failed to report user' });
+});
+
+
+
 router.get('/pending-friend-requests', requireAuth, async (req, res) => {
   try {
     const db = getDatabase();
