@@ -1025,13 +1025,15 @@ router.get('/friends', requireAuth, async (req, res) => {
     
     friendBlocks.forEach((block) => {
       if (block.user !== currentUserId) {
-        friendBlockedUserIds.push(block.user);
+        friendBlockedUserIds.push(new ObjectId(block.user));
       }
       if (block.blockedBy !== currentUserId) {
-        friendBlockedUserIds.push(block.blockedBy);
+        friendBlockedUserIds.push(new ObjectId(block.blockedBy));
       }
     });
     console.log('friendBlockedUserIds', friendBlockedUserIds);
+
+    const currentUserObjectId = new ObjectId(currentUserId);
 
     const friends = await friendsCollection
       .aggregate([
@@ -1040,12 +1042,12 @@ router.get('/friends', requireAuth, async (req, res) => {
             status: 'accepted',
             $or: [
               { 
-                "to.$oid": currentUserId, 
-                "from.$oid": { $nin: friendBlockedUserIds } 
+                to: currentUserObjectId, 
+                from: { $nin: friendBlockedUserIds } 
               },
               { 
-                "from.$oid": currentUserId, 
-                "to.$oid": { $nin: friendBlockedUserIds } 
+                from: currentUserObjectId, 
+                to: { $nin: friendBlockedUserIds } 
               }
             ]
           },
