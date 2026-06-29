@@ -851,10 +851,10 @@ router.post('/cancel-friend-request', requireAuth, async (req, res) => {
 
 router.post('/block-user', requireAuth, async (req, res) => {
   try {
-    const { friendsUserId } = req.body;
+    const { friendUserId } = req.body;
     const db = getDatabase();
     const friendBlocksCollection = db.collection('friend-blocks');
-    const result = await friendBlocksCollection.insertOne({ user: friendsUserId, blockedBy: req.user._id });
+    const result = await friendBlocksCollection.insertOne({ user: friendUserId, blockedBy: req.user._id });
     res.json({ result: result.acknowledged });
   } catch (e) {
     console.error('Error removing friend:', e);  
