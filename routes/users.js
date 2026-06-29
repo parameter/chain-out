@@ -1019,7 +1019,7 @@ router.get('/friends', requireAuth, async (req, res) => {
     const currentUserId = req.user._id;
 
     const friendBlocksCollection = db.collection('friend-blocks');
-    const friendBlocks = await friendBlocksCollection.find({ $or: [{ user: currentUserId, blockedBy: req.user._id.toString() }, { blockedBy: currentUserId, user: req.user._id.toString() }] }).toArray();
+    const friendBlocks = await friendBlocksCollection.find({ $or: [{ user: currentUserId }, { blockedBy: currentUserId }] }).toArray();
     const friendBlockedUserIds = friendBlocks.map((block) => [block.blockedBy, block.user]).flat(Infinity);
 
     console.log('friendBlockedUserIds', friendBlockedUserIds);
